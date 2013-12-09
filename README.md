@@ -14,9 +14,13 @@ Manifest
 --------
 
 targets/ - target sequences
+
 templates/ - template sequences and structures
+
 models/ - comparative models for initialization of simulations
+
 simulations/ - simulation data
+
 pylib/ - useful Python libraries
 
 
