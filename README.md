@@ -23,6 +23,8 @@ simulations/ - simulation data
 
 pylib/ - useful Python libraries
 
+spark-distributed/ - Library with map/reduce-able functions
+
 Dependencies
 ------------
 
@@ -34,4 +36,4 @@ Dependencies
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
 * Stride (optional, for model alignment/visualization) - http://webclu.bio.wzw.tum.de/stride/ (also included as part of the VMD package - http://www.ks.uiuc.edu/Research/vmd/)
 * Many other Python packages. Recommended aproach is to install either Enthought Canopy (https://www.enthought.com/products/canopy/) or Continuum Anaconda (https://store.continuum.io/)
-
+* Apache Spark - http://spark.incubator.apache.org/
