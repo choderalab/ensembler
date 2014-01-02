@@ -2,7 +2,6 @@
 
 class MSMSeed:
     
-     #this is a pdb object 
     alignment =None 
     seq_id = None
     model_struct = None
@@ -20,46 +19,139 @@ class MSMSeed:
     natoms_min = 0
     volume_min = 0
     box_min = None
-    
+    tmpname = None
+    tgtname =None
     def __init__(self, tgtseq, tmplseq,tmplstruct):
         self.tgtseq = tgtseq 
         self.tmplseq = tmplseq
         #this is just a string, since modeller is going to write it to file first
         self.tmplstruct = tmplstruct
-        
+
+
+
+
+
+#this function is an internal function that retrieves a specific chain from the PDB
+#it returns the pdb structure of the chain as a string and the sequence as a string
+#the last parameter is (mostly) for NMR structures with multiple models
+#this is an internal function that is used by the first stage, which builds the MSMSeed object
+def _retrieve_chain(pdb_code, chain_code, model_id=0):
+    import Bio.PDB as pdb
+    import tempfile
+    import os
+    import StringIO
+    import urllib2
+    get_fasta_restful = "http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=fastachain&compression=NO&structureId="
+    query_string = get_fasta_restful+pdb_code + '&chainId=' + chain_code
+    response = urllib2.urlopen(query_string)
+    fasta_result = response.read()
+    os.chdir(tempfile.mkdtemp())
+    pdb_fetcher = pdb.PDBList()
+    pdb_filepath = pdb_fetcher.retrieve_pdb_file(pdb_code)
+    parser = pdb.PDBParser()
+    structure = parser.get_structure(pdb_code, pdb_filepath)
+    chain_result = structure[model_id][chain_code]
+    outval = StringIO.StringIO()
+    io = pdb.PDBIO()
+    io.set_structure(chain_result)
+    io.save(outval)
+    return (fasta_result, outval.getvalue())
+
+
+#perform alignment with clustal
+def align_with_clustal(MSMSeedInput):
+    import os.path
+    import os
+    import subprocess
+    import tempfile
+    import modeller
+    import modeller.automodel
+    #this...for now
+    home_path = os.environ.get('MSMSEED_HOME')
+    if home_path == None:
+        home_path = '/cbio/jclab/pgrinaway'
+         #The args object should contain two elements- a sequences string in seg format and a structure
+    sequences = MSMSeedInput.tgtseq + MSMSeedInput.tmplseq
+
+    
+    #using modeller here to help with writing alignments exactly as it likes
+    modeller.log.none()
+    env = modeller.environ()         
+         
+    #the exit codes are useful for filtering RDDs, to reduce memory usage and improve performance
+    MSMSeedInput.exitcode = -1
+         
+         #look for environment variable for clustal binary, otherwise use SD cluster location
+    clustal_binary = os.environ.get('CLUSTAL_BINARY_PATH')
+    if clustal_binary == None:
+        clustal_path = '/cbio/jclab/share/kinome/external-tools/clustal-omega'
+        clustal_binary_name = 'clustalo-1.1.0-linux-64'
+        clustal_binary = os.path.join(clustal_path, clustal_binary_name)
+         
+         #make a temporary directory and change to it
+    tmpath = tempfile.mkdtemp()
+    os.chdir(tmpath)
+         
+    #write the unaligned sequences to a file in our tempdir, read them w/ the alignment obj
+    #and rewrite them in fASTA format
+    unaln_file = tempfile.NamedTemporaryFile(dir=tmpath, delete=False)
+    unaln_file.writelines(sequences)
+    unaln_file.close()
+    aln = modeller.alignment(env)
+    aln.append(unaln_file.name)
+    aln.write('unaligned.fasta', alignment_format='FASTA')
+         
+         
+    #We'll call clustal with commands, input- unaligned.fasta, output via STDOUT
+    cmd = [clustal_binary, '--infile=unaligned.fasta','--dealign','--outfmt=vienna','--force']
+    alignment = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin = subprocess.PIPE)
+    aln_out = alignment.communicate()[0]
+         
+         
+    #get the names of everything and their sequences separated
+    tgtname = aln_out.splitlines()[0].strip('>\n')
+    target_sequence = aln_out.splitlines()[1].strip('\n')
+    tmpname= aln_out.splitlines()[2].strip('>\n')
+    template_sequence = aln_out.splitlines()[3].strip('\n')
+
+    #build up alignment file content string, but don't save to file (can do that in build_model)
+    aln_pir = "Target-template alignment by clustal omega\n"
+    aln_pir += ">P1;%s\n" % tgtname
+    aln_pir += "sequence:SRC:FIRST:@:LAST :@:::-1.00:-1.00\n"
+    aln_pir += target_sequence + '*\n' 
+    aln_pir += ">P1;%s\n" % tmpname
+    aln_pir += "structureX:%s:FIRST:@:LAST : :undefined:undefined:-1.00:-1.00\n" % tmpname
+    aln_pir += template_sequence + '*\n'
+    MSMSeedInput.alignment = aln_pir
+    MSMSeedInput.tmpname = tmpname
+    MSMSeedInput.tgtname = tgtname
+    return MSMSeedInput 
 
 #Function to perform alignments and build initial model structure. Requires file writing as Modeller does
 #not at present accept objects
 
-def buildModel(MSMSeedInput):
+def build_model(MSMSeedInput):
          import os.path
          import os
-         import subprocess
          import tempfile
          import modeller
          import modeller.automodel
          import shutil
          from simtk.openmm import app
-        
-        #this...for now
-         home_path = os.environ.get('HOME')
+         home_path = os.environ.get('MSMSEED_HOME')
          if home_path == None:
-             home_path = '/cbio/jclab/pgrinaway'
-         #The args object should contain two elements- a sequences string in seg format and a structure
-         sequences = MSMSeedInput.tgtseq + MSMSeedInput.tmplseq
+              home_path = '/cbio/jclab/pgrinaway'
+        
+        
          structure = MSMSeedInput.tmplstruct
-         
-         
+         tmpname = MSMSeedInput.tmpname
+         tgtname = MSMSeedInput.tgtname
          #set an exit code- right now, 0 for success, 1 for identified failure, -1 for un
          #identified failure
-         MSMSeedInput.exitcode = -1
+         MSMSeedInput.exitcode = -2
          
          #look for environment variable for clustal binary, otherwise use SD cluster location
-         clustal_binary = os.environ.get('CLUSTAL_BINARY_PATH')
-         if clustal_binary == None:
-             clustal_path = '/cbio/jclab/share/kinome/external-tools/clustal-omega'
-             clustal_binary_name = 'clustalo-1.1.0-linux-64'
-             clustal_binary = os.path.join(clustal_path, clustal_binary_name)
+         
          
          #make a temporary directory and change to it
          tmpath = tempfile.mkdtemp()
@@ -74,48 +166,18 @@ def buildModel(MSMSeedInput):
          modeller.log.none()
          env = modeller.environ()
          
-         
-        
-         
-         #write the unaligned sequences to a file in our tempdir, read them w/ the alignment obj
-         #and rewrite them in fASTA format
-	 unaln_file = tempfile.NamedTemporaryFile(dir=tmpath, delete=False)
-	 unaln_file.writelines(sequences)
-	 unaln_file.close()
-         aln = modeller.alignment(env)
-         aln.append(unaln_file.name)
-         aln.write('unaligned.fasta', alignment_format='FASTA')
-         
-         
-         #We'll call clustal with commands, input- unaligned.fasta, output via STDOUT
-         cmd = [clustal_binary, '--infile=unaligned.fasta','--dealign','--outfmt=vienna','--force']
-         alignment = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin = subprocess.PIPE)
-         aln_out = alignment.communicate()[0]
-         
-         
-         #get the names of everything and their sequences separated
-         tgtname = aln_out.splitlines()[0].strip('>\n')
-         target_sequence = aln_out.splitlines()[1].strip('\n')
-         tmpname= aln_out.splitlines()[2].strip('>\n')
-         template_sequence = aln_out.splitlines()[3].strip('\n')
          env.io.atom_files_directory = ['.',struct_path]
          
          #write the structure of the template to a file with the name of the template, and tell env where to find it
-         struct_file = open(os.path.join(struct_path,tmpname),'w')
+         struct_file = open(os.path.join(struct_path,MSMSeedInput.tmpname),'w')
          struct_file.writelines(structure)
          struct_file.close()
          
          #write the alignmed sequences to file, modeller likes this
          aligned_filename = 'aligned.pir'
-         contents = "Target-template alignment by clustal omega\n"
-         contents += ">P1;%s\n" % tgtname
-         contents += "sequence:SRC:FIRST:@:LAST :@:::-1.00:-1.00\n"
-         contents += target_sequence + '*\n' 
-         contents += ">P1;%s\n" % tmpname
-         contents += "structureX:%s:FIRST:@:LAST : :undefined:undefined:-1.00:-1.00\n" % tmpname
-         contents += template_sequence + '*\n' 
+  
          outfile = open('aligned.pir', 'w')
-         outfile.write(contents)
+         outfile.write(MSMSeedInput.alignment)
          outfile.close()
          #set up the automodel class
     
@@ -139,7 +201,6 @@ def buildModel(MSMSeedInput):
             # model = open(tgtname+tmpname,'r').readlines()
              MSMSeedInput.seq_id = tgt_model.seq_id
              MSMSeedInput.exitcode=0
-             MSMSeedInput.alignment = aln_out
              #go home and wrap it up
              os.chdir(home_path)
              shutil.rmtree(tmpath)
@@ -151,17 +212,16 @@ def buildModel(MSMSeedInput):
              shutil.rmtree(tmpath)
              # didn't work :(
              MSMSeedInput.seq_id = tgt_model.seq_id
-             MSMSeedInput.exitcode=1
              MSMSeedInput.failure_msg = a.outputs[0]['failure']
-             MSMSeedInput.alignment = aln_out
              return MSMSeedInput
 
  
-def simulateImplicit(modelSeed):
+def simulate_implicit(modelSeed):
     import simtk.openmm as mm
     import simtk.unit as units
     import simtk.openmm.app as app
     import StringIO
+    from py4j import JavaGateway
     #get stuff out of args.. should be the same format as output of modeller step:
      #  (exitcode, model, aln_out, seqid) = args
     variants=None
@@ -308,16 +368,22 @@ def getwaters_model(implicit_refined_MSMseed):
     
     return implicit_refined_MSMseed
 
+#this is a utility function for getting a list of nwaters
+#can be done more idiomatically with a reduce() but this can be
+#useful for debugging
 def get_nwaters_list(nwaters_determined_MSMseed):
     return nwaters_determined_MSMseed.nwaters_min
 
-def getPctile(nwaters_list, pctile):
+#given a list of numbers, and a percentile, returns the number at the pctile% of the list
+def get_pctile(nwaters_list, pctile):
     import numpy
     nwaters_array = numpy.array(nwaters_list)
     nwaters_array.sort()
     pctile_idx =  int((len(nwaters_array) - 1) * pctile)
     return nwaters_array[pctile_idx]
-    
+
+
+#this function solvates the model
 def solvate_model(implicit_refined_MSMseed):
     import simtk.openmm as mm
     import simtk.unit as units
