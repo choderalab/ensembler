@@ -1,7 +1,7 @@
 MSMSeeder
 =========
 
-Generation of diverse structural ensembles from homology data, for the initialization of molecular dynamics simulation trajectories and construction of Markov state models.
+Generation of diverse structural ensembles from homology data, for the initialization of molecular dynamics simulations and subsequent construction of Markov state models.
 
 Authors
 -------
