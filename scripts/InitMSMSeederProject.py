@@ -4,17 +4,21 @@
 #
 # Daniel L. Parton <partond@mskcc.org> - 11 Mar 2014
 
-import os
+# =========
+# Parameters
+# =========
 
-# =========
-# parameters
-# =========
+import os, datetime, yaml
+import MSMSeeder
 
 project_dirnames = ['targets', 'templates', 'models', 'packaged-models']
 project_metadata_filepath = 'project-data.yaml'
 
+now = datetime.datetime.utcnow()
+datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
+
 # =========
-# initialize project
+# Create necessary project directories
 # =========
 
 for dirname in project_dirnames:
@@ -28,10 +32,15 @@ for dirname in project_dirnames:
         else:
             raise
     
+# =========
+# Create metadata file and add datestamp
+# =========
 
 if not os.path.exists(project_metadata_filepath):
     with open(project_metadata_filepath, 'w') as project_metadata_file:
         project_metadata_file.write('--- #Project metadata\n')
+        datestamp_node = {'init-datestamp' : datestamp}
+        project_metadata_file.write( yaml.dump(datestamp_node, default_flow_style=False) )
     print 'Created project metadata file "%s"' % project_metadata_filepath
 else:
     print 'Project metadata file "%s" already exists - will not overwrite' % project_metadata_filepath
