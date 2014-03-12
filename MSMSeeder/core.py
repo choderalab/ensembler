@@ -1,5 +1,8 @@
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 
+# this is used to convert a dict into an OrderedDict, so please no duplicate elements.
+project_metadata_document_order = ['init', 'target-selection', 'template-selection', 'modelling', 'model-refinement', 'packaging']
+
 
 
 

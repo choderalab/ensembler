@@ -8,11 +8,11 @@
 # Parameters
 # =========
 
-import os, datetime, yaml
+import os, datetime, json
 import MSMSeeder
 
 project_dirnames = ['targets', 'templates', 'models', 'packaged-models']
-project_metadata_filepath = 'project-data.yaml'
+project_metadata_filepath = 'project-data.json'
 
 now = datetime.datetime.utcnow()
 datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
@@ -38,9 +38,8 @@ for dirname in project_dirnames:
 
 if not os.path.exists(project_metadata_filepath):
     with open(project_metadata_filepath, 'w') as project_metadata_file:
-        project_metadata_file.write('--- #Project metadata\n')
-        datestamp_node = {'init-datestamp' : datestamp}
-        project_metadata_file.write( yaml.dump(datestamp_node, default_flow_style=False) )
+        init_node = {'init' : {'datestamp' : datestamp}}
+        json.dump(init_node, project_metadata_file, indent=4)
     print 'Created project metadata file "%s"' % project_metadata_filepath
 else:
     print 'Project metadata file "%s" already exists - will not overwrite' % project_metadata_filepath
