@@ -8,14 +8,17 @@
 # Parameters
 # =========
 
-import os, datetime, json
+import os, datetime, yaml, argparse
 import MSMSeeder
 
 project_dirnames = ['targets', 'templates', 'models', 'packaged-models']
-project_metadata_filepath = 'project-data.json'
+project_metadata_filepath = 'project-data.yaml'
 
 now = datetime.datetime.utcnow()
 datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
+
+argparser = argparse.ArgumentParser(description='Initialize MSMSeeder project within the current directory. Creates necessary subdirectories and a project metadata .yaml file.')
+argparser.parse_args()
 
 # =========
 # Create necessary project directories
@@ -36,11 +39,10 @@ for dirname in project_dirnames:
 # Create metadata file and add datestamp
 # =========
 
-if not os.path.exists(project_metadata_filepath):
-    with open(project_metadata_filepath, 'w') as project_metadata_file:
-        init_node = {'init' : {'datestamp' : datestamp}}
-        json.dump(init_node, project_metadata_file, indent=4)
-    print 'Created project metadata file "%s"' % project_metadata_filepath
-else:
-    print 'Project metadata file "%s" already exists - will not overwrite' % project_metadata_filepath
+project_metadata = MSMSeeder.core.ProjectMetadata()
+init_metadata = {'init' : {'datestamp' : datestamp}}
+project_metadata.add_metadata(init_metadata)
+project_metadata.write(ofilepath=project_metadata_filepath)
+
+print 'Done.'
 

@@ -9,50 +9,76 @@
 # Parameters
 # =========
 
-import os, datetime, json
+import os, datetime, yaml, argparse
 import MSMSeeder
 from lxml import etree
 from collections import OrderedDict
 
 fasta_ofilepath = os.path.join('targets', 'targets.fa')
 
-project_metadata_filepath = 'project-data.json'
+project_metadata_filepath = 'project-data.yaml'
 
 now = datetime.datetime.utcnow()
 datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
 
+argparser = argparse.ArgumentParser(description='Gather targets from an existing TargetExplorerDB database.')
+argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path', default=None)
+args = argparser.parse_args()
+
 # =========
-# Get TargetExplorerDB database path
+# Read in project metadata file (will throw an exception if it does not exist)
 # =========
 
-# check for command-line arg
-# use argparse
+project_metadata = MSMSeeder.core.ProjectMetadata()
+project_metadata.load(project_metadata_filepath)
 
-# and check the project metadata file
+# =========
+# Get TargetExplorerDB database path and parse
+# =========
 
-# if query strings are found in both, request user to decide which to use
+# First check for command-line arg
+DB_path = args.DBpath
 
-# XXX temporary
-DB_path = '/Users/partond/dev/TargetExplorerDB/database/database.xml'
+# DB_path supplied by command-line takes priority. If not found, check the project metadata file
+if DB_path == None:
+    try:
+        DB_path = project_metadata.data['target-selection']['TargetExplorerDB-database-path']
+    except KeyError:
+        pass
+
+if DB_path == None:
+    raise Exception, 'TargetExplorerDB database not found in command-line args or in project metadata file. Cannot continue.'
+
+# Parse the DB
 DB_root = etree.parse(DB_path).getroot()
 
+# =========
+# Extract target data from database
+# =========
 
-# update project metadata file
-# 'target-selection'
-# # 'target-selection-method' node indicating that targets have been selected from a TargetExplorerDB database (rather than from a direct search of UniProt)
-# # 'TargetExplorerDB-database-path' - the path to the database
-# # 'datestamp'
+print 'Extracting target data from database...'
 
-try:
-    with open(project_metadata_filepath, 'r') as project_metadata_file:
-        project_metadata = json.load(project_metadata_file)
-except IOError as e:
-    if e.errno == 2:
-        print 'ERROR: Project metadata file "%s" not found. Perhaps you are not in the project top-level directory?' % project_metadata_filepath
-    raise
+target_domains = DB_root.findall('entry/UniProt/domains/domain[@targetID]')
 
-if type(project_metadata) != dict:
-    raise Exception, 'Something wrong with the project metadata file. Contained data was not loaded as a dict.'
+# =========
+# Write target data to FASTA file
+# =========
+
+print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
+
+with open(fasta_ofilepath, 'w') as fasta_ofile:
+    for target_domain in target_domains:
+        targetID = target_domain.get('targetID')
+        targetseqnode = target_domain.find('sequence')
+        targetseq = targetseqnode.text.strip()
+
+        target_fasta_string = '>%s\n%s\n' % (targetID, targetseq)
+
+        fasta_ofile.write(target_fasta_string)
+
+# =========
+# Update project metadata file
+# =========
 
 target_selection_metadata = {
 'datestamp': datestamp,
@@ -60,31 +86,8 @@ target_selection_metadata = {
 'TargetExplorerDB-database-path': DB_path
 }
 
-print target_selection_metadata
+project_metadata.data['target-selection'] = target_selection_metadata
+project_metadata.write()
 
-project_metadata['target-selection'] = target_selection_metadata
+print 'Done.'
 
-with open(project_metadata_filepath, 'w') as project_metadata_file:
-    OD_project_metadata = OrderedDict( sorted(project_metadata.items(), key=lambda x: MSMSeeder.core.project_metadata_document_order.index(x[0])) )
-    json.dump(OD_project_metadata, project_metadata_file, indent=4)
-
-# # =========
-# # Extract target data from database
-# # =========
-#
-# target_domains = DB_root.findall('entry/UniProt/domains/domain[@targetID]')
-#
-# # =========
-# # Write target data to FASTA file
-# # =========
-#
-# with open(fasta_ofilepath, 'w') as fasta_ofile:
-#     for target_domain in target_domains:
-#         targetID = target_domain.get('targetID')
-#         targetseqnode = target_domain.find('sequence')
-#         targetseq = targetseqnode.text.strip()
-#
-#         target_fasta_string = '>%s\n%s\n' % (targetID, targetseq)
-#
-#         fasta_ofile.write(target_fasta_string)
-#

@@ -1,8 +1,67 @@
+# ========
+# Global package variables
+# ========
+
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 
-# this is used to convert a dict into an OrderedDict, so please no duplicate elements.
+# this is used to convert a dict into an OrderedDict, so please no duplicate items.
 project_metadata_document_order = ['init', 'target-selection', 'template-selection', 'modelling', 'model-refinement', 'packaging']
 
+# ========
+# Definitions
+# ========
+
+class ProjectMetadata:
+    '''Container class for project metadata'''
+    def __init__(self):
+        # Listed in document order. No duplicates please!
+        self.project_metadata_categories = ['init', 'target-selection', 'template-selection', 'modelling', 'model-refinement', 'packaging']
+        self.data = {}
+
+    def load(self, filepath):
+        '''Load project metadata from YAML file.
+        Overwrites any existing data already contained in the data attribute.'''
+        import yaml
+        self.filepath = filepath
+        try:
+            with open(self.filepath, 'r') as ifile:
+                yaml_data = yaml.load(ifile)
+        except IOError as e:
+            if e.errno == 2:
+                print 'ERROR: Project metadata file "%s" not found. Perhaps you are not in the project top-level directory?' % filepath
+            raise
+
+        if type(yaml_data) != dict:
+            raise Exception, 'Something wrong with the project metadata file. Contained data was not loaded as a dict.'
+        self.data = yaml_data
+
+    def write(self, ofilepath=None):
+        '''Write project metadata to YAML file'''
+        import os, yaml
+        if ofilepath == None:
+            try:
+                ofilepath = self.filepath
+            except:
+                raise
+
+        ofile_preexisted = False
+        if os.path.exists(ofilepath):
+            ofile_preexisted = True
+
+        with open(ofilepath, 'w') as ofile:
+            for category in self.project_metadata_categories:
+                if category in self.data.keys():
+                    subdict = {category: self.data[category]}
+                    yaml.dump(subdict, ofile, default_flow_style=False)
+
+        if ofile_preexisted:
+            print 'Updated project metadata file "%s"' % ofilepath
+        else:
+            print 'Created project metadata file "%s"' % ofilepath
+
+    def add_metadata(self, new_metadata):
+        for key in new_metadata.keys():
+            self.data[key] = new_metadata[key]
 
 
 
