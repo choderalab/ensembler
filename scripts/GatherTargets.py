@@ -1,16 +1,31 @@
 #!/usr/bin/env python
 #
-# Searches a user-defined TargetExplorerDB database for a set of target proteins, then saves target IDs and sequences.
+# Gathers protein target data - IDs and sequences.
 #
 # Daniel L. Parton <partond@mskcc.org> - 11 Mar 2014
 #
 
+import argparse
+argparser = argparse.ArgumentParser(description='Gather target protein data - IDs and sequences.', formatter_class=argparse.RawTextHelpFormatter)
+
+helpstring_gatherfrom = '''Choose a method for gathering target data.
+"TargetExplorerDB" (default): Gather target data from an existing
+TargetExplorerDB database, specified via either the project metadata file or
+the --DBpath argument.
+"UniProt": Gather target data from UniProt with a user-defined query
+string.'''
+argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='TargetExplorerDB')
+argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path', default=None)
+args = argparser.parse_args()
+
 def gather_targets_from_TargetExplorerDB():
+    '''Gather protein target data from an existing TargetExplorerDB database.'''
+
     # =========
     # Parameters
     # =========
 
-    import os, datetime, yaml, argparse
+    import os, datetime, yaml
     import MSMSeeder
     from lxml import etree
     from collections import OrderedDict
@@ -21,10 +36,6 @@ def gather_targets_from_TargetExplorerDB():
 
     now = datetime.datetime.utcnow()
     datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
-
-    argparser = argparse.ArgumentParser(description='Gather targets from an existing TargetExplorerDB database.')
-    argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path', default=None)
-    args = argparser.parse_args()
 
     # =========
     # Read in project metadata file (will throw an exception if it does not exist)
@@ -92,6 +103,32 @@ def gather_targets_from_TargetExplorerDB():
 
     print 'Done.'
 
+
+def gather_targets_from_UniProt():
+    '''# Searches UniProt for a set of target proteins with a user-defined
+    query string, then saves target IDs and sequences.'''
+
+    raise Exception, 'Not yet implemented.'
+
+    # TODO NOTE use 'ABL1_HUMAN_D0' style for targetIDs in this script. Don't bother with mutants. The gather_targets_from_TargetExplorerDB version of this routine will use whatever targetIDs it finds in the DB, which may include 'ABL1_HUMAN_D0_M0' for example.
+
+    # =========
+    # Parameters
+    # =========
+
+    # =========
+    # Get user-defined UniProt query string
+    # =========
+
+    # check for command-line arg
+
+    # and check the project metadata file
+
+
 if __name__ == '__main__':
-    gather_targets_from_TargetExplorerDB()
+
+    if args.GatherFrom == 'TargetExplorerDB':
+        gather_targets_from_TargetExplorerDB()
+    if args.GatherFrom == 'UniProt':
+        gather_targets_from_UniProt()
 
