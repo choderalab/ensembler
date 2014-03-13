@@ -17,7 +17,7 @@ def init_msmseeder_project(project_toplevel_dir):
     import MSMSeeder
 
     project_dirnames = ['targets', 'templates', 'models', 'packaged-models']
-    project_metadata_filepath = 'project-data.yaml'
+    MSMSeeder.core.project_metadata_filename = 'project-data.yaml'
 
     now = datetime.datetime.utcnow()
     datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
@@ -49,7 +49,7 @@ def init_msmseeder_project(project_toplevel_dir):
     project_metadata = MSMSeeder.core.ProjectMetadata()
     init_metadata = {'init' : {'datestamp' : datestamp}}
     project_metadata.add_metadata(init_metadata)
-    project_metadata.write(ofilepath=project_metadata_filepath)
+    project_metadata.write(ofilepath=MSMSeeder.core.project_metadata_filename)
 
     print 'Done.'
 

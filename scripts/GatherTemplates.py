@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Gathers protein target data - IDs and sequences.
+# Gathers protein template data - IDs, sequences and structures.
 #
 # Daniel L. Parton <partond@mskcc.org> - 11 Mar 2014
 #
@@ -10,13 +10,13 @@
 # ========
 
 import argparse
-argparser = argparse.ArgumentParser(description='Gather target protein data - IDs and sequences.', formatter_class=argparse.RawTextHelpFormatter)
+argparser = argparse.ArgumentParser(description='Gather template protein data - IDs, sequences and structures.', formatter_class=argparse.RawTextHelpFormatter)
 
-helpstring_gatherfrom = '''Choose a method for gathering target data.
-"TargetExplorerDB" (default): Gather target data from an existing
+helpstring_gatherfrom = '''Choose a method for selecting the templates.
+"TargetExplorerDB" (default): Select templates from an existing
 TargetExplorerDB database, specified via either the project metadata file or
 the --DBpath argument.
-"UniProt": Gather target data from UniProt with a user-defined query
+"UniProt": Select templates from UniProt with a user-defined query
 string.'''
 argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='TargetExplorerDB')
 argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path', default=None)
@@ -27,8 +27,10 @@ args = argparser.parse_args()
 # Definitions
 # ========
 
-def gather_targets_from_TargetExplorerDB():
+def gather_templates_from_TargetExplorerDB():
     '''Gather protein target data from an existing TargetExplorerDB database.'''
+
+    raise Exception, 'Not implemented yet.'
 
     # =========
     # Parameters
@@ -38,7 +40,7 @@ def gather_targets_from_TargetExplorerDB():
     import MSMSeeder
     from lxml import etree
 
-    fasta_ofilepath = os.path.join('targets', 'targets.fa')
+    fasta_ofilepath = os.path.join('templates', 'templates.fa')
 
     # =========
     # Read in project metadata file (will throw an exception if it does not exist)
@@ -57,7 +59,7 @@ def gather_targets_from_TargetExplorerDB():
     # DB_path supplied by command-line takes priority. If not found, check the project metadata file
     if DB_path == None:
         try:
-            DB_path = project_metadata.data['target-selection']['TargetExplorerDB-database-path']
+            DB_path = project_metadata.data['template-selection']['TargetExplorerDB-database-path']
         except KeyError:
             pass
 
@@ -68,28 +70,35 @@ def gather_targets_from_TargetExplorerDB():
     DB_root = etree.parse(DB_path).getroot()
 
     # =========
-    # Extract target data from database
+    # Extract template IDs data from database
     # =========
 
-    print 'Extracting target data from database...'
+    print 'Extracting template data from database...'
 
-    target_domains = DB_root.findall('entry/UniProt/domains/domain[@targetID]')
+    # TODO
 
     # =========
-    # Write target data to FASTA file
+    # Download structures if necessary
     # =========
 
-    print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
+    # TODO
 
-    with open(fasta_ofilepath, 'w') as fasta_ofile:
-        for target_domain in target_domains:
-            targetID = target_domain.get('targetID')
-            targetseqnode = target_domain.find('sequence')
-            targetseq = targetseqnode.text.strip()
+    # =========
+    # Write template data to FASTA file
+    # =========
 
-            target_fasta_string = '>%s\n%s\n' % (targetID, targetseq)
+    print 'Writing template data to FASTA file "%s"...' % fasta_ofilepath
 
-            fasta_ofile.write(target_fasta_string)
+    # TODO
+
+    # with open(fasta_ofilepath, 'w') as fasta_ofile:
+    #     for template in templates:
+    #         templateID =
+    #         templateseq =
+    #
+    #         template_fasta_string = '>%s\n%s\n' % (templateID, templateseq)
+    #
+    #         fasta_ofile.write(template_fasta_string)
 
     # =========
     # Update project metadata file
@@ -98,25 +107,23 @@ def gather_targets_from_TargetExplorerDB():
     now = datetime.datetime.utcnow()
     datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
 
-    target_selection_metadata = {
+    template_selection_metadata = {
     'datestamp': datestamp,
-    'target-selection-method': 'TargetExplorerDB',
+    'template-selection-method': 'TargetExplorerDB',
     'TargetExplorerDB-database-path': DB_path
     }
 
-    project_metadata.data['target-selection'] = target_selection_metadata
+    project_metadata.data['template-selection'] = template_selection_metadata
     project_metadata.write()
 
     print 'Done.'
 
 
-def gather_targets_from_UniProt():
-    '''# Searches UniProt for a set of target proteins with a user-defined
-    query string, then saves target IDs and sequences.'''
+def gather_templates_from_UniProt():
+    '''# Searches UniProt for a set of template proteins with a user-defined
+    query string, then saves IDs, sequences and structures.'''
 
     raise Exception, 'Not yet implemented.'
-
-    # TODO NOTE use 'ABL1_HUMAN_D0' style for targetIDs in this script. Don't bother with mutants. The gather_targets_from_TargetExplorerDB version of this routine will use whatever targetIDs it finds in the DB, which may include 'ABL1_HUMAN_D0_M0' for example.
 
     # =========
     # Parameters
@@ -134,8 +141,8 @@ def gather_targets_from_UniProt():
 if __name__ == '__main__':
 
     if args.GatherFrom == 'TargetExplorerDB':
-        gather_targets_from_TargetExplorerDB()
+        gather_templates_from_TargetExplorerDB()
 
     if args.GatherFrom == 'UniProt':
-        gather_targets_from_UniProt()
+        gather_templates_from_UniProt()
 
