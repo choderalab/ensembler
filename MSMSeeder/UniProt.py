@@ -1,5 +1,5 @@
 import os, urllib, urllib2, datetime, tempfile, subprocess, shutil
-import choderalab as clab
+# import choderalab as clab
 from lxml import etree
 
 def print_uniprot_xml_comparison(new_xml, old_xml):
@@ -97,21 +97,26 @@ def parse_uniprot_pdbref_chains(chains_span_str):
             chains_span[c] = [begin, end]
     return chains_span
 
-def retrieve_uniprot(search_string_query, maxreadlength=100000000):
+def encode_uniprot_query(UniProt_query):
+    return UniProt_query.replace(' ', '+').replace(':', '%3A').replace('(', '%28').replace(')', '%29')
+
+def retrieve_uniprot(search_string, maxreadlength=100000000):
     '''
     Searches the UniProt database given a search string, and retrieves an XML
     file, which is returned as a string.
     maxreadlength is the maximum size in bytes which will be read from the website
     (default 100MB)
+    Example search string: 'domain:"Protein kinase" AND reviewed:yes'
 
     The function also removes the xmlns attribute from <uniprot> tag, as this
     makes xpath searching annoying
     '''
 
-    url = 'http://www.uniprot.org/uniprot/'
-    response = urllib2.urlopen(url + search_string_query)
+    base_url = 'http://www.uniprot.org/uniprot/?query='
+    search_string_encoded = encode_uniprot_query(search_string)
+    query_url = base_url + search_string_encoded + '&format=xml'
+    response = urllib2.urlopen(query_url)
     page = response.read(maxreadlength)
-    #page = page.replace('xmlns="http://uniprot.org/uniprot" ', 'retrieve_date="'+datestamp+'" ', 1)
     page = page.replace('xmlns="http://uniprot.org/uniprot" ', '', 1)
 
     return page

@@ -20,6 +20,8 @@ the --DBpath argument.
 string.'''
 argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='TargetExplorerDB')
 argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path', default=None)
+argparser.add_argument('--UniProtQuery', type=str, help='UniProt query string', default=None)
+argparser.add_argument('--UniProtDomainRegex', type=str, help='Optional regular expression for selecting domains from within UniProt entries', default=None)
 args = argparser.parse_args()
 
 
@@ -43,7 +45,7 @@ def gather_templates_from_TargetExplorerDB():
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
 
     # =========
-    # Read in project metadata file (will throw an exception if it does not exist)
+    # Read in project metadata file
     # =========
 
     project_metadata = MSMSeeder.core.ProjectMetadata()
@@ -123,19 +125,85 @@ def gather_templates_from_UniProt():
     '''# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures.'''
 
-    raise Exception, 'Not yet implemented.'
-
     # =========
     # Parameters
     # =========
 
+    import os, datetime
+    import MSMSeeder
+    import MSMSeeder.UniProt
+    from lxml import etree
+
+    fasta_ofilepath = os.path.join('templates', 'templates.fa')
+
     # =========
-    # Get user-defined UniProt query string
+    # Read in project metadata file
     # =========
 
-    # check for command-line arg
+    project_metadata = MSMSeeder.core.ProjectMetadata()
+    project_metadata.load(MSMSeeder.core.project_metadata_filename)
 
-    # and check the project metadata file
+    # =========
+    # Get user-defined UniProt query string and domain-selection regex
+    # =========
+
+    # First check for command-line arg
+    UniProt_query_string = args.UniProtQuery
+    UniProt_domain_regex = args.UniProtDomainRegex
+
+    # Args supplied from command-line take priority. If not found, check the project metadata file
+    if UniProt_query_string == None:
+        try:
+            UniProt_query_string = project_metadata.data['template-selection']['UniProt-query-string']
+        except KeyError:
+            pass
+    if UniProt_domain_regex == None:
+        try:
+            UniProt_domain_regex = project_metadata.data['template-selection']['UniProt-domain-regex']
+        except KeyError:
+            pass
+
+    if UniProt_query_string == None:
+        raise Exception, 'UniProt query string not found in command-line args or in project metadata file. Cannot continue.'
+    # UniProt_domain_regex is optional
+
+    print UniProt_query_string
+
+    # =========
+    # Make request to UniProt web server
+    # =========
+
+    UniProtXMLstring = MSMSeeder.UniProt.retrieve_uniprot(UniProt_query_string)
+    UniProtXML = etree.fromstring(UniProtXMLstring)
+    print len(UniProtXML)
+
+    # =========
+    # Parse returned UniProt data
+    # =========
+
+    # =========
+    # Search for template PDB and SIFTS files; download if necessary
+    # =========
+
+    # =========
+    # Update project metadata file
+    # =========
+
+    now = datetime.datetime.utcnow()
+    datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
+
+    template_selection_metadata = {
+    'datestamp': datestamp,
+    'template-selection-method': 'UniProt',
+    'UniProt-query-string': UniProt_query_string
+    }
+    if UniProt_domain_regex != None:
+        template_selection_metadata['UniProt-domain-regex'] = UniProt_domain_regex
+
+    project_metadata.data['template-selection'] = template_selection_metadata
+    project_metadata.write()
+
+    print 'Done.'
 
 
 if __name__ == '__main__':
