@@ -8,6 +8,7 @@ datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 project_metadata_document_order = ['init', 'target-selection', 'template-selection', 'modelling', 'model-refinement', 'packaging']
 
 project_metadata_filename = 'project-data.yaml'
+manual_specifications_filename = 'manual-specifications.yaml'
 
 # ========
 # Definitions
@@ -64,6 +65,55 @@ class ProjectMetadata:
     def add_metadata(self, new_metadata):
         for key in new_metadata.keys():
             self.data[key] = new_metadata[key]
+
+    def get(self, attribs_to_get):
+        ''' Pass an attribute with which to query the project metadata, or a tuple of such attributes.
+        Returns None if data not found.
+        '''
+        if type(attribs_to_get) == str:
+            attribs_to_get = (attribs_to_get,)
+
+        # query against first attrib
+        try:
+            retrieved_data = self.data[attribs_to_get[0]]
+        except KeyError:
+            retrieved_data = None
+
+        # if more than one attrib to query against
+        if len(attribs_to_get) > 1 and retrieved_data != None:
+            for attrib in attribs_to_get[1:]:
+                try:
+                    retrieved_data = retrieved_data[attrib]
+                except KeyError:
+                    retrieved_data = None
+                    break
+
+        return retrieved_data
+
+
+def xpath_match_regex_case_sensitive(context, attrib_values, xpath_argument):
+    ''' To be used as an lxml XPath extension, for regex searches of attrib values.
+    '''
+    import re
+    # If no attrib found
+    if len(attrib_values) == 0:
+        return False
+    # If attrib found, then run match against regex
+    else:
+        regex = re.compile(xpath_argument)
+        return bool( re.search(regex, attrib_values[0]) )
+
+def xpath_match_regex_case_insensitive(context, attrib_values, xpath_argument):
+    ''' To be used as an lxml XPath extension, for regex searches of attrib values.
+    '''
+    import re
+    # If no attrib found
+    if len(attrib_values) == 0:
+        return False
+    # If attrib found, then run match against regex
+    else:
+        regex = re.compile(xpath_argument, re.IGNORECASE)
+        return bool( re.search(regex, attrib_values[0]) )
 
 
 

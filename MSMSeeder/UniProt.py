@@ -83,7 +83,7 @@ def parse_uniprot_pdbref_chains(chains_span_str):
     '''
     Examples of pdbref chains entries to be parsed:
     A=65-119             => {'A':[65,119]}
-    A/C/E/G=64-121       => {'A/C/E/G':[64,121]}
+    A/C/E/G=64-121       => {'A':[64,121], 'B':[64,121], 'C':[64,121], 'D':[64,121]}
     A=458-778, B=764-778 => {'A':[458,778],'B':[764,778]}
     '''
     comma_sep = chains_span_str.split(',')
