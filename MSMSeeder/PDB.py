@@ -12,28 +12,62 @@ import urllib2
 # METHODS
 #==============================================================================
 
+def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, desired_chainID):
+    '''
+    Parameters
+    ----------
+    output_file: string or file_like
+    pdb_input_file: string or file_like
+
+    Returns
+    ----------
+    int
+        The number of lines extracted.
+    '''
+    if type(pdb_input_file) == str:
+        with open(pdb_input_file, 'r') as pdb_file:
+            pdbtext = pdb_file.readlines()
+    else:
+        pdbtext = pdb_input_file.readlines()
+
+    # list of resnum strings e.g. ['9', '29', '30B'] must be converted as follows to match the PDB format:
+    # ['   9 ', '  29 ', '  30B']
+    import re
+    desired_resnums = [ '%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in desired_resnums ]
+
+    if type(output_file) == str:
+        ofile = open(output_file, 'w')
+    else:
+        ofile = output_file
+    try:
+        resnums_extracted = {}
+        for line in pdbtext:
+            if line[0:6] in ['ATOM  ', 'HETATM']:
+                resnum = line[22:27]
+                chainID = line[21]
+                if chainID == desired_chainID:
+                    if resnum in desired_resnums:
+                        ofile.write(line)
+                        resnums_extracted[resnum] = 1
+    finally:
+        if type(output_file) == str:
+            ofile.close()
+    return len(resnums_extracted)
+
 def retrieve_sifts(pdb_id):
     '''Retrieves a SIFTS .xml file, given a PDB ID. Works by modifying the PDBe download URL.
     Also removes annoying namespace stuff.
     '''
-    import re
-    sifts_download_base_url='http://www.ebi.ac.uk/pdbe-srv/view/files/sifts/'
-    url = sifts_download_base_url + pdb_id.lower() + '.xml'
+    import re, gzip, StringIO
+    sifts_download_base_url='ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/'
+    url = sifts_download_base_url + pdb_id.lower() + '.xml.gz'
     response = urllib2.urlopen(url)
-    sifts_page = response.read(10000000) # Max 10MB
-    # Old xmlns info
-    sifts_page = sifts_page.replace('\nxmlns="http://www.efamily.org.uk/xml/efamily/2004/08/14/eFamily.xsd"\n xmlns:align="http://www.efamily.org.uk/xml/efamily/2004/08/14/alignment.xsd"\n xmlns:data="http://www.efamily.org.uk/xml/data/2004/08/14/dataTypes.xsd"\n xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"\nxmlns:dc="http://purl.org/dc/elements/1.1/"\nxmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\nxsi:schemaLocation="http://www.efamily.org.uk/xml/efamily/2004/08/14/eFamily.xsd http://www.efamily.org.uk/xml/efamily/2004/08/14/eFamily.xsd">', '>')
-    #sifts_page = sifts_page.replace('align:','')
-    #sifts_page = sifts_page.replace('data:','')
-    #sifts_page = sifts_page.replace('rdf:','')
-    #sifts_page = sifts_page.replace('dc:','')
-    #sifts_page = sifts_page.replace('xsi:','')
 
-    # New xmlns info - doesn't work on all files for some reason
-    #sifts_page = sifts_page.replace(' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:align="http://www.ebi.ac.uk/pdbe/docs/sifts/alignment.xsd" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:data="http://www.ebi.ac.uk/pdbe/docs/sifts/dataTypes.xsd" xmlns="http://www.ebi.ac.uk/pdbe/docs/sifts/eFamily.xsd"', '')
-    #sifts_page = sifts_page.replace('schemaLocation="http://www.ebi.ac.uk/pdbe/docs/sifts/eFamily.xsd http://www.ebi.ac.uk/pdbe/docs/sifts/eFamily.xsd"', '')
+    sifts_page = response.read(100000000) # Max 100MB
+    # Decompress string
+    sifts_page = gzip.GzipFile(fileobj=StringIO.StringIO(sifts_page)).read()
 
-    # Ok, I'm just removing all attribs from the entry tag, and the entire rdf tag and contents...
+    # Removing all attribs from the entry tag, and the rdf tag and contents
     sifts_page_processed = ''
     skip_rdf_tag_flag = False
     for line in sifts_page.splitlines():

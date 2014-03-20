@@ -16,7 +16,7 @@ def init(project_toplevel_dir):
     import os, datetime, argparse
     import MSMSeeder
 
-    project_dirnames = ['targets', 'templates', 'models', 'packaged-models']
+    project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models']
     MSMSeeder.core.project_metadata_filename = 'project-data.yaml'
 
     now = datetime.datetime.utcnow()
@@ -36,11 +36,13 @@ def init(project_toplevel_dir):
             os.mkdir(dirname)
             print 'Created directory "%s"' % dirname
         except OSError as e:
-            # If directory already exists, e.errno will be set to int 17, and e.strerror will be set to int 'File exists'
             if e.errno == 17:
                 print 'Directory "%s" already exists - will not overwrite' % dirname
             else:
                 raise
+    os.mkdir(os.path.join('structures', 'pdb'))
+    os.mkdir(os.path.join('structures', 'sifts'))
+    os.mkdir(os.path.join('templates', 'structures'))
         
     # =========
     # Create metadata file and add datestamp
@@ -233,7 +235,7 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     print 'Done.'
 
 
-def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex):
+def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, structure_paths=[]):
     '''# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures.'''
 
@@ -241,12 +243,15 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex):
     # Parameters
     # =========
 
-    import os, datetime, yaml
+    import os, datetime, yaml, gzip
     import MSMSeeder
     import MSMSeeder.UniProt
+    import MSMSeeder.PDB
     from lxml import etree
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
+
+    template_acceptable_ratio_observed_residues = 0.7
 
     # =========
     # Read in project metadata
@@ -278,6 +283,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex):
     UniProtXMLstring = MSMSeeder.UniProt.retrieve_uniprot(UniProt_query_string)
     UniProtXML = etree.fromstring(UniProtXMLstring)
     print 'Number of entries returned from initial UniProt search:', len(UniProtXML)
+    print ''
 
     # =========
     # If the UniProt query string contained a domain selector, print the set of
@@ -299,6 +305,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex):
 
         UniProt_unique_domain_names = set([domain.get('description') for domain in UniProt_query_string_domains])
         print 'Unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s' % (query_string_domain_selection, UniProt_unique_domain_names)
+        print ''
 
     # =========
     # Print subset of domains returned following filtering with the UniProt_domain_regex (case sensitive)
@@ -309,14 +316,15 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex):
 
         regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
         print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s' % (UniProt_domain_regex, regex_matched_domains_unique_names)
+        print ''
 
     # =========
-    # Now go through all the UniProt entries, domains, PDBs and chains, do some filtering, and store IDs for the selected templates
+    # Now go through all the UniProt entries, domains, PDBs and chains, do some filtering, and store data for the selected PDB chains
     # =========
 
     all_UniProt_entries = UniProtXML.findall('entry')
 
-    selected_templateIDs = []
+    selected_PDBchains = []
 
     print 'Extracting information from returned UniProt data...'
 
@@ -351,24 +359,165 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex):
                     for chainID in chain_spans.keys():
                         span = chain_spans[chainID]
                         if (span[0] < domain_span[0]+30) & (span[1] > domain_span[1]-30):
-                            span_string = '%d_%d' % (span[0], span[1])
-                            templateID = '%(domainID)s_%(PDBID)s_%(chainID)s_%(span_string)s' % vars()
-                            selected_templateIDs.append(templateID)
+                            templateID = '%(domainID)s_%(PDBID)s_%(chainID)s' % vars()
+                            data = {
+                            'templateID': templateID,
+                            'PDBID': PDBID,
+                            'chainID': chainID,
+                            'domain_span': domain_span
+                            }
+                            selected_PDBchains.append(data)
 
-    print '%d templates selected.' % len(selected_templateIDs)
+    print '%d PDB chains selected.' % len(selected_PDBchains)
+    print ''
 
     # =========
     # Search for PDB and SIFTS files; download if necessary
     # =========
 
+    for PDBchain in selected_PDBchains:
+        PDBID = PDBchain['PDBID']
+        chainID = PDBchain['chainID']
+
+        project_pdb_filepath = os.path.join('structures', 'pdb', PDBID + '.pdb')
+        project_sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
+
+        # Check if PDB file/symlink already exists and is not empty
+        search_for_pdb = True
+        if os.path.exists(project_pdb_filepath):
+            if os.path.getsize(project_pdb_filepath) > 0:
+                search_for_pdb = False
+
+        # If not, search any user-defined paths and create a symlink if found
+        if search_for_pdb:
+            for structure_dir in structure_paths:
+                pdb_filepath = os.path.join(structure_dir, PDBID + '.pdb')
+                if os.path.exists(pdb_filepath):
+                    if os.path.getsize(pdb_filepath) > 0:
+                        if os.path.exists(project_pdb_filepath):
+                            os.remove(project_pdb_filepath)
+                        os.symlink(pdb_filepath, project_pdb_filepath)
+                        break
+
+            # If still not found, download the PDB file
+            if not os.path.exists(project_pdb_filepath):
+                print 'Downloading PDB file for:', PDBID
+                pdbgz_page = MSMSeeder.PDB.retrieve_pdb(PDBID, compressed='yes')
+                with open(project_pdb_filepath + '.gz', 'w') as pdbgz_file:
+                    pdbgz_file.write(pdbgz_page)    
+                with gzip.open(project_pdb_filepath + '.gz', 'rb') as pdbgz_file_decoded:
+                    with open(project_pdb_filepath, 'w') as project_pdb_file:
+                        project_pdb_file.writelines(pdbgz_file_decoded)
+                os.remove(project_pdb_filepath + '.gz')
+
+        # Check if SIFTS file already exists and is not empty
+        search_for_sifts = True
+        if os.path.exists(project_sifts_filepath):
+            if os.path.getsize(project_sifts_filepath) > 0:
+                search_for_sifts = False
+
+        # If not, search any user-defined paths and create a symlink if found
+        if search_for_sifts:
+            for structure_dir in structure_paths:
+                sifts_filepath = os.path.join(structure_dir, PDBID + '.xml.gz')
+                if os.path.exists(sifts_filepath):
+                    if os.path.getsize(sifts_filepath) > 0:
+                        if os.path.exists(project_sifts_filepath):
+                            os.remove(project_sifts_filepath)
+                        os.symlink(sifts_filepath, project_sifts_filepath)
+                        break
+
+            # If still not found, download the SIFTS file
+            if not os.path.exists(project_sifts_filepath):
+                print 'Downloading sifts file for:', PDBID
+                sifts_page = MSMSeeder.PDB.retrieve_sifts(PDBID)
+                with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file: 
+                    project_sifts_file.write(sifts_page)    
+
+    # =========
+    # Extract PDBchain residues using SIFTS files
+    # =========
+
+    selected_templates = []
+
+    print 'Extracting residues from PDB chains...'
+
+    for PDBchain in selected_PDBchains:
+        try:
+            templateID = PDBchain['templateID']
+            chainID = PDBchain['chainID']
+            PDBID = PDBchain['PDBID']
+            domain_span = PDBchain['domain_span']
+
+            # parse SIFTS XML document
+            sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
+            with gzip.open(sifts_filepath, 'rb') as sifts_file:
+                siftsXML = etree.parse(sifts_file).getroot()
+
+            # extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have a "PDB modified" or "Conflict" tag.
+            selected_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])]' % (chainID, domain_span[0], domain_span[1]))
+            # calculate the ratio of observed residues - if less than a certain amount, discard PDBchain
+            all_PDB_domain_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainID, domain_span[0], domain_span[1]))
+            if len(selected_residues) == 0 or len(all_PDB_domain_residues) == 0:
+                continue
+
+            ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
+            if ratio_observed < template_acceptable_ratio_observed_residues:
+                #PDBchain['DISCARD'] = True
+                continue
+
+            # make a single-letter aa code sequence
+            template_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
+            # store as strings to match resnums in PDB file directly. Important because PDB resnums may be e.g. '56A' in 3HLL
+            template_PDBresnums = [residue.get('dbResNum') for residue in selected_residues]
+
+            # store data
+            template_data = {
+            'PDBID': PDBID,
+            'chainID': chainID,
+            'templateID': templateID,
+            'template_seq': template_seq,
+            'template_PDBresnums': template_PDBresnums
+            }
+            selected_templates.append(template_data)
+
+        except Exception as e:
+            import traceback; print traceback.format_exc()
+            print e
+            import ipdb; ipdb.set_trace()
 
     # =========
     # Write template IDs and sequences to file
     # =========
 
+    print 'Writing template IDs and sequences to file:', fasta_ofilepath
+
     with open(fasta_ofilepath, 'w') as fasta_ofile:
-        for ID in selected_templateIDs:
-            fasta_ofile.write('>' + ID + '\n')
+        for template in selected_templates:
+            fasta_ofile.write('>' + template['templateID'] + '\n')
+            fasta_ofile.write(template['template_seq'] + '\n')
+
+    # =========
+    # Extract template structures from PDB files and write to file
+    # =========
+
+    print 'Writing template structures...'
+
+    for template in selected_templates:
+        try:
+            PDBID = template['PDBID']
+            chainID = template['chainID']
+            templateID = template['templateID']
+            template_PDBresnums = template['template_PDBresnums']
+            pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb')
+            template_filename = os.path.join('templates', 'structures', templateID + '.pdb')
+            nlines_extracted = MSMSeeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
+            if nlines_extracted != len(template_PDBresnums):
+                raise Exception
+        except Exception as e:
+            import traceback; print traceback.format_exc()
+            print e
+            import ipdb; ipdb.set_trace()
 
     # =========
     # Update project metadata file
@@ -380,7 +529,8 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex):
     template_selection_metadata = {
     'datestamp': datestamp,
     'template-selection-method': 'UniProt',
-    'UniProt-query-string': UniProt_query_string
+    'UniProt-query-string': UniProt_query_string,
+    'structure-paths': structure_paths
     }
     if UniProt_domain_regex != None:
         template_selection_metadata['UniProt-domain-regex'] = UniProt_domain_regex

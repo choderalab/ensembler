@@ -25,6 +25,7 @@ argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, cho
 argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path', default=None)
 argparser.add_argument('--UniProtQuery', type=str, help='UniProt query string', default=None)
 argparser.add_argument('--UniProtDomainRegex', type=str, help='Optional regular expression for selecting domains from within UniProt entries (case-sensitive)', default=None)
+argparser.add_argument('--StructurePaths', type=list, help='Optional list of local directories within which to search for PDB and SIFTS files.', default=None)
 args = argparser.parse_args()
 
 # ========
@@ -69,6 +70,7 @@ elif template_selection_method == 'UniProt':
     # Command-line args take priority
     UniProt_query_string = args.UniProtQuery
     UniProt_domain_regex = args.UniProtDomainRegex
+    structure_paths = args.StructurePaths
 
     # Otherwise check project metadata file
     if UniProt_query_string == None:
@@ -79,6 +81,10 @@ elif template_selection_method == 'UniProt':
     if UniProt_domain_regex == None:
         UniProt_domain_regex = project_metadata.get(('template-selection', 'UniProt-domain-regex'))
 
+    if structure_paths == None:
+        structure_paths = project_metadata.get(('template-selection', 'structure-paths'))
+    if structure_paths == None:
+        structure_paths = []
 
 # ========
 # Run the selected gather templates method
@@ -88,5 +94,5 @@ if template_selection_method == 'TargetExplorerDB':
     MSMSeeder.initproject.gather_templates_from_TargetExplorerDB(DB_path)
 
 if template_selection_method == 'UniProt':
-    MSMSeeder.initproject.gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex)
+    MSMSeeder.initproject.gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, structure_paths)
 
