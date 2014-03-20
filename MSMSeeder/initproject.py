@@ -441,48 +441,42 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     print 'Extracting residues from PDB chains...'
 
     for PDBchain in selected_PDBchains:
-        try:
-            templateID = PDBchain['templateID']
-            chainID = PDBchain['chainID']
-            PDBID = PDBchain['PDBID']
-            domain_span = PDBchain['domain_span']
+        templateID = PDBchain['templateID']
+        chainID = PDBchain['chainID']
+        PDBID = PDBchain['PDBID']
+        domain_span = PDBchain['domain_span']
 
-            # parse SIFTS XML document
-            sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
-            with gzip.open(sifts_filepath, 'rb') as sifts_file:
-                siftsXML = etree.parse(sifts_file).getroot()
+        # parse SIFTS XML document
+        sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
+        with gzip.open(sifts_filepath, 'rb') as sifts_file:
+            siftsXML = etree.parse(sifts_file).getroot()
 
-            # extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have a "PDB modified" or "Conflict" tag.
-            selected_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])]' % (chainID, domain_span[0], domain_span[1]))
-            # calculate the ratio of observed residues - if less than a certain amount, discard PDBchain
-            all_PDB_domain_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainID, domain_span[0], domain_span[1]))
-            if len(selected_residues) == 0 or len(all_PDB_domain_residues) == 0:
-                continue
+        # extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have a "PDB modified" or "Conflict" tag.
+        selected_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])]' % (chainID, domain_span[0], domain_span[1]))
+        # calculate the ratio of observed residues - if less than a certain amount, discard PDBchain
+        all_PDB_domain_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainID, domain_span[0], domain_span[1]))
+        if len(selected_residues) == 0 or len(all_PDB_domain_residues) == 0:
+            continue
 
-            ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
-            if ratio_observed < MSMSeeder.core.template_acceptable_ratio_observed_residues:
-                #PDBchain['DISCARD'] = True
-                continue
+        ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
+        if ratio_observed < MSMSeeder.core.template_acceptable_ratio_observed_residues:
+            #PDBchain['DISCARD'] = True
+            continue
 
-            # make a single-letter aa code sequence
-            template_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
-            # store as strings to match resnums in PDB file directly. Important because PDB resnums may be e.g. '56A' in 3HLL
-            template_PDBresnums = [residue.get('dbResNum') for residue in selected_residues]
+        # make a single-letter aa code sequence
+        template_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
+        # store as strings to match resnums in PDB file directly. Important because PDB resnums may be e.g. '56A' in 3HLL
+        template_PDBresnums = [residue.get('dbResNum') for residue in selected_residues]
 
-            # store data
-            template_data = {
-            'PDBID': PDBID,
-            'chainID': chainID,
-            'templateID': templateID,
-            'template_seq': template_seq,
-            'template_PDBresnums': template_PDBresnums
-            }
-            selected_templates.append(template_data)
-
-        except Exception as e:
-            import traceback; print traceback.format_exc()
-            print e
-            import ipdb; ipdb.set_trace()
+        # store data
+        template_data = {
+        'PDBID': PDBID,
+        'chainID': chainID,
+        'templateID': templateID,
+        'template_seq': template_seq,
+        'template_PDBresnums': template_PDBresnums
+        }
+        selected_templates.append(template_data)
 
     print '%d templates selected.', len(selected_templates)
     print ''
@@ -505,20 +499,15 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     print 'Writing template structures...'
 
     for template in selected_templates:
-        try:
-            PDBID = template['PDBID']
-            chainID = template['chainID']
-            templateID = template['templateID']
-            template_PDBresnums = template['template_PDBresnums']
-            pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb')
-            template_filename = os.path.join('templates', 'structures', templateID + '.pdb')
-            nlines_extracted = MSMSeeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
-            if nlines_extracted != len(template_PDBresnums):
-                raise Exception
-        except Exception as e:
-            import traceback; print traceback.format_exc()
-            print e
-            import ipdb; ipdb.set_trace()
+        PDBID = template['PDBID']
+        chainID = template['chainID']
+        templateID = template['templateID']
+        template_PDBresnums = template['template_PDBresnums']
+        pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb')
+        template_filename = os.path.join('templates', 'structures', templateID + '.pdb')
+        nlines_extracted = MSMSeeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
+        if nresidues_extracted != len(template_PDBresnums):
+            raise Exception, 'Number of residues extracted from PDB file does not match desired number of residues.'
 
     # =========
     # Update project metadata file
