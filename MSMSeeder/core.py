@@ -10,9 +10,17 @@ project_metadata_document_order = ['init', 'target-selection', 'template-selecti
 project_metadata_filename = 'project-data.yaml'
 manual_specifications_filename = 'manual-specifications.yaml'
 
+template_acceptable_ratio_observed_residues = 0.7
+
 # ========
 # Definitions
 # ========
+
+def check_project_toplevel_dir():
+    import os
+    for dirpath in ['structures', 'templates', 'targets', 'models']:
+        if not os.path.exists(dirpath):
+            raise Exception, 'Current directory not recognized as the top-level directory of a project.'
 
 class ProjectMetadata:
     '''Container class for project metadata'''

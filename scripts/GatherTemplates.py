@@ -28,6 +28,8 @@ argparser.add_argument('--UniProtDomainRegex', type=str, help='Optional regular 
 argparser.add_argument('--StructurePaths', type=list, help='Optional list of local directories within which to search for PDB and SIFTS files.', default=None)
 args = argparser.parse_args()
 
+MSMSeeder.core.check_project_toplevel_dir()
+
 # ========
 # Parse project metadata
 # ========

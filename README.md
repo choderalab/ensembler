@@ -1,7 +1,7 @@
 MSMSeeder
 =========
 
-Generation of diverse structural ensembles from homology data, for the initialization of molecular dynamics simulations and subsequent construction of Markov state models.
+Generation of diverse protein structural ensembles, for the initialization of molecular dynamics simulations and subsequent construction of Markov state models.
 
 Authors
 -------
@@ -13,15 +13,13 @@ Authors
 Manifest
 --------
 
-targets/ - target sequences
+scripts/ - Python wrapper scripts which accept parameters from the command-line or project metadata file
 
-templates/ - template sequences and structures
+MSMSeeder/ - main code
 
-models/ - comparative models for initialization of simulations
+tests/ - to test everything is working correctly, run nosetests from this top-level directory
 
-simulations/ - simulation data
-
-pylib/ - useful Python libraries
+models/scripts/ - deprecated; old scripts in the process of being refactored into the new codebase
 
 Dependencies
 ------------
@@ -30,7 +28,6 @@ Dependencies
 * Modeller - http://salilab.org/modeller/
 * mpi4py - http://mpi4py.scipy.org/
 * MDAnalysis - https://code.google.com/p/mdanalysis/
-* Clustal Omega - http://www.clustal.org/omega/
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
 * Stride (optional, for model alignment/visualization) - http://webclu.bio.wzw.tum.de/stride/ (also included as part of the VMD package - http://www.ks.uiuc.edu/Research/vmd/)
 * Many other Python packages. Recommended aproach is to install either Enthought Canopy (https://www.enthought.com/products/canopy/) or Continuum Anaconda (https://store.continuum.io/)

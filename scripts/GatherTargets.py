@@ -25,6 +25,8 @@ argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, cho
 argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path. Will be converted to an absolute path.', default=None)
 args = argparser.parse_args()
 
+MSMSeeder.core.check_project_toplevel_dir()
+
 # ========
 # Parse project metadata
 # ========

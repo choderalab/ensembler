@@ -251,8 +251,6 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
 
-    template_acceptable_ratio_observed_residues = 0.7
-
     # =========
     # Read in project metadata
     # =========
@@ -462,7 +460,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
                 continue
 
             ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
-            if ratio_observed < template_acceptable_ratio_observed_residues:
+            if ratio_observed < MSMSeeder.core.template_acceptable_ratio_observed_residues:
                 #PDBchain['DISCARD'] = True
                 continue
 
@@ -485,6 +483,9 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
             import traceback; print traceback.format_exc()
             print e
             import ipdb; ipdb.set_trace()
+
+    print '%d templates selected.', len(selected_templates)
+    print ''
 
     # =========
     # Write template IDs and sequences to file
