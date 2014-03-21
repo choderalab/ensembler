@@ -38,6 +38,9 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             if process_only_these_templates and template.id not in process_only_these_templates: continue
             build_model(target, template)
 
+    if rank == 0:
+        print 'Done.'
+
 def build_model(target, template):
     r'''Uses Modeller to build a homology model for a given target and
     template.
@@ -223,6 +226,8 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
                 identity = seqids[index]
                 seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
 
+    print 'Done.'
+
 def cluster_models(process_only_these_targets=None, verbose=False):
     import os, glob
     import Bio.SeqIO
@@ -237,7 +242,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
     templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
     templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
-    cutoff = 0.6 # Cutoff for RMSD clustering (Angstroms)
+    cutoff = 0.06 # Cutoff for RMSD clustering (nm)
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
@@ -249,27 +254,27 @@ def cluster_models(process_only_these_targets=None, verbose=False):
         # Construct a mdtraj trajectory containing all models
         # =============================
 
-        traj = None
+        print 'Building a list of valid models...'
+
+        model_pdbfilenames = []
         valid_templateIDs = []
         for t, template in enumerate(templates):
             model_dir = os.path.join(models_target_dir, template.id)
             model_pdbfilename = os.path.join(model_dir, 'model.pdb')
             if not os.path.exists(model_pdbfilename):
                 continue
-            if traj == None:
-                traj = mdtraj.load(model_pdbfilename)
-                valid_templateIDs.append(template.id)
-            else:
-                traj += mdtraj.load(model_pdbfilename)
-                valid_templateIDs.append(template.id)
+            model_pdbfilenames.append(model_pdbfilename)
+            valid_templateIDs.append(template.id)
 
-        print traj
+        print 'Constructing a trajectory containing all valid models...'
+
+        traj = mdtraj.load(model_pdbfilenames)
 
         # =============================
         # Clustering
         # =============================
 
-        print 'Conducting clustering...'
+        print 'Conducting RMSD-based clustering...'
 
         # Remove any existing unique_by_clustering files
         for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
@@ -304,6 +309,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
         with open( os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
             for u in uniques:
                 uniques_file.write(u+'\n')
-            print '%d unique models (from original set of %d) using cutoff of %.2f Angstroms' % (len(uniques), len(valid_templateIDs), cutoff)
+            print '%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff)
 
+    print 'Done.'
 
