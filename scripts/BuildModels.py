@@ -39,3 +39,9 @@ MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyThes
 # ========
 
 MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
+
+# ========
+# Cluster models
+# ========
+
+MSMSeeder.modelling.cluster_models(process_only_these_targets=args.ProcessOnlyTheseTargets)
