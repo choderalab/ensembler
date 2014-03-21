@@ -29,7 +29,13 @@ project_metadata = MSMSeeder.core.ProjectMetadata()
 project_metadata.load(MSMSeeder.core.project_metadata_filename)
 
 # ========
-# Run the selected gather templates method
+# Build models
 # ========
 
 MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
+
+# ========
+# Write a list of models sorted by sequence identity
+# ========
+
+MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)

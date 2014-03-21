@@ -1,9 +1,13 @@
 def build_models(process_only_these_targets=None, process_only_these_templates=None):
+    r'''Uses the build_model method to build homology models for a given set of
+    targets and templates.
+
+    MPI enabled.
+    '''
     import os
     import Bio.SeqIO
-    import mpi4py
-    from mpi4py import MPI
-    comm = MPI.COMM_WORLD 
+    import mpi4py.MPI
+    comm = mpi4py.MPI.COMM_WORLD 
     rank = comm.rank
     size = comm.size
 
@@ -35,6 +39,18 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             build_model(target, template)
 
 def build_model(target, template):
+    r'''Uses Modeller to build a homology model for a given target and
+    template.
+
+    Will not run Modeller if the output files already exist.
+
+    Parameters
+    ----------
+    target : BioPython SeqRecord
+    template : BioPython SeqRecord
+        Must be a corresponding .pdb template file with the same ID in the
+        templates/structures directory.
+    '''
     # align target and template
     import os, tempfile, shutil, gzip
     import Bio.pairwise2
@@ -58,9 +74,7 @@ def build_model(target, template):
     files_to_check = [model_dir, model_pdbfilename, seqid_filename, aln_filename, restraint_filename_gz]
     files_are_present = [os.path.exists(filename) for filename in files_to_check]
     if all(files_are_present):
-        text  = "---------------------------------------------------------------------------------\n"
-        text += "Output files already exist for target %s, template %s; files were not overwritten.\n" % (target.id, template.id)
-        print text
+        print "Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id)
         return
 
     # Conduct alignment
@@ -137,4 +151,75 @@ def build_model(target, template):
 
     finally:
         shutil.rmtree(temp_dir)
+
+def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
+    '''Compile sorted list of templates by sequence identity.
+    '''
+    import os
+    import numpy
+    import Bio.SeqIO
+
+    targets_dir = os.path.abspath("targets")
+    templates_dir = os.path.abspath("templates")
+    models_dir = os.path.abspath("models")
+
+    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
+    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
+    templates = Bio.SeqIO.parse(templates_fasta_filename, 'fasta')
+
+    # ========
+    # Compile sorted list by sequence identity
+    # ========
+
+    for target in targets:
+        
+        # Process only specified targets if directed.
+        if process_only_these_targets and (target.id not in process_only_these_targets): continue
+
+        models_target_dir = os.path.join(models_dir, target.id)
+        if not os.path.exists(models_target_dir): continue
+
+        print "-------------------------------------------------------------------------"
+        print "Compiling template sequence identities for target %s" % (target.id)
+        print "-------------------------------------------------------------------------"
+
+        # ========
+        # Build a list of valid models
+        # ========
+
+        if verbose: print "Building list of valid models..."
+        valid_templates = list()
+        for template in templates:
+            model_filename = os.path.join(models_target_dir, template.id, 'model.pdb')
+            if os.path.exists(model_filename):
+                valid_templates.append(template)
+
+        nvalid = len(valid_templates)
+        if verbose: print "%d valid models found" % nvalid
+
+        # ========
+        # Sort by sequence identity
+        # ========
+
+        if verbose: print "Sorting models in order of decreasing sequence identity..."
+        seqids = numpy.zeros([nvalid], numpy.float32)
+        for (template_index, template) in enumerate(valid_templates):
+            model_seqid_filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
+            with open(model_seqid_filename, 'r') as model_seqid_file:
+                firstline = model_seqid_file.readline().strip()
+            seqid = float(firstline)
+            seqids[template_index] = seqid
+        sorted_seqids = numpy.argsort(-seqids)
+
+        #
+        # WRITE TEMPLATES SORTED BY SEQUENCE IDENTITY
+        # 
+
+        seq_ofilename = os.path.join(models_target_dir, 'sequence-identities.txt')
+        with open(seq_ofilename, 'w') as seq_ofile:
+            for index in sorted_seqids:
+                template = valid_templates[index]
+                identity = seqids[index]
+                seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
 
