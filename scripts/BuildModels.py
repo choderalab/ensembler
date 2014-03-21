@@ -36,14 +36,14 @@ project_metadata.load(MSMSeeder.core.project_metadata_filename)
 # Build models
 # ========
 
-#MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
+MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
 
 # ========
 # Write a list of models sorted by sequence identity
 # ========
 
-#if rank == 0:
-#    MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
+if rank == 0:
+    MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
 
 # ========
 # Cluster models
