@@ -7,6 +7,10 @@
 
 import MSMSeeder
 import MSMSeeder.modelling
+import mpi4py.MPI
+comm = mpi4py.MPI.COMM_WORLD 
+rank = comm.rank
+size = comm.size
 
 # ========
 # Parse command-line arguments
@@ -38,4 +42,5 @@ MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyThes
 # Write a list of models sorted by sequence identity
 # ========
 
-MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
+if rank == 0:
+    MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
