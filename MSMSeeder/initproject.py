@@ -84,7 +84,8 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     # Parse the TargetExplorer database path
     # =========
 
-    DB_root = etree.parse(DB_path).getroot()
+    parser = etree.XMLParser(huge_tree=True)
+    DB_root = etree.parse(DB_path, parser).getroot()
 
     # =========
     # Extract target data from database
@@ -182,7 +183,8 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     # =========
 
     # Parse the DB
-    DB_root = etree.parse(DB_path).getroot()
+    parser = etree.XMLParser(huge_tree=True)
+    DB_root = etree.parse(DB_path, parser).getroot()
     DB_root
 
     # =========
@@ -258,6 +260,9 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     project_metadata = MSMSeeder.core.ProjectMetadata()
     project_metadata.load(MSMSeeder.core.project_metadata_filename)
 
+    min_domain_len = None
+    max_domain_len = None
+    domain_span_manual_specifications = None
     if os.path.exists(MSMSeeder.core.manual_specifications_filename):
         with open(MSMSeeder.core.manual_specifications_filename, 'r') as manual_specifications_file:
             manual_specifications = yaml.load(manual_specifications_file)
@@ -279,7 +284,8 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
 
     print 'Querying UniProt web server...'
     UniProtXMLstring = MSMSeeder.UniProt.retrieve_uniprot(UniProt_query_string)
-    UniProtXML = etree.fromstring(UniProtXMLstring)
+    parser = etree.XMLParser(huge_tree=True)
+    UniProtXML = etree.fromstring(UniProtXMLstring, parser)
     print 'Number of entries returned from initial UniProt search:', len(UniProtXML)
     print ''
 
@@ -449,9 +455,25 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         # parse SIFTS XML document
         sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
         with gzip.open(sifts_filepath, 'rb') as sifts_file:
-            siftsXML = etree.parse(sifts_file).getroot()
+            parser = etree.XMLParser(huge_tree=True)
+            siftsXML = etree.parse(sifts_file, parser).getroot()
 
-        # extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have a "PDB modified" or "Conflict" tag.
+        # firstly, add "PDB modified" tags to certain phosphorylated residue types, which sometimes do not have such tags in the SIFTS file
+        # known cases: 4BCP, 4BCG, 4I5C, 4IVB, 4IAC
+        modified_residues = []
+        modified_residues += siftsXML.findall('entity/segment/listResidue/residue[@dbResName="TPO"]')
+        modified_residues += siftsXML.findall('entity/segment/listResidue/residue[@dbResName="PTR"]')
+        modified_residues += siftsXML.findall('entity/segment/listResidue/residue[@dbResName="SEP"]')
+        for mr in modified_residues:
+            if mr == None:
+                continue
+            residue_detail_modified = etree.Element('residueDetail')
+            residue_detail_modified.set('dbSource','MSD')
+            residue_detail_modified.set('property','Annotation')
+            residue_detail_modified.text = 'PDB\n          modified'
+            mr.append(residue_detail_modified)
+
+        # now extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have a "PDB modified" or "Conflict" tag.
         selected_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])]' % (chainID, domain_span[0], domain_span[1]))
         # calculate the ratio of observed residues - if less than a certain amount, discard PDBchain
         all_PDB_domain_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainID, domain_span[0], domain_span[1]))
@@ -505,7 +527,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         template_PDBresnums = template['template_PDBresnums']
         pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb')
         template_filename = os.path.join('templates', 'structures', templateID + '.pdb')
-        nlines_extracted = MSMSeeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
+        nresidues_extracted = MSMSeeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
         if nresidues_extracted != len(template_PDBresnums):
             raise Exception, 'Number of residues extracted from PDB file does not match desired number of residues.'
 
