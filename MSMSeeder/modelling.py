@@ -2,7 +2,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     r'''Uses the build_model method to build homology models for a given set of
     targets and templates.
 
-    MPI enabled.
+    MPI-enabled.
     '''
     import os
     import Bio.SeqIO
@@ -222,4 +222,88 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
                 template = valid_templates[index]
                 identity = seqids[index]
                 seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
+
+def cluster_models(process_only_these_targets=None, verbose=False):
+    import os, glob
+    import Bio.SeqIO
+    import mdtraj
+
+    targets_dir = os.path.abspath("targets")
+    templates_dir = os.path.abspath("templates")
+    models_dir = os.path.abspath("models")
+
+    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
+    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
+    templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+
+    cutoff = 0.6 # Cutoff for RMSD clustering (Angstroms)
+
+    for target in targets:
+        if process_only_these_targets and (target.id not in process_only_these_targets): continue
+
+        models_target_dir = os.path.join(models_dir, target.id)
+        if not os.path.exists(models_target_dir): continue
+
+        # =============================
+        # Construct a mdtraj trajectory containing all models
+        # =============================
+
+        traj = None
+        valid_templateIDs = []
+        for t, template in enumerate(templates):
+            model_dir = os.path.join(models_target_dir, template.id)
+            model_pdbfilename = os.path.join(model_dir, 'model.pdb')
+            if not os.path.exists(model_pdbfilename):
+                continue
+            if traj == None:
+                traj = mdtraj.load(model_pdbfilename)
+                valid_templateIDs.append(template.id)
+            else:
+                traj += mdtraj.load(model_pdbfilename)
+                valid_templateIDs.append(template.id)
+
+        print traj
+
+        # =============================
+        # Clustering
+        # =============================
+
+        print 'Conducting clustering...'
+
+        # Remove any existing unique_by_clustering files
+        for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
+            os.unlink(f)
+
+        # Each template will be added to the list uniques if it is further than
+        # 0.2 Angstroms (RMSD) from the nearest template.
+        uniques=[]
+        min_rmsd = []
+        for (t, templateID) in enumerate(valid_templateIDs):
+            model_dir = os.path.join(models_target_dir, templateID)
+
+            # Add the first template to the list of uniques
+            if t==0:
+                uniques.append(templateID)
+                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+                continue
+
+            # Cluster using CA atoms
+            CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
+            rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
+            min_rmsd.append( min(rmsds) )
+
+            if min_rmsd[-1] < cutoff:
+                continue
+            else:
+                uniques.append( templateID )
+                # Create a blank file to say this template was found to be unique
+                # by clustering
+                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+
+        with open( os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
+            for u in uniques:
+                uniques_file.write(u+'\n')
+            print '%d unique models (from original set of %d) using cutoff of %.2f Angstroms' % (len(uniques), len(valid_templateIDs), cutoff)
+
 

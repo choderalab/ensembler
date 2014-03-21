@@ -44,3 +44,10 @@ MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyThes
 
 if rank == 0:
     MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
+
+# ========
+# Cluster models
+# ========
+
+if rank == 0:
+    MSMSeeder.modelling.cluster_models(process_only_these_targets=args.ProcessOnlyTheseTargets)
