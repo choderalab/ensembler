@@ -157,159 +157,173 @@ def build_model(target, template):
 
 def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
     '''Compile sorted list of templates by sequence identity.
+    Runs serially.
     '''
     import os
     import numpy
     import Bio.SeqIO
+    import mpi4py.MPI
+    comm = mpi4py.MPI.COMM_WORLD 
+    rank = comm.rank
 
-    targets_dir = os.path.abspath("targets")
-    templates_dir = os.path.abspath("templates")
-    models_dir = os.path.abspath("models")
+    if rank == 0:
+        targets_dir = os.path.abspath("targets")
+        templates_dir = os.path.abspath("templates")
+        models_dir = os.path.abspath("models")
 
-    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
-    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-    templates = Bio.SeqIO.parse(templates_fasta_filename, 'fasta')
-
-    # ========
-    # Compile sorted list by sequence identity
-    # ========
-
-    for target in targets:
-        
-        # Process only specified targets if directed.
-        if process_only_these_targets and (target.id not in process_only_these_targets): continue
-
-        models_target_dir = os.path.join(models_dir, target.id)
-        if not os.path.exists(models_target_dir): continue
-
-        print "-------------------------------------------------------------------------"
-        print "Compiling template sequence identities for target %s" % (target.id)
-        print "-------------------------------------------------------------------------"
+        targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
+        targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+        templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
+        templates = Bio.SeqIO.parse(templates_fasta_filename, 'fasta')
 
         # ========
-        # Build a list of valid models
+        # Compile sorted list by sequence identity
         # ========
 
-        if verbose: print "Building list of valid models..."
-        valid_templates = list()
-        for template in templates:
-            model_filename = os.path.join(models_target_dir, template.id, 'model.pdb')
-            if os.path.exists(model_filename):
-                valid_templates.append(template)
+        for target in targets:
+            
+            # Process only specified targets if directed.
+            if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
-        nvalid = len(valid_templates)
-        if verbose: print "%d valid models found" % nvalid
+            models_target_dir = os.path.join(models_dir, target.id)
+            if not os.path.exists(models_target_dir): continue
 
-        # ========
-        # Sort by sequence identity
-        # ========
+            print "-------------------------------------------------------------------------"
+            print "Compiling template sequence identities for target %s" % (target.id)
+            print "-------------------------------------------------------------------------"
 
-        if verbose: print "Sorting models in order of decreasing sequence identity..."
-        seqids = numpy.zeros([nvalid], numpy.float32)
-        for (template_index, template) in enumerate(valid_templates):
-            model_seqid_filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
-            with open(model_seqid_filename, 'r') as model_seqid_file:
-                firstline = model_seqid_file.readline().strip()
-            seqid = float(firstline)
-            seqids[template_index] = seqid
-        sorted_seqids = numpy.argsort(-seqids)
+            # ========
+            # Build a list of valid models
+            # ========
 
-        #
-        # WRITE TEMPLATES SORTED BY SEQUENCE IDENTITY
-        # 
+            if verbose: print "Building list of valid models..."
+            valid_templates = list()
+            for template in templates:
+                model_filename = os.path.join(models_target_dir, template.id, 'model.pdb')
+                if os.path.exists(model_filename):
+                    valid_templates.append(template)
 
-        seq_ofilename = os.path.join(models_target_dir, 'sequence-identities.txt')
-        with open(seq_ofilename, 'w') as seq_ofile:
-            for index in sorted_seqids:
-                template = valid_templates[index]
-                identity = seqids[index]
-                seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
+            nvalid = len(valid_templates)
+            if verbose: print "%d valid models found" % nvalid
 
-    print 'Done.'
+            # ========
+            # Sort by sequence identity
+            # ========
+
+            if verbose: print "Sorting models in order of decreasing sequence identity..."
+            seqids = numpy.zeros([nvalid], numpy.float32)
+            for (template_index, template) in enumerate(valid_templates):
+                model_seqid_filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
+                with open(model_seqid_filename, 'r') as model_seqid_file:
+                    firstline = model_seqid_file.readline().strip()
+                seqid = float(firstline)
+                seqids[template_index] = seqid
+            sorted_seqids = numpy.argsort(-seqids)
+
+            #
+            # WRITE TEMPLATES SORTED BY SEQUENCE IDENTITY
+            # 
+
+            seq_ofilename = os.path.join(models_target_dir, 'sequence-identities.txt')
+            with open(seq_ofilename, 'w') as seq_ofile:
+                for index in sorted_seqids:
+                    template = valid_templates[index]
+                    identity = seqids[index]
+                    seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
+
+        print 'Done.'
 
 def cluster_models(process_only_these_targets=None, verbose=False):
+    '''Cluster models based on RMSD, and filter out non-unique models as
+    determined by a given cutoff.
+
+    Runs serially.
+    '''
     import os, glob
     import Bio.SeqIO
     import mdtraj
+    import mpi4py.MPI
+    comm = mpi4py.MPI.COMM_WORLD 
+    rank = comm.rank
 
-    targets_dir = os.path.abspath("targets")
-    templates_dir = os.path.abspath("templates")
-    models_dir = os.path.abspath("models")
+    if rank == 0:
+        targets_dir = os.path.abspath("targets")
+        templates_dir = os.path.abspath("templates")
+        models_dir = os.path.abspath("models")
 
-    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
-    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-    templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+        targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
+        targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+        templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
+        templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
-    cutoff = 0.06 # Cutoff for RMSD clustering (nm)
+        cutoff = 0.06 # Cutoff for RMSD clustering (nm)
 
-    for target in targets:
-        if process_only_these_targets and (target.id not in process_only_these_targets): continue
+        for target in targets:
+            if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
-        models_target_dir = os.path.join(models_dir, target.id)
-        if not os.path.exists(models_target_dir): continue
+            models_target_dir = os.path.join(models_dir, target.id)
+            if not os.path.exists(models_target_dir): continue
 
-        # =============================
-        # Construct a mdtraj trajectory containing all models
-        # =============================
+            # =============================
+            # Construct a mdtraj trajectory containing all models
+            # =============================
 
-        print 'Building a list of valid models...'
+            print 'Building a list of valid models...'
 
-        model_pdbfilenames = []
-        valid_templateIDs = []
-        for t, template in enumerate(templates):
-            model_dir = os.path.join(models_target_dir, template.id)
-            model_pdbfilename = os.path.join(model_dir, 'model.pdb')
-            if not os.path.exists(model_pdbfilename):
-                continue
-            model_pdbfilenames.append(model_pdbfilename)
-            valid_templateIDs.append(template.id)
+            model_pdbfilenames = []
+            valid_templateIDs = []
+            for t, template in enumerate(templates):
+                model_dir = os.path.join(models_target_dir, template.id)
+                model_pdbfilename = os.path.join(model_dir, 'model.pdb')
+                if not os.path.exists(model_pdbfilename):
+                    continue
+                model_pdbfilenames.append(model_pdbfilename)
+                valid_templateIDs.append(template.id)
 
-        print 'Constructing a trajectory containing all valid models...'
+            print 'Constructing a trajectory containing all valid models...'
 
-        traj = mdtraj.load(model_pdbfilenames)
+            traj = mdtraj.load(model_pdbfilenames)
 
-        # =============================
-        # Clustering
-        # =============================
+            # =============================
+            # Clustering
+            # =============================
 
-        print 'Conducting RMSD-based clustering...'
+            print 'Conducting RMSD-based clustering...'
 
-        # Remove any existing unique_by_clustering files
-        for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
-            os.unlink(f)
+            # Remove any existing unique_by_clustering files
+            for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
+                os.unlink(f)
 
-        # Each template will be added to the list uniques if it is further than
-        # 0.2 Angstroms (RMSD) from the nearest template.
-        uniques=[]
-        min_rmsd = []
-        for (t, templateID) in enumerate(valid_templateIDs):
-            model_dir = os.path.join(models_target_dir, templateID)
+            # Each template will be added to the list uniques if it is further than
+            # 0.2 Angstroms (RMSD) from the nearest template.
+            uniques=[]
+            min_rmsd = []
+            for (t, templateID) in enumerate(valid_templateIDs):
+                model_dir = os.path.join(models_target_dir, templateID)
 
-            # Add the first template to the list of uniques
-            if t==0:
-                uniques.append(templateID)
-                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
-                continue
+                # Add the first template to the list of uniques
+                if t==0:
+                    uniques.append(templateID)
+                    with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+                    continue
 
-            # Cluster using CA atoms
-            CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
-            rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
-            min_rmsd.append( min(rmsds) )
+                # Cluster using CA atoms
+                CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
+                rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
+                min_rmsd.append( min(rmsds) )
 
-            if min_rmsd[-1] < cutoff:
-                continue
-            else:
-                uniques.append( templateID )
-                # Create a blank file to say this template was found to be unique
-                # by clustering
-                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+                if min_rmsd[-1] < cutoff:
+                    continue
+                else:
+                    uniques.append( templateID )
+                    # Create a blank file to say this template was found to be unique
+                    # by clustering
+                    with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
 
-        with open( os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
-            for u in uniques:
-                uniques_file.write(u+'\n')
-            print '%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff)
+            with open( os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
+                for u in uniques:
+                    uniques_file.write(u+'\n')
+                print '%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff)
 
-    print 'Done.'
+        print 'Done.'
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 #
-# Models a set of targets sequences onto a set of template structures using Modeller.
+# Solvate models which have been through MD equilibration with implicit solvent
 #
-# Daniel L. Parton <partond@mskcc.org> - 11 Mar 2014
+# Daniel L. Parton <partond@mskcc.org> - 21 Mar 2014
 #
 
 import MSMSeeder
-import MSMSeeder.modelling
+import MSMSeeder.refinement
 
 # ========
 # Parse command-line arguments
@@ -29,19 +29,14 @@ project_metadata = MSMSeeder.core.ProjectMetadata()
 project_metadata.load(MSMSeeder.core.project_metadata_filename)
 
 # ========
-# Build models
+# Solvate
 # ========
 
-MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
+MSMSeeder.refinement.solvate_models(process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
 
 # ========
-# Write a list of models sorted by sequence identity
+# Determine distribution of nwaters and filter out those above the 68th percentile
 # ========
 
-MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
+MSMSeeder.refinement.determine_nwaters(process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
 
-# ========
-# Cluster models
-# ========
-
-MSMSeeder.modelling.cluster_models(process_only_these_targets=args.ProcessOnlyTheseTargets)

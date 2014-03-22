@@ -7,10 +7,6 @@
 
 import MSMSeeder
 import MSMSeeder.refinement
-import mpi4py.MPI
-comm = mpi4py.MPI.COMM_WORLD 
-rank = comm.rank
-size = comm.size
 
 # ========
 # Parse command-line arguments
