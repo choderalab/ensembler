@@ -1,0 +1,15 @@
+init:
+  datestamp: 2014-03-18 19:31:03 UTC
+target-selection:
+  TargetExplorer-database-path: [database path]
+  datestamp: 2014-03-18 19:40:00 UTC
+  domain-span-manual-specifications-path: [manual specifications path]
+  target-selection-method: TargetExplorerDB
+template-selection:
+  UniProt-domain-regex: ^Protein kinase(?!; truncated)(?!; inactive)
+  UniProt-query-string: domain:"Protein kinase" AND reviewed:yes
+  datestamp: 2014-03-21 21:27:22 UTC
+  structure-paths:
+  - [pdb files path]
+  - [sifts files path]
+  template-selection-method: UniProt

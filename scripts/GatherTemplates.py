@@ -15,10 +15,12 @@ import MSMSeeder.initproject
 import argparse
 argparser = argparse.ArgumentParser(description='Gather template protein data - IDs, sequences and structures.', formatter_class=argparse.RawTextHelpFormatter)
 
-helpstring_gatherfrom = '''Choose a method for selecting the templates.
-"TargetExplorerDB": Select templates from an existing
-TargetExplorerDB database, specified via either the project metadata file or
-the --DBpath argument.
+helpstring_gatherfrom = r'''Choose a method for selecting the templates.
+
+"TargetExplorerDB": Select templates from an existing TargetExplorerDB
+database, specified via either the project metadata file or the --DBpath
+argument.
+
 "UniProt": Select templates from UniProt with a user-defined query
 string.'''
 argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'])

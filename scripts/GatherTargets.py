@@ -15,10 +15,12 @@ import MSMSeeder.initproject
 import argparse
 argparser = argparse.ArgumentParser(description='Gather target protein data - IDs and sequences.', formatter_class=argparse.RawTextHelpFormatter)
 
-helpstring_gatherfrom = '''Choose a method for gathering target data.
-"TargetExplorerDB": Gather target data from an existing
-TargetExplorer database, specified via either the project metadata file or
-the --DBpath argument.
+helpstring_gatherfrom = r'''Choose a method for gathering target data.
+
+"TargetExplorerDB": Gather target data from an existing TargetExplorer
+database, specified via either the project metadata file or the --DBpath
+argument.
+
 "UniProt": Gather target data from UniProt with a user-defined query
 string.'''
 argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'])
