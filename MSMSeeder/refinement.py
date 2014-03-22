@@ -265,7 +265,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             model_filename = os.path.join(model_dir, 'implicit-refined.pdb')
             if not os.path.exists(model_filename): continue
 
-            # Pass if this simulation has already been run.
+            # Pass if solvation has already been run for this model.
             nwaters_filename = os.path.join(model_dir, 'nwaters.txt')
             if os.path.exists(nwaters_filename): continue
 
@@ -489,7 +489,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         density = (nwaters_enlarged - nwaters_min) / (volume_enlarged - volume_min)
         if verbose: print "Enlarged solvated system has %d atoms (%d waters) : density of %.3f waters / nm^3" % (natoms_enlarged, nwaters_enlarged, density / (1.0 / unit.nanometer**3))
 
-        # Aim for slightly waters more than target.
+        # Aim for slightly more waters than target.
         over_target = False
         extra_nwaters = 100
         while not over_target:
@@ -647,10 +647,6 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         models_target_dir = os.path.join(models_dir, target.id)
         if not os.path.exists(models_target_dir): continue
 
-        # Start a 'reject file'.
-        reject_filename = os.path.join(models_target_dir, 'reject-explicit.txt')
-        reject_file = open(reject_filename, 'w')
-
         # Determine number of waters to use.
         nwaters_filename = os.path.join(models_target_dir, 'nwaters-use.txt')
         with open(nwaters_filename, 'r') as infile:
@@ -659,10 +655,6 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         for template_index in range(rank, len(templates), size):
             template = templates[template_index]
-
-            print "-------------------------------------------------------------------------"
-            print "Simulating %s => %s in explicit solvent for %.1f ps" % (target, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
-            print "-------------------------------------------------------------------------"
 
             model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
@@ -702,6 +694,10 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                     # Now try to solvate and simulate model.
                     pass
 
+            print "-------------------------------------------------------------------------"
+            print "Simulating %s => %s in explicit solvent for %.1f ps" % (target.id, template.id, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
+            print "-------------------------------------------------------------------------"
+
             try:
                 if verbose: print "Reading model..."
                 pdb = app.PDBFile(model_filename)
@@ -714,7 +710,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             except Exception:
                 # Record rejected models.
                 trbk = traceback.format_exc()
-                reject_file_path = os.path.join(models_target_dir, 'implicit-rejected.txt')
+                reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt')
                 with open(reject_file_path, 'w') as reject_file:
                     reject_file.write(trbk)
 
