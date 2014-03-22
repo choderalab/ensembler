@@ -13,7 +13,7 @@ import MSMSeeder.refinement
 # ========
 
 import argparse
-argparser = argparse.ArgumentParser(description='Conducts implicit-solvent MD refinement on a set of models.', formatter_class=argparse.RawTextHelpFormatter)
+argparser = argparse.ArgumentParser(description='Conducts explicit-solvent MD refinement on a set of models.', formatter_class=argparse.RawTextHelpFormatter)
 
 argparser.add_argument('--OpenMMPlatform', choices=['CUDA', 'OpenCL', 'CPU', 'Reference'], default='CUDA', help='(Default: CUDA) Choose the OpenMM Platform to use.')
 argparser.add_argument('-gpupn', type=int, default=1, help='(Default: 1) If using GPUs, select how many are available per node.')
@@ -34,5 +34,5 @@ project_metadata.load(MSMSeeder.core.project_metadata_filename)
 # Run simulations
 # ========
 
-MSMSeeder.refinement.refine_implicitMD(openmm_platform=args.OpenMMPlatform, gpupn=args.gpupn, process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
+MSMSeeder.refinement.refine_explicitMD(openmm_platform=args.OpenMMPlatform, gpupn=args.gpupn, process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
 
