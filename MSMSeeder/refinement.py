@@ -1,4 +1,4 @@
-def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False):
+def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=True):
     import os, traceback
     import Bio.SeqIO
     import simtk.openmm as openmm
@@ -51,8 +51,9 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         platform = openmm.Platform.getPlatformByName(openmm_platform)
 
         # Set GPU id.
-        if openmm_platform in ['CUDA', 'OpenCL']:
+        if openmm_platform == 'CUDA':
             platform.setPropertyDefaultValue('CudaDeviceIndex', '%d' % gpuid)
+        elif openmm_platform == 'OpenCL':
             platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
 
         # Only simulate models that are unique following filtering by clustering.
