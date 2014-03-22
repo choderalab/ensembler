@@ -22,8 +22,9 @@ tests/ - to test everything is working correctly, run nosetests from this top-le
 Basic Usage
 -----------
 
-Make sure this directory is visible to your Python interpreter (e.g. by adding
-it to your $PYTHONPATH environment variable).
+After cloning this repository, make sure the MSMSeeder/ library is visible to
+your Python interpreter (e.g. by adding it to your $PYTHONPATH environment
+variable).
 
 You may also find it useful to add the scripts/ directory to your $PATH
 environment variable, so you can execute the contained scripts directly.
