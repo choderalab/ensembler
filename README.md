@@ -28,11 +28,12 @@ it to your $PYTHONPATH environment variable).
 You may also find it useful to add the scripts/ directory to your $PATH
 environment variable, so you can execute the contained scripts directly.
 
-The recommended approach for familiarizing yourself with this package is to
-first try out the scripts, but the library functions can also be used directly
-if wanted. The scripts can each be run from the command-line with a '-h' flag,
-which will print information on their usage. They are intended to be run in the
-following order:
+The package can be used either by running the command-line scripts, or by
+writing your own scripts to interact with the MSMSeeder Python library. The
+former approach is recommended as the first step if you are new here. The
+scripts can each be run from the command-line with a '-h' flag, which will
+print information on their usage. They are intended to be run in the following
+order:
 
 1. InitMSMSeederProject.py
 2. GatherTargets.py
@@ -44,6 +45,10 @@ following order:
 
 Further scripts can be used to package and compress the results, ready for
 transfer or for set-up on the Folding@Home distributed computing platform.
+
+The scripts have been parallelized with MPI where useful. Furthermore, the MD
+refinement steps use the OpenMM simulation package, which has particularly high
+performance on GPUs.
 
 Dependencies
 ------------
