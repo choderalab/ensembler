@@ -2,7 +2,7 @@
 #
 # Gathers protein target data - IDs and sequences.
 #
-# Daniel L. Parton <partond@mskcc.org> - 11 Mar 2014
+# Daniel L. Parton <daniel.parton@choderalab.org> - 11 Mar 2014
 #
 
 import MSMSeeder

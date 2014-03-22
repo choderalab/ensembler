@@ -168,7 +168,6 @@ e.g. ACC+ID (from)
 
     url_query = urllib.urlencode(query_params)
     request = urllib2.Request(url,url_query)
-    #contact = 'partond@mskcc.org'
     request.add_header('User-Agent', 'Python contact')
     response = urllib2.urlopen(request)
     page = response.read(200000)
@@ -201,7 +200,6 @@ def retrieve_uniprotACs(query_data):
         
         url_query = urllib.urlencode(query_params)
         request = urllib2.Request(url,url_query)
-        #contact = 'partond@mskcc.org'
         request.add_header('User-Agent', 'Python contact')
         response = urllib2.urlopen(request)
         page = response.read(200000)
@@ -229,7 +227,6 @@ def query_uniprot_multiple(query_params):
         
         url_query = urllib.urlencode(q)
         request = urllib2.Request(url,url_query)
-        #contact = 'partond@mskcc.org'
         request.add_header('User-Agent', 'Python contact')
         response = urllib2.urlopen(request)
         page = response.read(200000)
@@ -252,7 +249,6 @@ def query_uniprot(query_params):
 
     url_query = urllib.urlencode(query_params)
     request = urllib2.Request(url,url_query)
-    #contact = 'partond@mskcc.org'
     request.add_header('User-Agent', 'Python contact')
     response = urllib2.urlopen(request)
     page = response.read(200000)

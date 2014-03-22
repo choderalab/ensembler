@@ -2,7 +2,7 @@
 #
 # Solvate models which have been through MD equilibration with implicit solvent
 #
-# Daniel L. Parton <partond@mskcc.org> - 21 Mar 2014
+# Daniel L. Parton <daniel.parton@choderalab.org> - 21 Mar 2014
 #
 
 import MSMSeeder

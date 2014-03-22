@@ -1,6 +1,6 @@
 # Methods for retrieving data from the PDB
 #
-# Daniel L. Parton <partond@mskcc.org> - 16 Feb 2013
+# Daniel L. Parton <daniel.parton@choderalab.org> - 16 Feb 2013
 
 #==============================================================================
 # IMPORTS

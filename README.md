@@ -6,8 +6,8 @@ Generation of diverse protein structural ensembles, for the initialization of mo
 Authors
 -------
 
+* Daniel L. Parton | daniel.parton@choderalab.org
 * John D. Chodera | john.chodera@choderalab.org
-* Daniel L. Parton | danny.parton@choderalab.org
 * Patrick B. Grinaway | patrick.grinaway@choderalab.org
 
 Manifest
@@ -19,16 +19,13 @@ MSMSeeder/ - main code
 
 tests/ - to test everything is working correctly, run nosetests from this top-level directory
 
-models/scripts/ - deprecated; old scripts in the process of being refactored into the new codebase
-
 Dependencies
 ------------
 
 * OpenMM - https://simtk.org/home/openmm
 * Modeller - http://salilab.org/modeller/
 * mpi4py - http://mpi4py.scipy.org/
-* MDAnalysis - https://code.google.com/p/mdanalysis/
+* mdtraj - http://mdtraj.org/
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
-* Stride (optional, for model alignment/visualization) - http://webclu.bio.wzw.tum.de/stride/ (also included as part of the VMD package - http://www.ks.uiuc.edu/Research/vmd/)
-* Many other Python packages. Recommended aproach is to install either Enthought Canopy (https://www.enthought.com/products/canopy/) or Continuum Anaconda (https://store.continuum.io/)
+* Various other Python packages commonly used in scientific computing. Recommended aproach is to install either Enthought Canopy (https://www.enthought.com/products/canopy/) or Continuum Anaconda (https://store.continuum.io/)
 

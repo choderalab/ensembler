@@ -1,6 +1,6 @@
 # Library containing functions for multiple sequence alignment
 #
-# Daniel L. Parton <partond@mskcc.org> - 2 Apr 2013
+# Daniel L. Parton <daniel.parton@choderalab.org> - 2 Apr 2013
 #
 
 import os, platform, shlex

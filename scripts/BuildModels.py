@@ -2,7 +2,7 @@
 #
 # Models a set of targets sequences onto a set of template structures using Modeller.
 #
-# Daniel L. Parton <partond@mskcc.org> - 11 Mar 2014
+# Daniel L. Parton <daniel.parton@choderalab.org> - 11 Mar 2014
 #
 
 import MSMSeeder

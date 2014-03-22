@@ -2,7 +2,7 @@
 #
 # Refine models with implicit-solvent MD simulations
 #
-# Daniel L. Parton <partond@mskcc.org> - 21 Mar 2014
+# Daniel L. Parton <daniel.parton@choderalab.org> - 21 Mar 2014
 #
 
 import MSMSeeder

@@ -2,7 +2,7 @@
 #
 # Gathers protein template data - IDs, sequences and structures.
 #
-# Daniel L. Parton <partond@mskcc.org> - 11 Mar 2014
+# Daniel L. Parton <daniel.parton@choderalab.org> - 11 Mar 2014
 #
 
 import MSMSeeder
