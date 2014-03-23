@@ -305,7 +305,13 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         UniProt_query_string_domains = UniProtXML.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection, extensions = { (None, 'match_regex'): MSMSeeder.core.xpath_match_regex_case_insensitive })
 
         UniProt_unique_domain_names = set([domain.get('description') for domain in UniProt_query_string_domains])
-        print 'Unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s' % (query_string_domain_selection, UniProt_unique_domain_names)
+        print 'Set of unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s' % (query_string_domain_selection, UniProt_unique_domain_names)
+        print ''
+
+    else:
+        UniProt_domains = UniProtXML.xpath('entry/feature[@type="domain"]')
+        UniProt_unique_domain_names = set([domain.get('description') for domain in UniProt_domains])
+        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s' % (UniProt_query_string, UniProt_unique_domain_names)
         print ''
 
     # =========
