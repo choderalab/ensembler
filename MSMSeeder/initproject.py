@@ -13,7 +13,7 @@ def init(project_toplevel_dir):
     # Parameters
     # =========
 
-    import os, datetime, argparse
+    import os, datetime
     import MSMSeeder
 
     project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models']
@@ -21,9 +21,6 @@ def init(project_toplevel_dir):
 
     now = datetime.datetime.utcnow()
     datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
-
-    argparser = argparse.ArgumentParser(description='Initialize MSMSeeder project within the current directory. Creates necessary subdirectories and a project metadata .yaml file.')
-    argparser.parse_args()
 
     # =========
     # Create necessary project directories

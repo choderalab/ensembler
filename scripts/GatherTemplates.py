@@ -18,16 +18,16 @@ argparser = argparse.ArgumentParser(description='Gather template protein data - 
 helpstring_gatherfrom = r'''Choose a method for selecting the templates.
 
 "TargetExplorerDB": Select templates from an existing TargetExplorerDB
-database, specified via either the project metadata file or the --DBpath
+database, specified via either the project metadata file or the --db_path
 argument.
 
 "UniProt": Select templates from UniProt with a user-defined query
 string.'''
-argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'])
-argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path', default=None)
-argparser.add_argument('--UniProtQuery', type=str, help='UniProt query string', default=None)
-argparser.add_argument('--UniProtDomainRegex', type=str, help='Optional regular expression for selecting domains from within UniProt entries (case-sensitive)', default=None)
-argparser.add_argument('--StructurePaths', type=list, help='Optional list of local directories within which to search for PDB and SIFTS files.', default=None)
+argparser.add_argument('--gather_from', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'])
+argparser.add_argument('--db_path', type=str, help='TargetExplorerDB database path', default=None)
+argparser.add_argument('--uniprot_query', type=str, help='UniProt query string', default=None)
+argparser.add_argument('--uniprot_domain_regex', type=str, help='Optional regular expression for selecting domains from within UniProt entries (case-sensitive)', default=None)
+argparser.add_argument('--structure_paths', type=list, help='Optional list of local directories within which to search for PDB and SIFTS files.', default=None)
 args = argparser.parse_args()
 
 MSMSeeder.core.check_project_toplevel_dir()
@@ -44,7 +44,7 @@ project_metadata.load(MSMSeeder.core.project_metadata_filename)
 # ========
 
 # Command-line args take priority
-template_selection_method = args.GatherFrom
+template_selection_method = args.gather_from
 
 # Otherwise check project metadata file
 if template_selection_method == None:
@@ -60,7 +60,7 @@ if template_selection_method == None:
 if template_selection_method == 'TargetExplorerDB':
 
     # Command-line args take priority
-    DB_path = args.DBpath
+    DB_path = args.db_path
 
     # Otherwise check project metadata file
     if DB_path == None:
@@ -72,9 +72,9 @@ if template_selection_method == 'TargetExplorerDB':
 elif template_selection_method == 'UniProt':
 
     # Command-line args take priority
-    UniProt_query_string = args.UniProtQuery
-    UniProt_domain_regex = args.UniProtDomainRegex
-    structure_paths = args.StructurePaths
+    UniProt_query_string = args.uniprot_query
+    UniProt_domain_regex = args.uniprot_domain_regex
+    structure_paths = args.structure_paths
 
     # Otherwise check project metadata file
     if UniProt_query_string == None:

@@ -15,8 +15,8 @@ import MSMSeeder.modelling
 import argparse
 argparser = argparse.ArgumentParser(description='Models a set of target sequences onto a set of template structures using Modeller.', formatter_class=argparse.RawTextHelpFormatter)
 
-argparser.add_argument('--ProcessOnlyTheseTargets', nargs='+', help='Supply one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
-argparser.add_argument('--ProcessOnlyTheseTemplates', nargs='+', help='Supply one or more template IDs separated by spaces (e.g. "ABL1_HUMAN_D0_1OPL_A")')
+argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
+argparser.add_argument('--templates', nargs='+', help='(Default: all templates) Optionally define a subset of templates to work on by providing one or more template IDs separated by spaces (e.g. "ABL1_HUMAN_D0_1OPL_A")')
 args = argparser.parse_args()
 
 MSMSeeder.core.check_project_toplevel_dir()
@@ -32,16 +32,16 @@ project_metadata.load(MSMSeeder.core.project_metadata_filename)
 # Build models
 # ========
 
-MSMSeeder.modelling.build_models(process_only_these_targets=args.ProcessOnlyTheseTargets, process_only_these_templates=args.ProcessOnlyTheseTemplates)
+MSMSeeder.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates)
 
 # ========
 # Write a list of models sorted by sequence identity
 # ========
 
-MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.ProcessOnlyTheseTargets)
+MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.targets)
 
 # ========
 # Cluster models
 # ========
 
-MSMSeeder.modelling.cluster_models(process_only_these_targets=args.ProcessOnlyTheseTargets)
+MSMSeeder.modelling.cluster_models(process_only_these_targets=args.targets)

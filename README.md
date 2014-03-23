@@ -17,7 +17,7 @@ scripts/ - Python wrapper scripts which accept parameters from the command-line 
 
 MSMSeeder/ - main code; can be used as a standalone library package
 
-tests/ - to test everything is working correctly, run nosetests from this top-level directory
+tests/ - to test whether the code is working correctly, run nosetests from this top-level directory
 
 Basic Usage
 -----------
@@ -30,11 +30,10 @@ You may also find it useful to add the scripts/ directory to your $PATH
 environment variable, so you can execute the contained scripts directly.
 
 The package can be used either by running the command-line scripts, or by
-writing your own scripts to interact with the MSMSeeder Python library. The
-former approach is recommended as the first step if you are new here. The
-scripts can each be run from the command-line with a '-h' flag, which will
-print information on their usage. They are intended to be run in the following
-order:
+writing scripts to interact with the MSMSeeder Python library. The former
+approach is recommended for familiarizing yourself with the code. Each script
+can be run from the command-line with a '-h' flag, which will print information
+on their usage. They are intended to be run in the following order:
 
 1. InitMSMSeederProject.py
 2. GatherTargets.py

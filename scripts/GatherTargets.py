@@ -18,13 +18,13 @@ argparser = argparse.ArgumentParser(description='Gather target protein data - ID
 helpstring_gatherfrom = r'''Choose a method for gathering target data.
 
 "TargetExplorerDB": Gather target data from an existing TargetExplorer
-database, specified via either the project metadata file or the --DBpath
+database, specified via either the project metadata file or the --db_path
 argument.
 
 "UniProt": Gather target data from UniProt with a user-defined query
 string.'''
-argparser.add_argument('--GatherFrom', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'])
-argparser.add_argument('--DBpath', type=str, help='TargetExplorerDB database path. Will be converted to an absolute path.', default=None)
+argparser.add_argument('--gather_from', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'])
+argparser.add_argument('--db_path', type=str, help='TargetExplorerDB database path. Will be converted to an absolute path.', default=None)
 args = argparser.parse_args()
 
 MSMSeeder.core.check_project_toplevel_dir()
@@ -41,7 +41,7 @@ project_metadata.load(MSMSeeder.core.project_metadata_filename)
 # ========
 
 # Command-line args take priority
-target_selection_method = args.GatherFrom
+target_selection_method = args.gather_from
 
 # Otherwise check project metadata file
 if target_selection_method == None:
@@ -57,7 +57,7 @@ if target_selection_method == None:
 if target_selection_method == 'TargetExplorerDB':
 
     # Command-line args take priority
-    DB_path = args.DBpath
+    DB_path = args.db_path
 
     # Otherwise check project metadata file
     if DB_path == None:
