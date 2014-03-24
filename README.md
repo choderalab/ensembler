@@ -75,13 +75,13 @@ The scripts have been parallelized with MPI where useful. Furthermore, the MD
 refinement steps use the OpenMM simulation package, which has particularly high
 performance on GPUs.
 
-Some scripts will write certain input parameters to a project metadata file
-(named "project-data.yaml" and stored in the project top-level directory). The
-purpose of this is partly to keep a record of the input parameters used, but if
-wanted, this file can be used to provide the same input parameters the next
-time the same script is run. Note that input parameters read from command-line
-arguments take precedence over those read from the project metadata file. A
-template project metadata file is provided in the source code.
+Some scripts will write certain parameters to a project metadata file (named
+"project-data.yaml" and stored in the project top-level directory). The purpose
+of this is partly to keep a record of the input parameters used, but if wanted,
+this file can be used to provide the same input parameters the next time the
+same script is run. Note that input parameters read from command-line arguments
+take precedence over those read from the project metadata file. A template
+project metadata file is provided in the source code.
 
 Sometimes it is necessary to manually override certain automatic aspects of the
 target and template retrieval scripts. This can be achieved using a file named
