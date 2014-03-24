@@ -85,6 +85,7 @@ Example commands
     RefineImplicitMD.py --targets ABL1_HUMAN_D0
     Solvate.py --targets ABL1_HUMAN_D0
     RefineExplicitMD.py --targets ABL1_HUMAN_D0
+    PackageModels.py --targets ABL1_HUMAN_D0 --package_for FAH
 
 Additional notes on scripts
 ----------------
