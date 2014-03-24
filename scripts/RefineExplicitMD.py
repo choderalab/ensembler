@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Refine models with implicit-solvent MD simulations
+# Refine models with explicit-solvent MD simulations
 #
 # Daniel L. Parton <daniel.parton@choderalab.org> - 21 Mar 2014
 #
@@ -22,13 +22,6 @@ argparser.add_argument('--templates', nargs='+', help='(Default: all templates) 
 args = argparser.parse_args()
 
 MSMSeeder.core.check_project_toplevel_dir()
-
-# ========
-# Parse project metadata
-# ========
-
-project_metadata = MSMSeeder.core.ProjectMetadata()
-project_metadata.load(MSMSeeder.core.project_metadata_filename)
 
 # ========
 # Run simulations

@@ -1,9 +1,9 @@
 MSMSeeder
 =========
 
-Generation of diverse protein structural ensembles, for the initialization of
-molecular dynamics simulations and subsequent construction of Markov state
-models.
+Software pipeline used to generate diverse protein structural ensembles, for
+the purpose of seeding multiple parallel molecular dynamics simulations, and
+subsequent construction of Markov state models.
 
 Authors
 -------
@@ -15,16 +15,16 @@ Authors
 Overview
 --------
 
-The first stage in the software pipeline is the gathering of protein target
+The first stage in the software pipeline is the retrieval of protein target
 sequences and protein template structures. It then builds models by mapping
-each target sequence onto every available template structure using Modeller.
-After filtering out non-unique models (based on an RMSD cutoff), the models are
-subjected to a two-stage molecular dynamics simulation refinement; the first
-with implicit solvation, the second with explicit solvation. For the explicit
-solvation step, the models are solvated such that each system contains the same
-number of waters. Finally, scripts are provided to package and compress the
-resulting models, ready for transfer or for set-up on other platforms such as
-Folding@Home.
+each target sequence onto every available template structure using Modeller
+(http://salilab.org/modeller/). After filtering out non-unique models (based on
+an RMSD cutoff), the models are subjected to a two-stage molecular dynamics
+simulation refinement; the first with implicit solvation, the second with
+explicit solvation. For the explicit solvation step, the models are solvated
+such that each system contains the same number of waters. Finally, scripts are
+provided to package and compress the resulting models, ready for transfer or
+for set-up on other platforms such as Folding@Home.
 
 The scripts have been parallelized with MPI where useful. Furthermore, the MD
 refinement steps use the OpenMM simulation package, which has particularly high

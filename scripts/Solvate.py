@@ -22,13 +22,6 @@ args = argparser.parse_args()
 MSMSeeder.core.check_project_toplevel_dir()
 
 # ========
-# Parse project metadata
-# ========
-
-project_metadata = MSMSeeder.core.ProjectMetadata()
-project_metadata.load(MSMSeeder.core.project_metadata_filename)
-
-# ========
 # Solvate each model individually
 # ========
 
