@@ -85,11 +85,10 @@ project metadata file is provided in the source code.
 
 Sometimes it is necessary to manually override certain automatic aspects of the
 target and template retrieval scripts. This can be achieved using a file named
-'manual-specifications.yaml', which is to be placed in the project top-level
-directory (a template is provided in the source code). Currently, this allows
-one to manually specify individual domain spans for targets and templates
-retrieved from UniProt, as well as minimum and maximum acceptable domain
-lengths.
+'manual-specifications.yaml', to be placed in the project top-level directory
+(a template is provided in the source code). Currently, this allows one to
+manually specify individual domain spans for targets and templates retrieved
+from UniProt, as well as minimum and maximum acceptable domain lengths.
 
 Example commands
 ----------------
