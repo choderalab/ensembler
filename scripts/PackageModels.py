@@ -24,6 +24,7 @@ FAH: set-up the input files and directory structure necessary to start a Folding
 
 argparser.add_argument('--package_for', choices=['transfer', 'FAH'], help=package_for_helpstring)
 argparser.add_argument('--nFAHclones', type=int, default=10, help='(Default: 10) If packaging for Folding@Home, select the number of clones to use for each model.')
+argparser.add_argument('--archiveFAHproject', type=bool, default=True, help='(Default: True) If packaging for Folding@Home, choose whether to compress the results into a .tgz file.')
 argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
 args = argparser.parse_args()
 
@@ -37,5 +38,5 @@ if args.package_for == 'transfer':
     MSMSeeder.packaging.package_for_transfer(process_only_these_targets=args.targets)
 
 elif args.package_for == 'FAH':
-    MSMSeeder.packaging.package_for_fah(process_only_these_targets=args.targets, nclones=args.nFAHclones)
+    MSMSeeder.packaging.package_for_fah(process_only_these_targets=args.targets, nclones=args.nFAHclones, archive=args.archiveFAHproject)
 

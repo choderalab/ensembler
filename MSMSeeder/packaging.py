@@ -1,5 +1,5 @@
-def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
-    '''Set-up the input files and directory structure necessary to start a Folding@Home project.
+def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, archive=True):
+    '''Create the input files and directory structure necessary to start a Folding@Home project.
 
     MPI-enabled.
     '''
@@ -232,6 +232,19 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
 
             source_dir = os.path.join(models_target_dir, valid_templates[run_index].id)
             generateRun(project_dir, source_dir, run_index, nclones, verbose)
+
+        # ========
+        # Archive
+        # ========
+
+        comm.Barrier()
+
+        if archive:
+            if rank == 0:
+                if verbose: print "Building compressed archive of results..."
+                import subprocess
+                archive_filename = os.path.join(projects_dir, target.id + '.tgz')
+                subprocess.call(['tar', 'zcf', archive_filename, project_dir])
 
 
 def package_for_transfer(process_only_these_targets=None):
