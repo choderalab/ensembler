@@ -7,6 +7,8 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
     import Bio.SeqIO
     import numpy
     import mpi4py.MPI
+    import simtk.openmm as openmm
+    import simtk.unit as unit
     comm = mpi4py.MPI.COMM_WORLD
     rank = comm.rank
     size = comm.size
@@ -40,8 +42,6 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
         if verbose: print "Building RUN %d" % run
      
         try:
-            import simtk.openmm as openmm
-            import simtk.unit as unit
             import os, shutil
             import gzip
             
@@ -158,9 +158,10 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
 
         comm.Barrier()
 
-        print "-------------------------------------------------------------------------"
-        print "Building FAH OpenMM project for target %s" % (target.id)
-        print "-------------------------------------------------------------------------"
+        if rank == 0:
+            print "-------------------------------------------------------------------------"
+            print "Building FAH OpenMM project for target %s" % target.id
+            print "-------------------------------------------------------------------------"
 
         # ========
         # Build a list of valid templates
@@ -174,11 +175,11 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
             is_valid = True
             filenames = ['explicit-system.xml', 'explicit-state.xml', 'explicit-integrator.xml']
             for filename in filenames:
-                fullpath = os.path.join(models_target_dir, template, filename)
+                fullpath = os.path.join(models_target_dir, template.id, filename)
                 if not (os.path.exists(fullpath) or os.path.exists(fullpath+'.gz')):
                     is_valid = False
             # Exclude those that are not unique by clustering.
-            unique_by_clustering = os.path.exists(os.path.join(models_target_dir, template, 'unique_by_clustering'))
+            unique_by_clustering = os.path.exists(os.path.join(models_target_dir, template.id, 'unique_by_clustering'))
             if not unique_by_clustering:
                 is_valid = False
             # TODO: Exclude if final potential energies from explicit solvent equilibration are too high.
@@ -197,7 +198,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
         if verbose: print "Sorting templates in order of decreasing sequence identity..."
         sequence_identities = numpy.zeros([nvalid], numpy.float32)
         for (template_index, template) in enumerate(valid_templates):
-            filename = os.path.join(models_target_dir, template, 'sequence-identity.txt')
+            filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
             with open(filename, 'r') as infile:
                 contents = infile.readline().strip()
             sequence_identity = float(contents)
@@ -225,7 +226,11 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10):
 
         if verbose: print "Building RUNs in parallel..."
         for run_index in range(rank, len(valid_templates), size):
-            source_dir = os.path.join(models_target_dir, valid_templates[run_index])
+            print "-------------------------------------------------------------------------"
+            print "Building RUN for template %s" % valid_templates[run_index].id
+            print "-------------------------------------------------------------------------"
+
+            source_dir = os.path.join(models_target_dir, valid_templates[run_index].id)
             generateRun(project_dir, source_dir, run_index, nclones, verbose)
 
 

@@ -23,7 +23,7 @@ FAH: set-up the input files and directory structure necessary to start a Folding
 '''.strip()
 
 argparser.add_argument('--package_for', choices=['transfer', 'FAH'], help=package_for_helpstring)
-argparser.add_argument('--nFAHclones', type=int, default=10, help='If packaging for Folding@Home, select the number of clones to use for each model.')
+argparser.add_argument('--nFAHclones', type=int, default=10, help='(Default: 10) If packaging for Folding@Home, select the number of clones to use for each model.')
 argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
 args = argparser.parse_args()
 
