@@ -16,19 +16,15 @@ Overview
 --------
 
 The first stage in the software pipeline is the retrieval of protein target
-sequences and protein template structures. It then builds models by mapping
-each target sequence onto every available template structure using Modeller
-(http://salilab.org/modeller/). After filtering out non-unique models (based on
-an RMSD cutoff), the models are subjected to a two-stage molecular dynamics
-simulation refinement; the first with implicit solvation, the second with
-explicit solvation. For the explicit solvation step, the models are solvated
-such that each system contains the same number of waters. Finally, scripts are
-provided to package and compress the resulting models, ready for transfer or
-for set-up on other platforms such as Folding@Home.
-
-The scripts have been parallelized with MPI where useful. Furthermore, the MD
-refinement steps use the OpenMM simulation package, which has particularly high
-performance on GPUs.
+sequences and protein template structures. Models are subsequently built by
+mapping each target sequence onto every available template structure using
+Modeller (http://salilab.org/modeller/). After filtering out non-unique models
+(based on an RMSD cutoff), the models are subjected to a two-stage molecular
+dynamics simulation refinement; the first with implicit solvation, the second
+with explicit solvation. For the explicit solvation step, the models are
+solvated such that each system contains the same number of waters. Finally,
+scripts are provided to package and compress the resulting models, ready for
+transfer or for set-up on other platforms such as Folding@Home.
 
 Manifest
 --------
@@ -74,6 +70,10 @@ following order:
 6. Solvate.py
 7. RefineExplicitMD.py
 8. PackageModels.py
+
+The scripts have been parallelized with MPI where useful. Furthermore, the MD
+refinement steps use the OpenMM simulation package, which has particularly high
+performance on GPUs.
 
 Example commands
 ----------------
