@@ -242,20 +242,6 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
                 run_dir = os.path.join(project_dir, 'RUN' + str(run_index))
                 archiveRun(run_index, run_dir, verbose)
 
-        # ========
-        # Archive
-        # ========
-
-        comm.Barrier()
-
-        if archive:
-            if rank == 0:
-                if verbose: print "Building archive of compressed runs..."
-                import subprocess
-                archive_filename = os.path.join(projects_dir, target.id + '.tgz')
-                compressed_run_files = os.path.join(project_dir, '*.tgz')
-                subprocess.call(['tar', 'cf', archive_filename, compressed_run_files])
-
 
 def package_for_transfer(process_only_these_targets=None):
     raise Exception, 'Not implemented yet.'
