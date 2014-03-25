@@ -1,0 +1,8 @@
+target-selection:
+  domain-spans:
+    ABL1_HUMAN_D0: 242-513
+template-selection:
+  min-domain-len: 0
+  max-domain-len: 350
+  domain-spans:
+    ABL1_HUMAN_D0: 242-513

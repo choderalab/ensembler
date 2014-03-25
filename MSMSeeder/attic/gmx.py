@@ -1,6 +1,6 @@
 # Library for helping with Gromacs set-up and simulation
 #
-# Daniel L. Parton <partond@mskcc.org> - 13 Mar 2013
+# Daniel L. Parton <daniel.parton@choderalab.org> - 13 Mar 2013
 #
 import re
 
