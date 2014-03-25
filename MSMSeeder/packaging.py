@@ -145,6 +145,12 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         return
 
 
+    def archiveRun(run_index, run_dir, verbose=False):
+        import subprocess
+        archive_filename = run_dir + '.tgz'
+        subprocess.call(['tar', 'zcf', archive_filename, run_dir])
+
+
 
 
     for target in targets:
@@ -232,6 +238,9 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
 
             source_dir = os.path.join(models_target_dir, valid_templates[run_index].id)
             generateRun(project_dir, source_dir, run_index, nclones, verbose)
+            if archive:
+                run_dir = os.path.join(project_dir, 'RUN' + str(run_index))
+                archiveRun(run_index, run_dir, verbose)
 
         # ========
         # Archive
@@ -241,10 +250,11 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
 
         if archive:
             if rank == 0:
-                if verbose: print "Building compressed archive of results..."
+                if verbose: print "Building archive of compressed runs..."
                 import subprocess
                 archive_filename = os.path.join(projects_dir, target.id + '.tgz')
-                subprocess.call(['tar', 'zcf', archive_filename, project_dir])
+                compressed_run_files = os.path.join(project_dir, '*.tgz')
+                subprocess.call(['tar', 'cf', archive_filename, compressed_run_files])
 
 
 def package_for_transfer(process_only_these_targets=None):
