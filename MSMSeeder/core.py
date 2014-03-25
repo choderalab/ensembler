@@ -4,9 +4,6 @@
 
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 
-# this is used to convert a dict into an OrderedDict, so please no duplicate items.
-project_metadata_document_order = ['init', 'target-selection', 'template-selection', 'modelling', 'model-refinement', 'packaging']
-
 project_metadata_filename = 'project-data.yaml'
 manual_specifications_filename = 'manual-specifications.yaml'
 
