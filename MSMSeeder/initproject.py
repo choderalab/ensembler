@@ -503,7 +503,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         }
         selected_templates.append(template_data)
 
-    print '%d templates selected.', len(selected_templates)
+    print '%d templates selected.' % len(selected_templates)
     print ''
 
     # =========
