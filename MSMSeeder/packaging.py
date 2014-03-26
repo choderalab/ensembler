@@ -18,11 +18,12 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
     models_dir = os.path.abspath('models')
     packaged_models_dir = os.path.abspath('packaged-models')
     projects_dir = os.path.join(packaged_models_dir, 'fah-projects')
+    original_dir = os.getcwd()
     if not os.path.exists(projects_dir):
         os.mkdir(projects_dir)
 
     targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
     templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
     templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
@@ -145,10 +146,13 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         return
 
 
-    def archiveRun(run_index, run_dir, verbose=False):
+    def archiveRun(run_index, verbose=False):
         import subprocess
-        archive_filename = run_dir + '.tgz'
+        os.chdir(project_dir)
+        archive_filename = 'RUN%d.tgz' % run_index
+        run_dir = 'RUN%d' % run_index
         subprocess.call(['tar', 'zcf', archive_filename, run_dir])
+        os.chdir(original_dir)
 
 
 
@@ -239,8 +243,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             source_dir = os.path.join(models_target_dir, valid_templates[run_index].id)
             generateRun(project_dir, source_dir, run_index, nclones, verbose)
             if archive:
-                run_dir = os.path.join(project_dir, 'RUN' + str(run_index))
-                archiveRun(run_index, run_dir, verbose)
+                archiveRun(run_index, verbose)
 
 
 def package_for_transfer(process_only_these_targets=None):

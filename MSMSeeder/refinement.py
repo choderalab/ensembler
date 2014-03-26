@@ -20,7 +20,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     original_dir = os.getcwd()
 
     targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
     templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
     templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
@@ -224,7 +224,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     original_dir = os.getcwd()
 
     targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
     templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
     templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
@@ -318,7 +318,7 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
         models_dir = os.path.abspath("models")
 
         targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-        targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+        targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
         templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
         templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
@@ -397,7 +397,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     original_dir = os.getcwd()
 
     targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
     templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
     templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 

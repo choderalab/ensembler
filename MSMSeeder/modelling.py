@@ -17,21 +17,22 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
     templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
 
-    targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
     templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
     ntemplates = len(templates)
 
     for target in targets:
         if process_only_these_targets and target.id not in process_only_these_targets: continue
 
+        models_target_dir = os.path.join(models_dir, target.id)
         if rank == 0:
             print "========================================================================="
             print "Modelling '%s'" % (target.id)
             print "========================================================================="
+            if not os.path.exists(models_target_dir):
+                os.mkdir(models_target_dir)
 
-        models_target_dir = os.path.join(models_dir, target.id)
-        if not os.path.exists(models_target_dir):
-            os.mkdir(models_target_dir)
+        comm.Barrier()
 
         for template_index in range(rank, ntemplates, size):
             template = templates[template_index]
@@ -172,9 +173,9 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
         models_dir = os.path.abspath("models")
 
         targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-        targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+        targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
         templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-        templates = Bio.SeqIO.parse(templates_fasta_filename, 'fasta')
+        templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
         # ========
         # Compile sorted list by sequence identity
@@ -220,9 +221,9 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
                 seqids[template_index] = seqid
             sorted_seqids = numpy.argsort(-seqids)
 
-            #
-            # WRITE TEMPLATES SORTED BY SEQUENCE IDENTITY
-            # 
+            # ========
+            # Write templates sorted by sequence identity
+            # ========
 
             seq_ofilename = os.path.join(models_target_dir, 'sequence-identities.txt')
             with open(seq_ofilename, 'w') as seq_ofile:
@@ -252,7 +253,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
         models_dir = os.path.abspath("models")
 
         targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-        targets = Bio.SeqIO.parse(targets_fasta_filename, 'fasta')
+        targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
         templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
         templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
 
