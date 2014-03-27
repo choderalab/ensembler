@@ -41,7 +41,13 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
         ofile = output_file
     try:
         resnums_extracted = {}
+        model_index = 0
         for line in pdbtext:
+            # For PDBs containing multiple MODELs (e.g. NMR structures), extract data only from the first model, ignore others.
+            if line[0:6] == 'MODEL ':
+                model_index += 1
+                if model_index == 2:
+                    break
             if line[0:6] in ['ATOM  ', 'HETATM']:
                 resnum = line[22:27]
                 chainID = line[21]
