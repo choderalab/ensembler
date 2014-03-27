@@ -2,6 +2,11 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
     '''Create the input files and directory structure necessary to start a Folding@Home project.
 
     MPI-enabled.
+
+    Parameters
+    ----------
+    archive : Bool
+        A .tgz compressed archive will be created for each individual RUN directory.
     '''
     import os
     import Bio.SeqIO
@@ -244,6 +249,10 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             generateRun(project_dir, source_dir, run_index, nclones, verbose)
             if archive:
                 archiveRun(run_index, verbose)
+
+    comm.Barrier()
+    if rank == 0:
+        print 'Done.'
 
 
 def package_for_transfer(process_only_these_targets=None):
