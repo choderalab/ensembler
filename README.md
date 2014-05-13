@@ -20,7 +20,7 @@ Overview of pipeline
 3. Filter out non-unique models (based on a RMSD cutoff).
 4. Refine models with implicit solvent molecular dynamics simulation.
 5. Refine models with explicit solvent molecular dynamics simulation.
-6. (optional) Package and/or compress the final models, ready for transfer or for set-up on other platforms such as [Folding@Home](http://folding.stanford.edu/).
+6. (_optional_) Package and/or compress the final models, ready for transfer or for set-up on other platforms such as [Folding@Home](http://folding.stanford.edu/).
 
 Manifest
 --------
