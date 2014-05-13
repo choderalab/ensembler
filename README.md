@@ -52,11 +52,9 @@ Basic Usage
 -----------
 
 The package can be used either by running the command-line scripts listed
-below, or by writing scripts to interact with the MSMSeeder Python library. The
-former approach is recommended for initially familiarizing yourself with the
-software. Each script can be run from the command-line with a '-h' flag, which
-will print information on their usage. They are intended to be run in the
-following order:
+below, or by writing scripts to interact with the MSMSeeder Python library.
+Each script can be run from the command-line with a '-h' flag, which will print
+information on their usage. They are intended to be run in the following order:
 
 1. InitMSMSeederProject.py
 2. GatherTargets.py
