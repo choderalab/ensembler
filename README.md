@@ -20,7 +20,7 @@ Overview of pipeline
 3. Filter out non-unique models (based on a RMSD cutoff).
 4. Refine models with implicit solvent molecular dynamics simulation.
 5. Refine models with explicit solvent molecular dynamics simulation.
-6. (optional) Package and/or compress the final models, ready for transfer or for set-up on other platforms such as Folding@Home.
+6. (optional) Package and/or compress the final models, ready for transfer or for set-up on other platforms such as [Folding@Home](http://folding.stanford.edu/).
 
 Manifest
 --------
@@ -105,24 +105,23 @@ Additional notes on scripts
 
 ### GatherTargets.py and GatherTemplates.py
 
-These two scripts are used to provide target data (ids and sequences) and
-template data (ids, sequences and structures). In each case, two different
-methods are provided, specified using the *--gather\_from* flag. The
-'TargetExplorerDB' method allows one to retrieve data from an existing
-TargetExplorer database (https://github.com/choderalab/targetexplorerdb), while
-the 'UniProt' method retrieves data from the UniProt web server. In the latter
-case, the *--uniprot\_query* flag specifies the search string used to select
-UniProt entries. This uses the same syntax as the search function on the
+These scripts are used to provide target data (ids and sequences) and
+template data (ids, sequences and structures). Two different
+methods are provided for each script, specified with a command-line flag:
+
+* _--gather\_from TargetExplorerDB_
+    * Retrieves data from an existing
+[TargetExplorer](https://github.com/choderalab/targetexplorerdb) database
+* _--gather\_from UniProt_
+    * retrieves data from the UniProt web server, as specified by two additional flags:
+    * _--uniprot\_query_
+        * Specifies the search string used to select UniProt entries
+        * This uses the same syntax as the search function on the
 UniProt site; not all types of syntax may be supported, but most basic searches
-will work. While the initial data returned is in the form of UniProt *entries*
-(i.e.  full-length proteins), the targets and templates selected by the scripts
-must be protein domains. Without further specification, the scripts will select
-all protein domains contained within the returned Uniprot entries. Often it
-will be necessary to select only a subset of these protein domains - e.g. if
-protein kinase domains are the desired target, then it will be necessary to
-filter out other domains contained in the full-length kinase proteins - and
-this can be achieved by supplying an appropriate regular expression along with
-the *--uniprot\_domain\_regex* flag.
+will work.
+        * Note that this flag used on its own will return UniProt _entries_ (i.e. full-length proteins)
+    * _--uniprot\_domain\_regex_
+        * Pass a regular expression to this flag to subselect only certain target/template domains
 
 It should also be noted that the output from these two scripts is simply a list
 of target sequences (targets/targets.fa), a list of template sequences
@@ -131,6 +130,6 @@ of target sequences (targets/targets.fa), a list of template sequences
 scripts can thus be run using any set of data specified in this way, allowing
 the GatherTargets.py and GatherTemplates.py scripts to be bypassed or modified
 if necessary. The main restrictions are that modified residues (e.g.
-phosphotyrosine) cannot be included, and that ids and residues in the
+phosphotyrosines) cannot be included, and that ids and residues in the
 templates.fa file must match with the template structure files.
 
