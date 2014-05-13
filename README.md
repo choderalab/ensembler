@@ -12,19 +12,15 @@ Authors
 * John D. Chodera | john.chodera@choderalab.org
 * Patrick B. Grinaway | patrick.grinaway@choderalab.org
 
-Overview
---------
+Overview of pipeline
+--------------------
 
-The first stage in the software pipeline is the retrieval of protein target
-sequences and protein template structures. Models are subsequently built by
-mapping each target sequence onto every available template structure using
-Modeller (http://salilab.org/modeller/). After filtering out non-unique models
-(based on an RMSD cutoff), the models are subjected to a two-stage molecular
-dynamics simulation refinement; the first with implicit solvation, the second
-with explicit solvation. For the explicit solvation step, the models are
-solvated such that each system contains the same number of waters. Finally,
-scripts are provided to package and compress the resulting models, ready for
-transfer or for set-up on other platforms such as Folding@Home.
+1. Retrieve protein target sequences and template structures.
+2. Build models by mapping each target sequence onto every available template structure, using Modeller (http://salilab.org/modeller/).
+3. Filter out non-unique models (based on a RMSD cutoff).
+4. Refine models with implicit solvent molecular dynamics simulation.
+5. Refine models with explicit solvent molecular dynamics simulation.
+6. (optional) Package and/or compress the final models, ready for transfer or for set-up on other platforms such as Folding@Home.
 
 Manifest
 --------
@@ -38,8 +34,8 @@ tests/ - to test whether the code is working correctly, run nosetests from this 
 Installation
 ------------
 
-Clone this repository, move into this directory, then run:
-
+    git clone https://github.com/choderalab/msmseeder.git
+    cd msmseeder
     python setup.py install
 
 Dependencies
