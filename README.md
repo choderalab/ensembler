@@ -46,7 +46,7 @@ Dependencies
 * mpi4py - http://mpi4py.scipy.org/
 * mdtraj - http://mdtraj.org/
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
-* Various other Python packages commonly used in scientific computing. Recommended aproach is to install either Enthought Canopy (https://www.enthought.com/products/canopy/) or Continuum Anaconda (https://store.continuum.io/)
+* Various other Python packages commonly used in scientific computing. Recommended aproach is to install either Continuum Anaconda (https://store.continuum.io/) or Enthought Canopy (https://www.enthought.com/products/canopy/)
 
 Basic Usage
 -----------
