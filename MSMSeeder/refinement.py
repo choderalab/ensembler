@@ -203,6 +203,10 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 with open(reject_file_path, 'w') as reject_file:
                     reject_file.write(trbk)
 
+    comm.Barrier()
+    if rank == 0:
+        print 'Done.'
+
 
 def solvate_models(process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False):
     '''Solvate models which have been through MD refinement with implict solvent.
@@ -301,6 +305,10 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                 reject_file.write('%s : %s\n' % (template.id, str(e)))
                 reject_file.flush()
 
+    comm.Barrier()
+    if rank == 0:
+        print 'Done.'
+
 
 def determine_nwaters(process_only_these_targets=None, process_only_these_templates=None, verbose=False):
     '''Determine distribution of nwaters, and select the value at the 68th percentile.
@@ -369,6 +377,10 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
             filename = os.path.join(models_target_dir, 'nwaters-use.txt')
             with open(filename, 'w') as outfile:
                 outfile.write('%d\n' % nwaters_array[index68])
+
+    comm.Barrier()
+    if rank == 0:
+        print 'Done.'
 
 
 # ========
@@ -713,6 +725,10 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt')
                 with open(reject_file_path, 'w') as reject_file:
                     reject_file.write(trbk)
+
+    comm.Barrier()
+    if rank == 0:
+        print 'Done.'
 
 
 def readFileContents(filename):

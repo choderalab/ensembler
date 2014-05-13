@@ -1,4 +1,4 @@
-def build_models(process_only_these_targets=None, process_only_these_templates=None):
+def build_models(process_only_these_targets=None, process_only_these_templates=None, verbose=False):
     r'''Uses the build_model method to build homology models for a given set of
     targets and templates.
 
@@ -27,22 +27,21 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
         models_target_dir = os.path.join(models_dir, target.id)
         if rank == 0:
             print "========================================================================="
-            print "Modelling '%s'" % (target.id)
+            print "Working on target '%s'" % (target.id)
             print "========================================================================="
             if not os.path.exists(models_target_dir):
                 os.mkdir(models_target_dir)
 
-        comm.Barrier()
-
         for template_index in range(rank, ntemplates, size):
             template = templates[template_index]
             if process_only_these_templates and template.id not in process_only_these_templates: continue
-            build_model(target, template)
+            build_model(target, template, verbose)
 
+    comm.Barrier()
     if rank == 0:
         print 'Done.'
 
-def build_model(target, template):
+def build_model(target, template, verbose=False):
     r'''Uses Modeller to build a homology model for a given target and
     template.
 
@@ -60,10 +59,6 @@ def build_model(target, template):
     import Bio.pairwise2
     import Bio.SubsMat.MatrixInfo
 
-    print "-------------------------------------------------------------------------"
-    print "Modelling '%s' => '%s'" % (target.id, template.id)
-    print "-------------------------------------------------------------------------"
-
     templates_dir = os.path.abspath('templates')
     models_dir = os.path.abspath('models')
     models_target_dir = os.path.join(models_dir, target.id)
@@ -78,8 +73,12 @@ def build_model(target, template):
     files_to_check = [model_dir, model_pdbfilename, seqid_filename, aln_filename, restraint_filename_gz]
     files_are_present = [os.path.exists(filename) for filename in files_to_check]
     if all(files_are_present):
-        print "Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id)
+        if verbose: print "Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id)
         return
+
+    print "-------------------------------------------------------------------------"
+    print "Modelling '%s' => '%s'" % (target.id, template.id)
+    print "-------------------------------------------------------------------------"
 
     # Conduct alignment
     matrix = Bio.SubsMat.MatrixInfo.gonnet
@@ -232,6 +231,8 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
                     identity = seqids[index]
                     seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
 
+    comm.Barrier()
+    if rank == 0:
         print 'Done.'
 
 def cluster_models(process_only_these_targets=None, verbose=False):
@@ -326,5 +327,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
                     uniques_file.write(u+'\n')
                 print '%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff)
 
+    comm.Barrier()
+    if rank == 0:
         print 'Done.'
 
