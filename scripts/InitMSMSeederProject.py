@@ -17,5 +17,8 @@ args = argparser.parse_args()
 
 project_dir = os.path.abspath(args.project_dir)
 
+if not os.path.exists(project_dir):
+    os.makedirs(project_dir)
+
 MSMSeeder.initproject.init(project_dir)
 
