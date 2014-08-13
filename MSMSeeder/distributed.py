@@ -230,9 +230,11 @@ def _retrieve_chain(pdb_code_input, model_id=0):
     import os
     import StringIO
     import urllib2
+    import shutil
     import simtk.openmm.app as app
     pdb_code, chain_code = pdb_code_input.split("_")
-    os.chdir(tempfile.mkdtemp())
+    temp_dir = tempfile.mkdtemp()
+    os.chdir(temp_dir)
     pdb_fetcher = pdb.PDBList()
     pdb_filepath = pdb_fetcher.retrieve_pdb_file(pdb_code)
     parser = pdb.PDBParser()
@@ -250,6 +252,7 @@ def _retrieve_chain(pdb_code_input, model_id=0):
     io.set_structure(chain_result)
     io.save(outval)
     outval.seek(0)
+    shutil.rmtree(temp_dir)
     return (fasta_result, app.PDBFile(outval))
 
 def align_template_to_reference(msmseed, ref_structure, ref_structure_id):
