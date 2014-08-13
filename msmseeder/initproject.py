@@ -13,11 +13,13 @@ def init(project_toplevel_dir):
     # Parameters
     # =========
 
-    import os, datetime
+    import sys
+    import os
+    import datetime
+    from lxml import etree
     import msmseeder
 
     project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models']
-    msmseeder.core.project_metadata_filename = 'project-data.yaml'
 
     now = datetime.datetime.utcnow()
     datestamp = now.strftime(msmseeder.core.datestamp_format_string)
@@ -40,15 +42,18 @@ def init(project_toplevel_dir):
     os.mkdir(os.path.join('structures', 'pdb'))
     os.mkdir(os.path.join('structures', 'sifts'))
     os.mkdir(os.path.join('templates', 'structures'))
-        
+
     # =========
-    # Create metadata file and add datestamp
+    # Metadata
     # =========
 
-    project_metadata = msmseeder.core.ProjectMetadata()
-    init_metadata = {'init' : {'datestamp' : datestamp}}
-    project_metadata.add_metadata(init_metadata)
-    project_metadata.write(ofilepath=msmseeder.core.project_metadata_filename)
+    metadata_root = etree.Element('metadata')
+    init_node = etree.SubElement(metadata_root, 'init', datestamp=datestamp, init_path=os.path.abspath(project_toplevel_dir))
+    python_node = etree.SubElement(init_node, 'python', version=sys.version.split('|')[0].strip())
+    etree.SubElement(python_node, 'version_full').text=sys.version
+    etree.SubElement(init_node, 'msmseeder', version=str(msmseeder.__version__), commit=msmseeder.core.get_src_git_commit_hash())
+    with open('meta.xml', 'w') as metadata_file:
+        metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
 
     print 'Done.'
 
