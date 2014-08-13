@@ -5,7 +5,7 @@
 # Daniel L. Parton <daniel.parton@choderalab.org> - 11 Mar 2014
 
 import os, argparse
-import MSMSeeder.initproject
+import msmseeder.initproject
 
 # ========
 # Parse command-line arguments
@@ -20,5 +20,5 @@ project_dir = os.path.abspath(args.project_dir)
 if not os.path.exists(project_dir):
     os.makedirs(project_dir)
 
-MSMSeeder.initproject.init(project_dir)
+msmseeder.initproject.init(project_dir)
 

@@ -5,8 +5,8 @@
 # Daniel L. Parton <daniel.parton@choderalab.org> - 21 Mar 2014
 #
 
-import MSMSeeder
-import MSMSeeder.refinement
+import msmseeder
+import msmseeder.refinement
 
 # ========
 # Parse command-line arguments
@@ -21,11 +21,11 @@ argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Opti
 argparser.add_argument('--templates', nargs='+', help='(Default: all templates) Optionally define a subset of templates to work on by providing one or more template IDs separated by spaces (e.g. "ABL1_HUMAN_D0_1OPL_A")')
 args = argparser.parse_args()
 
-MSMSeeder.core.check_project_toplevel_dir()
+msmseeder.core.check_project_toplevel_dir()
 
 # ========
 # Run simulations
 # ========
 
-MSMSeeder.refinement.refine_implicitMD(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates)
+msmseeder.refinement.refine_implicitMD(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates)
 

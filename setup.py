@@ -11,7 +11,7 @@ setup(
     author_email = 'daniel.parton@choderalab.org',
     description = 'Generation of diverse protein structural ensembles, for the initialization of molecular dynamics simulations and subsequent construction of Markov state models. ',
     long_description = read('README.md'),
-    packages = ['MSMSeeder', 'tests'],
+    packages = ['msmseeder', 'tests'],
     scripts = ['scripts/InitMSMSeederProject.py', 'scripts/GatherTargets.py', 'scripts/GatherTemplates.py', 'scripts/BuildModels.py', 'scripts/RefineImplicitMD.py', 'scripts/Solvate.py', 'scripts/RefineExplicitMD.py', 'scripts/PackageModels.py'],
     data_files = [('', ['LICENSE']), ('templates', ['project-data.yaml-TEMPLATE', 'manual-specifications.yaml-TEMPLATE'])],
 )

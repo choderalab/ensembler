@@ -5,8 +5,8 @@
 # Daniel L. Parton <daniel.parton@choderalab.org> - 24 Mar 2014
 #
 
-import MSMSeeder
-import MSMSeeder.packaging
+import msmseeder
+import msmseeder.packaging
 
 # ========
 # Parse command-line arguments
@@ -28,15 +28,15 @@ argparser.add_argument('--archiveFAHproject', type=bool, default=True, help='(De
 argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
 args = argparser.parse_args()
 
-MSMSeeder.core.check_project_toplevel_dir()
+msmseeder.core.check_project_toplevel_dir()
 
 # ========
 # Run simulations
 # ========
 
 if args.package_for == 'transfer':
-    MSMSeeder.packaging.package_for_transfer(process_only_these_targets=args.targets)
+    msmseeder.packaging.package_for_transfer(process_only_these_targets=args.targets)
 
 elif args.package_for == 'FAH':
-    MSMSeeder.packaging.package_for_fah(process_only_these_targets=args.targets, nclones=args.nFAHclones, archive=args.archiveFAHproject)
+    msmseeder.packaging.package_for_fah(process_only_these_targets=args.targets, nclones=args.nFAHclones, archive=args.archiveFAHproject)
 

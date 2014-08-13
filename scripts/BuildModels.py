@@ -5,8 +5,8 @@
 # Daniel L. Parton <daniel.parton@choderalab.org> - 11 Mar 2014
 #
 
-import MSMSeeder
-import MSMSeeder.modelling
+import msmseeder
+import msmseeder.modelling
 
 # ========
 # Parse command-line arguments
@@ -20,22 +20,22 @@ argparser.add_argument('--templates', nargs='+', help='(Default: all templates) 
 argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
 args = argparser.parse_args()
 
-MSMSeeder.core.check_project_toplevel_dir()
+msmseeder.core.check_project_toplevel_dir()
 
 # ========
 # Build models
 # ========
 
-MSMSeeder.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)
+msmseeder.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)
 
 # ========
 # Write a list of models sorted by sequence identity
 # ========
 
-MSMSeeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.targets, verbose=args.verbose)
+msmseeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.targets, verbose=args.verbose)
 
 # ========
 # Cluster models
 # ========
 
-MSMSeeder.modelling.cluster_models(process_only_these_targets=args.targets, verbose=args.verbose)
+msmseeder.modelling.cluster_models(process_only_these_targets=args.targets, verbose=args.verbose)

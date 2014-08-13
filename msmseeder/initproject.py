@@ -14,13 +14,13 @@ def init(project_toplevel_dir):
     # =========
 
     import os, datetime
-    import MSMSeeder
+    import msmseeder
 
     project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models']
-    MSMSeeder.core.project_metadata_filename = 'project-data.yaml'
+    msmseeder.core.project_metadata_filename = 'project-data.yaml'
 
     now = datetime.datetime.utcnow()
-    datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
+    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
 
     # =========
     # Create necessary project directories
@@ -45,10 +45,10 @@ def init(project_toplevel_dir):
     # Create metadata file and add datestamp
     # =========
 
-    project_metadata = MSMSeeder.core.ProjectMetadata()
+    project_metadata = msmseeder.core.ProjectMetadata()
     init_metadata = {'init' : {'datestamp' : datestamp}}
     project_metadata.add_metadata(init_metadata)
-    project_metadata.write(ofilepath=MSMSeeder.core.project_metadata_filename)
+    project_metadata.write(ofilepath=msmseeder.core.project_metadata_filename)
 
     print 'Done.'
 
@@ -65,7 +65,7 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     # =========
 
     import os, datetime
-    import MSMSeeder
+    import msmseeder
     from lxml import etree
 
     fasta_ofilepath = os.path.join('targets', 'targets.fa')
@@ -74,8 +74,8 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     # Read in project metadata file (will throw an exception if it does not exist)
     # =========
 
-    project_metadata = MSMSeeder.core.ProjectMetadata()
-    project_metadata.load(MSMSeeder.core.project_metadata_filename)
+    project_metadata = msmseeder.core.ProjectMetadata()
+    project_metadata.load(msmseeder.core.project_metadata_filename)
 
     # =========
     # Parse the TargetExplorer database path
@@ -113,7 +113,7 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     # =========
 
     now = datetime.datetime.utcnow()
-    datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
+    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
 
     target_selection_metadata = {
     'datestamp': datestamp,
@@ -163,7 +163,7 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     # =========
 
     import os, datetime
-    import MSMSeeder
+    import msmseeder
     from lxml import etree
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
@@ -172,8 +172,8 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     # Read in project metadata file
     # =========
 
-    project_metadata = MSMSeeder.core.ProjectMetadata()
-    project_metadata.load(MSMSeeder.core.project_metadata_filename)
+    project_metadata = msmseeder.core.ProjectMetadata()
+    project_metadata.load(msmseeder.core.project_metadata_filename)
 
     # =========
     # Parse the TargetExplorer database
@@ -220,7 +220,7 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     # =========
 
     now = datetime.datetime.utcnow()
-    datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
+    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
 
     template_selection_metadata = {
     'datestamp': datestamp,
@@ -243,9 +243,9 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # =========
 
     import os, datetime, yaml, gzip
-    import MSMSeeder
-    import MSMSeeder.UniProt
-    import MSMSeeder.PDB
+    import msmseeder
+    import msmseeder.UniProt
+    import msmseeder.PDB
     from lxml import etree
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
@@ -254,14 +254,14 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # Read in project metadata
     # =========
 
-    project_metadata = MSMSeeder.core.ProjectMetadata()
-    project_metadata.load(MSMSeeder.core.project_metadata_filename)
+    project_metadata = msmseeder.core.ProjectMetadata()
+    project_metadata.load(msmseeder.core.project_metadata_filename)
 
     min_domain_len = None
     max_domain_len = None
     domain_span_manual_specifications = None
-    if os.path.exists(MSMSeeder.core.manual_specifications_filename):
-        with open(MSMSeeder.core.manual_specifications_filename, 'r') as manual_specifications_file:
+    if os.path.exists(msmseeder.core.manual_specifications_filename):
+        with open(msmseeder.core.manual_specifications_filename, 'r') as manual_specifications_file:
             manual_specifications = yaml.load(manual_specifications_file)
         template_manual_specifications = manual_specifications.get('template-selection')
         min_domain_len = template_manual_specifications.get('min-domain-len')
@@ -280,7 +280,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # =========
 
     print 'Querying UniProt web server...'
-    UniProtXMLstring = MSMSeeder.UniProt.retrieve_uniprot(UniProt_query_string)
+    UniProtXMLstring = msmseeder.UniProt.retrieve_uniprot(UniProt_query_string)
     parser = etree.XMLParser(huge_tree=True)
     UniProtXML = etree.fromstring(UniProtXMLstring, parser)
     print 'Number of entries returned from initial UniProt search:', len(UniProtXML)
@@ -302,7 +302,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         query_string_split = UniProt_query_string.split('"')
         query_string_domain_selection = query_string_split[ query_string_split.index('domain:') + 1 ]
 
-        UniProt_query_string_domains = UniProtXML.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection, extensions = { (None, 'match_regex'): MSMSeeder.core.xpath_match_regex_case_insensitive })
+        UniProt_query_string_domains = UniProtXML.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_insensitive })
 
         UniProt_unique_domain_names = set([domain.get('description') for domain in UniProt_query_string_domains])
         print 'Set of unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s' % (query_string_domain_selection, UniProt_unique_domain_names)
@@ -319,7 +319,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # =========
 
     if UniProt_domain_regex != None:
-        regex_matched_domains = UniProtXML.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % UniProt_domain_regex, extensions = { (None, 'match_regex'): MSMSeeder.core.xpath_match_regex_case_sensitive })
+        regex_matched_domains = UniProtXML.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % UniProt_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
 
         regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
         print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s' % (UniProt_domain_regex, regex_matched_domains_unique_names)
@@ -338,7 +338,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     for entry in all_UniProt_entries:
         entry_name = entry.find('name').text
         if UniProt_domain_regex != None:
-            selected_domains = entry.xpath('feature[@type="domain"][match_regex(@description, "%s")]' % UniProt_domain_regex, extensions = { (None, 'match_regex'): MSMSeeder.core.xpath_match_regex_case_sensitive })
+            selected_domains = entry.xpath('feature[@type="domain"][match_regex(@description, "%s")]' % UniProt_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
         else:
             selected_domains = entry.findall('feature[@type="domain"]')
 
@@ -361,7 +361,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
 
                 for PDB_chain_span_node in PDB_chain_span_nodes:
                     chain_span_string = PDB_chain_span_node.get('value')
-                    chain_spans = MSMSeeder.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
+                    chain_spans = msmseeder.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
 
                     for chainID in chain_spans.keys():
                         span = chain_spans[chainID]
@@ -409,7 +409,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
             # If still not found, download the PDB file
             if not os.path.exists(project_pdb_filepath):
                 print 'Downloading PDB file for:', PDBID
-                pdbgz_page = MSMSeeder.PDB.retrieve_pdb(PDBID, compressed='yes')
+                pdbgz_page = msmseeder.PDB.retrieve_pdb(PDBID, compressed='yes')
                 with open(project_pdb_filepath + '.gz', 'w') as pdbgz_file:
                     pdbgz_file.write(pdbgz_page)    
                 with gzip.open(project_pdb_filepath + '.gz', 'rb') as pdbgz_file_decoded:
@@ -437,7 +437,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
             # If still not found, download the SIFTS file
             if not os.path.exists(project_sifts_filepath):
                 print 'Downloading sifts file for:', PDBID
-                sifts_page = MSMSeeder.PDB.retrieve_sifts(PDBID)
+                sifts_page = msmseeder.PDB.retrieve_sifts(PDBID)
                 with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file: 
                     project_sifts_file.write(sifts_page)    
 
@@ -484,7 +484,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
             continue
 
         ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
-        if ratio_observed < MSMSeeder.core.template_acceptable_ratio_observed_residues:
+        if ratio_observed < msmseeder.core.template_acceptable_ratio_observed_residues:
             #PDBchain['DISCARD'] = True
             continue
 
@@ -530,7 +530,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         template_PDBresnums = template['template_PDBresnums']
         pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb')
         template_filename = os.path.join('templates', 'structures', templateID + '.pdb')
-        nresidues_extracted = MSMSeeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
+        nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
         if nresidues_extracted != len(template_PDBresnums):
             raise Exception, 'Number of residues extracted from PDB file does not match desired number of residues.'
 
@@ -539,7 +539,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # =========
 
     now = datetime.datetime.utcnow()
-    datestamp = now.strftime(MSMSeeder.core.datestamp_format_string)
+    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
 
     template_selection_metadata = {
     'datestamp': datestamp,

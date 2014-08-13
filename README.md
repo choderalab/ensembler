@@ -27,7 +27,7 @@ Manifest
 
 scripts/ - Python wrapper scripts which accept parameters from the command-line or project metadata file
 
-MSMSeeder/ - main code; can be used as a standalone Python library package
+msmseeder/ - main code; can be used as a standalone Python library package
 
 tests/ - to test whether the code is working correctly, run nosetests from this top-level directory
 
