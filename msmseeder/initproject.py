@@ -16,13 +16,13 @@ def init(project_toplevel_dir):
     import sys
     import os
     import datetime
-    from lxml import etree
+    import json
+    import yaml
     import msmseeder
 
     project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models']
 
-    now = datetime.datetime.utcnow()
-    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
+    datestamp = msmseeder.core.get_utcnow_formatted()
 
     # =========
     # Create necessary project directories
@@ -47,13 +47,19 @@ def init(project_toplevel_dir):
     # Metadata
     # =========
 
-    metadata_root = etree.Element('metadata')
-    init_node = etree.SubElement(metadata_root, 'init', datestamp=datestamp, init_path=os.path.abspath(project_toplevel_dir))
-    python_node = etree.SubElement(init_node, 'python', version=sys.version.split('|')[0].strip())
-    etree.SubElement(python_node, 'version_full').text = sys.version
-    etree.SubElement(init_node, 'msmseeder', version=str(msmseeder.__version__), commit=msmseeder.core.get_src_git_commit_hash())
-    with open('meta.xml', 'w') as metadata_file:
-        metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
+    metadata = {
+        'init': {
+            'datestamp': datestamp,
+            'init_path': os.path.abspath(project_toplevel_dir),
+            'python_version': sys.version.split('|')[0].strip(),
+            'python_full_version': sys.version,
+            'msmseeder_version': msmseeder.__version__,
+            'msmseeder_commit': msmseeder.core.get_src_git_commit_hash()
+        }
+    }
+
+    metadata = msmseeder.core.ProjectMetadata(metadata)
+    metadata.write('meta.yaml')
 
     print 'Done.'
 
@@ -62,7 +68,7 @@ def init(project_toplevel_dir):
 # Gather targets methods
 # =========
 
-def gather_targets_from_TargetExplorerDB(DB_path):
+def gather_targets_from_TargetExplorerDB(DB_path, species=None):
     '''Gather protein target data from an existing TargetExplorerDB database.'''
 
     # =========
@@ -73,6 +79,7 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     import os
     import datetime
     import imp
+    import yaml
     import msmseeder
     from lxml import etree
 
@@ -91,7 +98,10 @@ def gather_targets_from_TargetExplorerDB(DB_path):
 
     print 'Extracting target data from database...'
 
-    target_domains = DB_root.findall('entry/UniProt/domains/domain[@targetID]')
+    if species != None:
+        target_domains = DB_root.findall('entry/UniProt[@NCBI_taxID="%s"]/domains/domain[@targetID]' % species)
+    else:
+        target_domains = DB_root.findall('entry/UniProt/domains/domain[@targetID]')
 
     # =========
     # Also get the original uniprot search strings from the database project directory
@@ -120,27 +130,29 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     # Metadata
     # =========
 
-    now = datetime.datetime.utcnow()
-    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
+    datestamp = msmseeder.core.get_utcnow_formatted()
 
-    parser = etree.XMLParser(remove_blank_text=True)
-    metadata_root = etree.parse('meta.xml', parser).getroot()
+    with open('meta.yaml') as init_meta_file:
+        metadata = yaml.load(init_meta_file)
 
-    # gather_targets metadata
-    gather_targets_node = etree.SubElement(metadata_root, 'gather_targets', datestamp=datestamp, method='TargetExplorerDB', ntargets=str(len(target_domains)))
-    gather_from_target_explorer_node = etree.SubElement(gather_targets_node, 'gather_from_target_explorer')
-    etree.SubElement(gather_from_target_explorer_node, 'uniprot_query_string').text = target_explorer_db_project_config.uniprot_query_string
-    etree.SubElement(gather_from_target_explorer_node, 'uniprot_domain_regex').text = target_explorer_db_project_config.uniprot_domain_regex
-    etree.SubElement(gather_from_target_explorer_node, 'database_path').text = DB_path
+    metadata['gather_targets'] = {
+        'datestamp': datestamp,
+        'method': 'TargetExplorerDB',
+        'ntargets': str(len(target_domains)),
+        'gather_from_target_explorer': {
+            'uniprot_query_string': target_explorer_db_project_config.uniprot_query_string,
+            'uniprot_domain_regex': target_explorer_db_project_config.uniprot_domain_regex,
+            'species_selector': species if not None else '',
+            'database_path': DB_path
+        },
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': sys.version,
+        'msmseeder_version': msmseeder.__version__,
+        'msmseeder_commit': msmseeder.core.get_src_git_commit_hash()
+    }
 
-    # code version metadata
-    python_node = etree.SubElement(gather_targets_node, 'python', version=sys.version.split('|')[0].strip())
-    etree.SubElement(python_node, 'version_full').text = sys.version
-    etree.SubElement(gather_targets_node, 'msmseeder', version=str(msmseeder.__version__), commit=msmseeder.core.get_src_git_commit_hash())
-
-    targets_metadata_filepath = os.path.join('targets', 'meta.xml')
-    with open(targets_metadata_filepath, 'w') as metadata_file:
-        metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
+    metadata = msmseeder.core.ProjectMetadata(metadata)
+    metadata.write('targets/meta.yaml')
 
     print 'Done.'
 
@@ -235,8 +247,7 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     # Update project metadata file
     # =========
 
-    now = datetime.datetime.utcnow()
-    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
+    datestamp = msmseeder.core.get_utcnow_formatted()
 
     template_selection_metadata = {
     'datestamp': datestamp,
@@ -555,28 +566,27 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # Metadata
     # =========
 
-    now = datetime.datetime.utcnow()
-    datestamp = now.strftime(msmseeder.core.datestamp_format_string)
+    datestamp = msmseeder.core.get_utcnow_formatted()
 
-    parser = etree.XMLParser(remove_blank_text=True)
-    metadata_root = etree.parse('meta.xml', parser).getroot()
+    with open('meta.yaml') as init_meta_file:
+        metadata = yaml.load(init_meta_file)
 
-    # gather_templates metadata
-    gather_templates_node = etree.SubElement(metadata_root, 'gather_templates', datestamp=datestamp, method='UniProt', ntemplates=str(len(selected_templates)))
-    gather_from_uniprot_node = etree.SubElement(gather_templates_node, 'gather_from_uniprot')
-    etree.SubElement(gather_from_uniprot_node, 'uniprot_query_string').text = UniProt_query_string
-    etree.SubElement(gather_from_uniprot_node, 'uniprot_domain_regex').text = UniProt_domain_regex if not None else ''
-    structure_paths_node = etree.SubElement(gather_from_uniprot_node, 'structure_paths')
-    for structure_path in structure_paths:
-        etree.SubElement(structure_paths_node, 'path').text = structure_path
+    metadata['gather_templates'] = {
+        'datestamp': datestamp,
+        'method': 'UniProt',
+        'ntemplates': str(len(selected_templates)),
+        'gather_from_uniprot': {
+            'uniprot_query_string': UniProt_query_string,
+            'uniprot_domain_regex': UniProt_domain_regex if not None else ''
+        },
+        'structure_paths': structure_paths,
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': sys.version,
+        'msmseeder_version': msmseeder.__version__,
+        'msmseeder_commit': msmseeder.core.get_src_git_commit_hash()
+    }
 
-    # code version metadata
-    python_node = etree.SubElement(gather_templates_node, 'python', version=sys.version.split('|')[0].strip())
-    etree.SubElement(python_node, 'version_full').text=sys.version
-    etree.SubElement(gather_templates_node, 'msmseeder', version=str(msmseeder.__version__), commit=msmseeder.core.get_src_git_commit_hash())
-
-    templates_metadata_filepath = os.path.join('templates', 'meta.xml')
-    with open(templates_metadata_filepath, 'w') as metadata_file:
-        metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
+    metadata = msmseeder.core.ProjectMetadata(metadata)
+    metadata.write('templates/meta.yaml')
 
     print 'Done.'

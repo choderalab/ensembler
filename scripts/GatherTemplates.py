@@ -5,6 +5,7 @@
 # Daniel L. Parton <daniel.parton@choderalab.org> - 11 Mar 2014
 #
 
+import os
 import msmseeder
 import msmseeder.initproject
 
@@ -77,7 +78,10 @@ elif template_selection_method == 'UniProt':
 
     UniProt_query_string = args.uniprot_query
     UniProt_domain_regex = args.uniprot_domain_regex
-    structure_paths = args.structure_paths if not None else []
+    if args.structure_paths != None:
+        structure_paths = [os.path.abspath(path) for path in args.structure_paths]
+    else:
+        structure_paths = []
 
 # ========
 # Run the selected gather templates method

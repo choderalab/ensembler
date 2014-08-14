@@ -25,6 +25,7 @@ argument.
 string.'''
 argparser.add_argument('--gather_from', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='TargetExplorerDB')
 argparser.add_argument('--db_path', type=str, help='TargetExplorerDB database path. Will be converted to an absolute path.', required=True)
+argparser.add_argument('--species', type=str, help='Optional NCBI taxonomy ID specifier e.g. 9606 (human).')
 args = argparser.parse_args()
 
 msmseeder.core.check_project_toplevel_dir()
@@ -51,7 +52,7 @@ elif target_selection_method == 'UniProt':
 # ========
 
 if target_selection_method == 'TargetExplorerDB':
-    msmseeder.initproject.gather_targets_from_TargetExplorerDB(DB_path)
+    msmseeder.initproject.gather_targets_from_TargetExplorerDB(DB_path, species=args.species)
 
 elif target_selection_method == 'UniProt':
     msmseeder.initproject.gather_targets_from_UniProt()

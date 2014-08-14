@@ -1,10 +1,25 @@
+def get_modeller_version():
+    '''Hacky attempt to get Modeller version by regex searching the installation directory.
+    '''
+    import modeller
+    import re
+    regex = re.compile('/modeller-[0-9.]{2,6}/')
+    match = re.search(regex, modeller.__file__)
+    if match != None:
+        version = match.group()[10:-1]
+        return version
+    else:
+        return ''
+
 def build_models(process_only_these_targets=None, process_only_these_templates=None, verbose=False):
     r'''Uses the build_model method to build homology models for a given set of
     targets and templates.
 
     MPI-enabled.
     '''
+    import sys
     import os
+    import Bio
     import Bio.SeqIO
     import mpi4py.MPI
     comm = mpi4py.MPI.COMM_WORLD 
@@ -37,8 +52,44 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             if process_only_these_templates and template.id not in process_only_these_templates: continue
             build_model(target, template, verbose)
 
-    comm.Barrier()
+        comm.Barrier()
+
+        # ========
+        # Metadata
+        # ========
+
+        if rank == 0:
+            import yaml
+            import msmseeder
+            import subprocess
+            datestamp = msmseeder.core.get_utcnow_formatted()
+            nsuccessful_models = subprocess.check_output(['find', models_target_dir, '-name', 'model.pdb']).count('\n')
+
+            with open('meta.yaml') as meta_file:
+                metadata = yaml.load(meta_file)
+            with open('targets/meta.yaml') as meta_file:
+                metadata.update(yaml.load(meta_file))
+            with open('templates/meta.yaml') as meta_file:
+                metadata.update(yaml.load(meta_file))
+
+            metadata['build_models'] = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'nsuccessful_models': nsuccessful_models,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': sys.version,
+                'msmseeder_version': msmseeder.__version__,
+                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'modeller_version': get_modeller_version(),
+                'biopython_version': Bio.__version__
+            }
+
+            metadata = msmseeder.core.ProjectMetadata(metadata)
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            metadata.write(meta_filepath)
+
     if rank == 0:
+
         print 'Done.'
 
 def build_model(target, template, verbose=False):
@@ -231,6 +282,33 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
                     identity = seqids[index]
                     seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
 
+            # ========
+            # Metadata
+            # ========
+
+            import sys
+            import yaml
+            import msmseeder
+            datestamp = msmseeder.core.get_utcnow_formatted()
+
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            with open(meta_filepath) as meta_file:
+                metadata = yaml.load(meta_file)
+
+            metadata['sort_by_sequence_identity'] = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': sys.version,
+                'msmseeder_version': msmseeder.__version__,
+                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'biopython_version': Bio.__version__
+            }
+
+            metadata = msmseeder.core.ProjectMetadata(metadata)
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            metadata.write(meta_filepath)
+
     comm.Barrier()
     if rank == 0:
         print 'Done.'
@@ -326,6 +404,36 @@ def cluster_models(process_only_these_targets=None, verbose=False):
                 for u in uniques:
                     uniques_file.write(u+'\n')
                 print '%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff)
+
+            # ========
+            # Metadata
+            # ========
+
+            import sys
+            import yaml
+            import msmseeder
+            import mdtraj.version
+            datestamp = msmseeder.core.get_utcnow_formatted()
+
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            with open(meta_filepath) as meta_file:
+                metadata = yaml.load(meta_file)
+
+            metadata['cluster_models'] = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': sys.version,
+                'msmseeder_version': msmseeder.__version__,
+                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'biopython_version': Bio.__version__,
+                'mdtraj_version': mdtraj.version.short_version,
+                'mdtraj_commit': mdtraj.version.git_revision
+            }
+
+            metadata = msmseeder.core.ProjectMetadata(metadata)
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:

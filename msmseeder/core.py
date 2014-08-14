@@ -16,6 +16,12 @@ template_acceptable_ratio_observed_residues = 0.7
 # Definitions
 # ========
 
+def get_utcnow_formatted():
+    import datetime
+    now = datetime.datetime.utcnow()
+    datestamp = now.strftime(datestamp_format_string)
+    return datestamp
+
 def check_project_toplevel_dir():
     import os
     for dirpath in ['structures', 'templates', 'targets', 'models']:
@@ -35,9 +41,24 @@ def get_src_git_commit_hash():
     return commit_hash
 
 class ProjectMetadata:
+    def __init__(self, data):
+        # Listed in desired document order
+        self.project_metadata_categories = ['init', 'gather_targets', 'gather_templates', 'build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'refine_explicit_md', 'package_for_fah']
+        self.data = data
+
+    def write(self, ofilepath):
+        import yaml
+        with open(ofilepath, 'w') as ofile:
+            for category in self.project_metadata_categories:
+                if category in self.data.keys():
+                    subdict = {category: self.data[category]}
+                    yaml.dump(subdict, ofile, default_flow_style=False)
+
+# XXX Deprecated
+class DeprecatedProjectMetadata:
     '''Container class for project metadata'''
     def __init__(self):
-        # Listed in document order. No duplicates please!
+        # Listed in document order.
         self.project_metadata_categories = ['init', 'target-selection', 'template-selection', 'modelling', 'model-refinement', 'packaging']
         self.data = {}
 
