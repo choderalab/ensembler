@@ -19,6 +19,7 @@ argparser.add_argument('--openmm_platform', choices=['CUDA', 'OpenCL', 'CPU', 'R
 argparser.add_argument('-gpupn', type=int, default=1, help='(Default: 1) If using GPUs, select how many are available per node.')
 argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
 argparser.add_argument('--templates', nargs='+', help='(Default: all templates) Optionally define a subset of templates to work on by providing one or more template IDs separated by spaces (e.g. "ABL1_HUMAN_D0_1OPL_A")')
+argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
 args = argparser.parse_args()
 
 msmseeder.core.check_project_toplevel_dir()
@@ -27,5 +28,4 @@ msmseeder.core.check_project_toplevel_dir()
 # Run simulations
 # ========
 
-msmseeder.refinement.refine_explicitMD(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates)
-
+msmseeder.refinement.refine_explicitMD(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)

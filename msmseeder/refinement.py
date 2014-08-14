@@ -49,6 +49,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     def simulate_implicitMD(model_dir, variants=None, gpuid=0, rank=0, verbose=False):
         os.chdir(model_dir)
+        if verbose: print 'rank %d gpuid %d working in model_dir %s' % (rank, gpuid, model_dir)
 
         # Choose platform.
         platform = openmm.Platform.getPlatformByName(openmm_platform)
@@ -195,7 +196,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             if os.path.exists(pdb_filename): continue
 
             try:
-                simulate_implicitMD(model_dir, variants, gpuid, rank)
+                simulate_implicitMD(model_dir, variants, gpuid, rank, verbose=verbose)
             except Exception:
                 # Record rejected models.
                 trbk = traceback.format_exc()
@@ -473,7 +474,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     forcefield = app.ForceField(*forcefields_to_use)
 
 
-    def solvate_pdb(pdb, target_nwaters, model='tip3p'):
+    def solvate_pdb(pdb, target_nwaters, model='tip3p', verbose=False):
         """
         Solvate the contents of a PDB file, ensuring it has exactly 'target_nwaters' waters.
 
@@ -750,9 +751,9 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 pdb = app.PDBFile(model_filename)
 
                 if verbose: print "Solvating model to achieve target of %d waters..." % nwaters
-                [positions, topology] = solvate_pdb(pdb, nwaters)
+                [positions, topology] = solvate_pdb(pdb, nwaters, verbose=verbose)
 
-                simulate_explicitMD(model_dir, gpuid, rank)
+                simulate_explicitMD(model_dir, gpuid, rank, verbose=verbose)
 
             except Exception:
                 # Record rejected models.

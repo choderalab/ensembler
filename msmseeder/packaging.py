@@ -24,8 +24,10 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
     packaged_models_dir = os.path.abspath('packaged-models')
     projects_dir = os.path.join(packaged_models_dir, 'fah-projects')
     original_dir = os.getcwd()
-    if not os.path.exists(projects_dir):
-        os.mkdir(projects_dir)
+    if rank == 0:
+        if not os.path.exists(projects_dir):
+            os.mkdir(projects_dir)
+    comm.Barrier()
 
     targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
     targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )

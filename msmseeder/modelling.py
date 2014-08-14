@@ -106,7 +106,7 @@ def build_model(target, template, verbose=False):
         templates/structures directory.
     '''
     # align target and template
-    import os, tempfile, shutil, gzip
+    import os, tempfile, shutil, gzip, traceback
     import Bio.pairwise2
     import Bio.SubsMat.MatrixInfo
 
@@ -192,9 +192,6 @@ def build_model(target, template, verbose=False):
             with gzip.open(restraint_filename_gz, 'wb') as rsrgzfile:
                 rsrgzfile.write(rsrfile.read())
 
-        # Clean up temp dir
-        os.chdir(current_dir)
-
         if os.path.getsize(model_pdbfilename) < 1:
             raise Exception, 'Output PDB file is empty. Could be a filesystem error.'
 
@@ -203,7 +200,14 @@ def build_model(target, template, verbose=False):
         text += "Sequence identity was %.1f%%.\n" % (target_model.seq_id)
         return text
 
+    except:
+        trbk = traceback.format_exc()
+        reject_file_path = os.path.join(models_target_dir, 'modelling-rejected.txt')
+        with open(reject_file_path, 'w') as reject_file:
+            reject_file.write(trbk)
+
     finally:
+        os.chdir(current_dir)
         shutil.rmtree(temp_dir)
 
 def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
