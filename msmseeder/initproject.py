@@ -50,7 +50,7 @@ def init(project_toplevel_dir):
     metadata_root = etree.Element('metadata')
     init_node = etree.SubElement(metadata_root, 'init', datestamp=datestamp, init_path=os.path.abspath(project_toplevel_dir))
     python_node = etree.SubElement(init_node, 'python', version=sys.version.split('|')[0].strip())
-    etree.SubElement(python_node, 'version_full').text=sys.version
+    etree.SubElement(python_node, 'version_full').text = sys.version
     etree.SubElement(init_node, 'msmseeder', version=str(msmseeder.__version__), commit=msmseeder.core.get_src_git_commit_hash())
     with open('meta.xml', 'w') as metadata_file:
         metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
@@ -69,18 +69,14 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     # Parameters
     # =========
 
-    import os, datetime
+    import sys
+    import os
+    import datetime
+    import imp
     import msmseeder
     from lxml import etree
 
     fasta_ofilepath = os.path.join('targets', 'targets.fa')
-
-    # =========
-    # Read in project metadata file (will throw an exception if it does not exist)
-    # =========
-
-    project_metadata = msmseeder.core.ProjectMetadata()
-    project_metadata.load(msmseeder.core.project_metadata_filename)
 
     # =========
     # Parse the TargetExplorer database path
@@ -96,6 +92,13 @@ def gather_targets_from_TargetExplorerDB(DB_path):
     print 'Extracting target data from database...'
 
     target_domains = DB_root.findall('entry/UniProt/domains/domain[@targetID]')
+
+    # =========
+    # Also get the original uniprot search strings from the database project directory
+    # =========
+
+    db_config_path = os.path.abspath(os.path.join(os.path.dirname(DB_path), '..', 'project_config.py'))
+    target_explorer_db_project_config = imp.load_source('project_config', db_config_path)
 
     # =========
     # Write target data to FASTA file
@@ -114,23 +117,32 @@ def gather_targets_from_TargetExplorerDB(DB_path):
             fasta_ofile.write(target_fasta_string)
 
     # =========
-    # Update project metadata file
+    # Metadata
     # =========
 
     now = datetime.datetime.utcnow()
     datestamp = now.strftime(msmseeder.core.datestamp_format_string)
 
-    target_selection_metadata = {
-    'datestamp': datestamp,
-    'target-selection-method': 'TargetExplorerDB',
-    'TargetExplorer-database-path': DB_path
-    }
+    parser = etree.XMLParser(remove_blank_text=True)
+    metadata_root = etree.parse('meta.xml', parser).getroot()
 
-    project_metadata.data['target-selection'] = target_selection_metadata
-    project_metadata.write()
+    # gather_targets metadata
+    gather_targets_node = etree.SubElement(metadata_root, 'gather_targets', datestamp=datestamp, method='TargetExplorerDB', ntargets=str(len(target_domains)))
+    gather_from_target_explorer_node = etree.SubElement(gather_targets_node, 'gather_from_target_explorer')
+    etree.SubElement(gather_from_target_explorer_node, 'uniprot_query_string').text = target_explorer_db_project_config.uniprot_query_string
+    etree.SubElement(gather_from_target_explorer_node, 'uniprot_domain_regex').text = target_explorer_db_project_config.uniprot_domain_regex
+    etree.SubElement(gather_from_target_explorer_node, 'database_path').text = DB_path
+
+    # code version metadata
+    python_node = etree.SubElement(gather_targets_node, 'python', version=sys.version.split('|')[0].strip())
+    etree.SubElement(python_node, 'version_full').text = sys.version
+    etree.SubElement(gather_targets_node, 'msmseeder', version=str(msmseeder.__version__), commit=msmseeder.core.get_src_git_commit_hash())
+
+    targets_metadata_filepath = os.path.join('targets', 'meta.xml')
+    with open(targets_metadata_filepath, 'w') as metadata_file:
+        metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
 
     print 'Done.'
-
 
 def gather_targets_from_UniProt():
     '''# Searches UniProt for a set of target proteins with a user-defined
@@ -187,7 +199,6 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     # Parse the DB
     parser = etree.XMLParser(huge_tree=True)
     DB_root = etree.parse(DB_path, parser).getroot()
-    DB_root
 
     # =========
     # Extract template IDs data from database
@@ -247,7 +258,11 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # Parameters
     # =========
 
-    import os, datetime, yaml, gzip
+    import sys
+    import os
+    import datetime
+    import yaml
+    import gzip
     import msmseeder
     import msmseeder.UniProt
     import msmseeder.PDB
@@ -256,11 +271,8 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
 
     # =========
-    # Read in project metadata
+    # Read in project manual specifications
     # =========
-
-    project_metadata = msmseeder.core.ProjectMetadata()
-    project_metadata.load(msmseeder.core.project_metadata_filename)
 
     min_domain_len = None
     max_domain_len = None
@@ -540,23 +552,31 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
             raise Exception, 'Number of residues extracted from PDB file does not match desired number of residues.'
 
     # =========
-    # Update project metadata file
+    # Metadata
     # =========
 
     now = datetime.datetime.utcnow()
     datestamp = now.strftime(msmseeder.core.datestamp_format_string)
 
-    template_selection_metadata = {
-    'datestamp': datestamp,
-    'template-selection-method': 'UniProt',
-    'UniProt-query-string': UniProt_query_string,
-    'structure-paths': structure_paths
-    }
-    if UniProt_domain_regex != None:
-        template_selection_metadata['UniProt-domain-regex'] = UniProt_domain_regex
+    parser = etree.XMLParser(remove_blank_text=True)
+    metadata_root = etree.parse('meta.xml', parser).getroot()
 
-    project_metadata.data['template-selection'] = template_selection_metadata
-    project_metadata.write()
+    # gather_templates metadata
+    gather_templates_node = etree.SubElement(metadata_root, 'gather_templates', datestamp=datestamp, method='UniProt', ntemplates=str(len(selected_templates)))
+    gather_from_uniprot_node = etree.SubElement(gather_templates_node, 'gather_from_uniprot')
+    etree.SubElement(gather_from_uniprot_node, 'uniprot_query_string').text = UniProt_query_string
+    etree.SubElement(gather_from_uniprot_node, 'uniprot_domain_regex').text = UniProt_domain_regex if not None else ''
+    structure_paths_node = etree.SubElement(gather_from_uniprot_node, 'structure_paths')
+    for structure_path in structure_paths:
+        etree.SubElement(structure_paths_node, 'path').text = structure_path
+
+    # code version metadata
+    python_node = etree.SubElement(gather_templates_node, 'python', version=sys.version.split('|')[0].strip())
+    etree.SubElement(python_node, 'version_full').text=sys.version
+    etree.SubElement(gather_templates_node, 'msmseeder', version=str(msmseeder.__version__), commit=msmseeder.core.get_src_git_commit_hash())
+
+    templates_metadata_filepath = os.path.join('templates', 'meta.xml')
+    with open(templates_metadata_filepath, 'w') as metadata_file:
+        metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
 
     print 'Done.'
-
