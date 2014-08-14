@@ -203,6 +203,41 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 with open(reject_file_path, 'w') as reject_file:
                     reject_file.write(trbk)
 
+        if rank == 0:
+
+            # ========
+            # Metadata
+            # ========
+
+            import sys
+            import yaml
+            import msmseeder
+            import subprocess
+            import simtk.openmm.version
+            datestamp = msmseeder.core.get_utcnow_formatted()
+            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'refined-implicit.pdb']).count('\n')
+
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            with open(meta_filepath) as meta_file:
+                metadata = yaml.load(meta_file)
+
+            metadata['refine_implicit_md'] = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'nsuccessful_refinements': nsuccessful_refinements,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': sys.version,
+                'msmseeder_version': msmseeder.__version__,
+                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'biopython_version': Bio.__version__,
+                'openmm_version': simtk.openmm.version.short_version,
+                'openmm_commit': simtk.openmm.version.git_revision
+            }
+
+            metadata = msmseeder.core.ProjectMetadata(metadata)
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            metadata.write(meta_filepath)
+
     comm.Barrier()
     if rank == 0:
         print 'Done.'
