@@ -1,15 +1,33 @@
 def get_modeller_version():
     '''Hacky attempt to get Modeller version by regex searching the installation directory.
     '''
-    import modeller
+    import os
     import re
+    import modeller
+    # first try a regex search of the install path
     regex = re.compile('/modeller-[0-9.]{2,6}/')
     match = re.search(regex, modeller.__file__)
     if match != None:
         version = match.group()[10:-1]
         return version
-    else:
-        return ''
+
+    # otherwise try to find a README file within the installation directory structure
+    readme_file_path = os.path.join(os.path.dirname(modeller.__file__), '..', '..', 'README')
+    if os.path.exists(readme_file_path):
+        with open(readme_file_path) as readme_file:
+            # try first 10 lines
+            # example desired line:
+            #      MODELLER 9.11, 2012/08/29, r8834
+            for i in range(10):
+                line = readme_file.readline().strip()
+                regex = re.compile('MODELLER [0-9.]{2,6}')
+                match = re.search(regex, line)
+                if match != None:
+                    version = match.group()[9:]
+                    return version
+
+    # otherwise return None
+    return ''
 
 def build_models(process_only_these_targets=None, process_only_these_templates=None, verbose=False):
     r'''Uses the build_model method to build homology models for a given set of

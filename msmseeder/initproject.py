@@ -288,20 +288,15 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     min_domain_len = None
     max_domain_len = None
     domain_span_manual_specifications = None
+    skip_pdbs = []
     if os.path.exists(msmseeder.core.manual_specifications_filename):
         with open(msmseeder.core.manual_specifications_filename, 'r') as manual_specifications_file:
             manual_specifications = yaml.load(manual_specifications_file)
         template_manual_specifications = manual_specifications.get('template-selection')
-        min_domain_len = template_manual_specifications.get('min-domain-len')
-        max_domain_len = template_manual_specifications.get('max-domain-len')
-        domain_span_manual_specifications = template_manual_specifications.get('domain-spans')
-
-    if min_domain_len == None:
-        min_domain_len = 0
-    if max_domain_len == None:
-        max_domain_len = np.nan
-    if domain_span_manual_specifications == None:
-        domain_span_manual_specifications = {}
+        min_domain_len = template_manual_specifications.get('min-domain-len') if not None else 0
+        max_domain_len = template_manual_specifications.get('max-domain-len') if not None else np.nan
+        domain_span_manual_specifications = template_manual_specifications.get('domain-spans') if not None else {}
+        skip_pdbs = template_manual_specifications.get('skip-pdbs') if not None else []
 
     # =========
     # Make request to UniProt web server and parse the returned XML
@@ -385,6 +380,8 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
 
             for PDB in PDBs:
                 PDBID = PDB.get('id')
+                if PDBID in skip_pdbs:
+                    continue
                 PDB_chain_span_nodes = PDB.findall('property[@type="chains"]')
 
                 for PDB_chain_span_node in PDB_chain_span_nodes:
