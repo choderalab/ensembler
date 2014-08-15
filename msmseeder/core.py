@@ -28,18 +28,6 @@ def check_project_toplevel_dir():
         if not os.path.exists(dirpath):
             raise Exception, 'Current directory not recognized as the top-level directory of a project.'
 
-def get_src_git_commit_hash():
-    import os
-    import subprocess
-    import msmseeder
-    git_metadata_path = os.path.join(msmseeder.core.src_toplevel_dir, '.git')
-    try:
-        commit_hash = subprocess.check_output(['git', '--git-dir', git_metadata_path, 'rev-parse', 'HEAD'])
-        commit_hash = commit_hash.strip()
-    except subprocess.CalledProcessError:
-        raise Exception('Failed to find source code git commit hash')
-    return commit_hash
-
 class ProjectMetadata:
     def __init__(self, data):
         # Listed in desired document order

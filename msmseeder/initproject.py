@@ -19,6 +19,7 @@ def init(project_toplevel_dir):
     import json
     import yaml
     import msmseeder
+    import msmseeder.version
 
     project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models']
 
@@ -53,8 +54,8 @@ def init(project_toplevel_dir):
             'init_path': os.path.abspath(project_toplevel_dir),
             'python_version': sys.version.split('|')[0].strip(),
             'python_full_version': sys.version,
-            'msmseeder_version': msmseeder.__version__,
-            'msmseeder_commit': msmseeder.core.get_src_git_commit_hash()
+            'msmseeder_version': msmseeder.version.short_version,
+            'msmseeder_commit': msmseeder.version.git_revision
         }
     }
 
@@ -81,6 +82,7 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
     import imp
     import yaml
     import msmseeder
+    import msmseeder.version
     from lxml import etree
 
     fasta_ofilepath = os.path.join('targets', 'targets.fa')
@@ -147,8 +149,8 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
         },
         'python_version': sys.version.split('|')[0].strip(),
         'python_full_version': sys.version,
-        'msmseeder_version': msmseeder.__version__,
-        'msmseeder_commit': msmseeder.core.get_src_git_commit_hash()
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision
     }
 
     metadata = msmseeder.core.ProjectMetadata(metadata)
@@ -277,6 +279,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     import msmseeder
     import msmseeder.UniProt
     import msmseeder.PDB
+    import msmseeder.version
     from lxml import etree
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
@@ -579,8 +582,8 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         'structure_paths': structure_paths,
         'python_version': sys.version.split('|')[0].strip(),
         'python_full_version': sys.version,
-        'msmseeder_version': msmseeder.__version__,
-        'msmseeder_commit': msmseeder.core.get_src_git_commit_hash()
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision()
     }
 
     metadata = msmseeder.core.ProjectMetadata(metadata)

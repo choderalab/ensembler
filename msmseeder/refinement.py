@@ -213,6 +213,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             import sys
             import yaml
             import msmseeder
+            import msmseeder.version
             import subprocess
             import simtk.openmm.version
             datestamp = msmseeder.core.get_utcnow_formatted()
@@ -228,8 +229,8 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
-                'msmseeder_version': msmseeder.__version__,
-                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'msmseeder_version': msmseeder.version.short_version,
+                'msmseeder_commit': msmseeder.version.git_revision,
                 'biopython_version': Bio.__version__,
                 'openmm_version': simtk.openmm.version.short_version,
                 'openmm_commit': simtk.openmm.version.git_revision

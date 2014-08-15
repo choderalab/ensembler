@@ -4,6 +4,7 @@ def get_modeller_version():
     import os
     import re
     import modeller
+    import msmseeder.version
     # first try a regex search of the install path
     regex = re.compile('/modeller-[0-9.]{2,6}/')
     match = re.search(regex, modeller.__file__)
@@ -96,8 +97,8 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
                 'nsuccessful_models': nsuccessful_models,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
-                'msmseeder_version': msmseeder.__version__,
-                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'msmseeder_version': msmseeder.version.short_version,
+                'msmseeder_commit': msmseeder.version.git_revision,
                 'modeller_version': get_modeller_version(),
                 'biopython_version': Bio.__version__
             }
@@ -311,6 +312,7 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
             import sys
             import yaml
             import msmseeder
+            import msmseeder.version
             datestamp = msmseeder.core.get_utcnow_formatted()
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
@@ -322,8 +324,8 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
                 'datestamp': datestamp,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
-                'msmseeder_version': msmseeder.__version__,
-                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'msmseeder_version': msmseeder.version.short_version,
+                'msmseeder_commit': msmseeder.version.git_revision,
                 'biopython_version': Bio.__version__
             }
 
@@ -434,6 +436,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
             import sys
             import yaml
             import msmseeder
+            import msmseeder.version
             import mdtraj.version
             datestamp = msmseeder.core.get_utcnow_formatted()
 
@@ -446,8 +449,8 @@ def cluster_models(process_only_these_targets=None, verbose=False):
                 'datestamp': datestamp,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
-                'msmseeder_version': msmseeder.__version__,
-                'msmseeder_commit': msmseeder.core.get_src_git_commit_hash(),
+                'msmseeder_version': msmseeder.version.short_version,
+                'msmseeder_commit': msmseeder.version.git_revision,
                 'biopython_version': Bio.__version__,
                 'mdtraj_version': mdtraj.version.short_version,
                 'mdtraj_commit': mdtraj.version.git_revision
