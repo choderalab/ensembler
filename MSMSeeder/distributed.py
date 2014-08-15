@@ -223,9 +223,35 @@ class MDSys(object):
         return self._positions
 
 
+def blast_pdb_local(fasta_string, num_hits=1000):
+    import subprocess
+    import os
+    import shlex
+    blast_data = os.getenv("DATA_HOME")
+    blast_query = 'blastp -db %s/pdbaa -max_target_seqs %d -outfmt' % (blast_data, num_hits)
+    out_fmt = '7 qseqid sseqid evalue bitscore'
+    blast_cmd = shlex.split(blast_query)
+    blast_cmd.append(out_fmt)
+    p = subprocess.Popen(blast_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    blast_aln, error = p.communicate(input=fasta_string)
+    msmseeds = []
+    for result in blast_aln:
+        res_data = result.split("\t")
+        e_value = float(res_data[2])
+        template_chain_code =  "_".join(res_data[1].split("|")[3:])
+        template_fasta, template_pdb = _retrieve_chain(template_chain_code)
+        msmseeds.append(MSMSeed(fasta_string, template_fasta, template_pdb, e_value))
+    return msmseeds
+
+
+
+
+
+
 
 def _retrieve_chain(pdb_code_input, model_id=0):
     import Bio.PDB as pdb
+    import Bio.Seq
     import tempfile
     import os
     import StringIO
@@ -241,21 +267,19 @@ def _retrieve_chain(pdb_code_input, model_id=0):
     structure = parser.get_structure(pdb_code, pdb_filepath)
     chain_result = structure[model_id][chain_code]
     pp = pdb.PPBuilder()
-    pplist = []
+    seq = Bio.Seq.Seq('')
     for peptide in pp.build_peptides(chain_result):
-        pplist.append(peptide)
-    if len(pplist)>1:
-        print "more than one polypeptide matched, taking first"
-    fasta_result = ">%s_%s\n" % (pdb_code, chain_code) + pplist[0].get_sequence()
+        seq+=peptide.get_sequence()
+    fasta_result = ">%s_%s\n" % (pdb_code, chain_code) + seq
     outval = StringIO.StringIO()
     io = pdb.PDBIO()
     io.set_structure(chain_result)
     io.save(outval)
     outval.seek(0)
     shutil.rmtree(temp_dir)
-    return (fasta_result, app.PDBFile(outval))
+    return fasta_result, app.PDBFile(outval)
 
-def align_template_to_reference(msmseed, ref_structure, ref_structure_id):
+def align_template_to_reference(msmseed, ref_msmseed):
     import modeller
     import tempfile
     import shutil
@@ -263,18 +287,29 @@ def align_template_to_reference(msmseed, ref_structure, ref_structure_id):
     try:
         os.chdir(temp_dir)
         alignment_file = open('aln_tmp.pir','w')
-        alignment_file.writelines(msmseed.alignment)
+        aln = _PIR_alignment(ref_msmseed.template_sequence, ref_msmseed.template_id, msmseed.template_sequence, msmseed.template_id)
+        alignment_file.writelines(aln)
         alignment_file.close()
         template_file = open(msmseed.template_id + '.pdb','w')
         template_pdb = msmseed.template_structure
         template_pdb.writeFile(template_pdb.topology, template_pdb.positions, template_file)
         template_file.close()
-        ref_file = open(ref_structure_id + '.pdb', 'w')
-        ref_structure.writeFile(ref_structure.topology, ref_structure.positions, ref_file)
+        ref_pdb = ref_msmseed.template_structure
+        ref_file = open(ref_msmseed.template_id + '.pdb', 'w')
+        ref_pdb.writeFile(ref_pdb.topology, ref_pdb.positions, ref_file)
         ref_file.close()
         modeller.log.none()
         env = modeller.environ()
         env.io.atom_files_directory = temp_dir
+        aln = modeller.alignment(env, file='aln_tmp.pir', align_codes=(ref_msmseed.template_id, msmseed.template_id))
+        mdl  = modeller.model(env, file=ref_msmseed.template_id + '.pdb')
+        mdl2 = modeller.model(env, file=msmseed.template_id+'.pdb')
+        mdl.pick_atoms(aln, pick_atoms_set=1, atom_types='CA')
+        x = mdl.superpose(mdl2, aln)
+        return x, mdl
+    finally:
+        shutil.rmtree(temp_dir)
+    return "=("
 
 
 
@@ -324,13 +359,34 @@ def _correct_template_fasta(template_fasta):
 
 
 
+def _PIR_alignment(target_sequence, target_id, template_sequence, template_id):
+    import Bio.SubsMat
+    import Bio.pairwise2
+    from Bio.SubsMat import MatrixInfo as matlist
+    import Bio.SeqIO
+
+    matrix = matlist.gonnet
+    gap_open = -10
+    gap_extend = -0.5
+    aln = Bio.pairwise2.align.globalds(target_sequence, template_sequence, matrix, gap_open, gap_extend)
+
+    #put together PIR file
+    contents = "Target-template alignment by clustal omega\n"
+    contents += ">P1;%s\n" % target_id
+    contents += "sequence:%s:FIRST:@:LAST :@:::-1.00:-1.00\n" % target_id
+    contents += aln[0][0] + '*\n'
+    contents += ">P1;%s\n" % template_id
+    contents += "structureX:%s:FIRST:@:LAST : :undefined:undefined:-1.00:-1.00\n" % template_id
+    contents += aln[0][1] + '*\n'
+    return contents
 
 
 
-def make_PIR_alignment(msmseed):
+def target_template_alignment(msmseed):
     """
     Use Biopython pairwise2 to generate a sequence alignment in PIR format so that MODELLER can be used.
-    Puts alignment in MSMSeed
+    Puts alignment in MSMSeed. The functionality for this was separated into another internal function,
+    _PIR_alignment().
 
     Parameters
     ----------
@@ -345,25 +401,8 @@ def make_PIR_alignment(msmseed):
 
 
     """
-    import Bio.SubsMat
-    import Bio.pairwise2
-    from Bio.SubsMat import MatrixInfo as matlist
-    import Bio.SeqIO
-
-    matrix = matlist.gonnet
-    gap_open = -10
-    gap_extend = -0.5
-    aln = Bio.pairwise2.align.globalds(msmseed.target_sequence, msmseed.template_sequence, matrix, gap_open, gap_extend)
-
-    #put together PIR file
-    contents = "Target-template alignment by clustal omega\n"
-    contents += ">P1;%s\n" % msmseed.target_id
-    contents += "sequence:%s:FIRST:@:LAST :@:::-1.00:-1.00\n" % msmseed.target_id
-    contents += aln[0][0] + '*\n'
-    contents += ">P1;%s\n" % msmseed.template_id
-    contents += "structureX:%s:FIRST:@:LAST : :undefined:undefined:-1.00:-1.00\n" % msmseed.template_id
-    contents += aln[0][1] + '*\n'
-    msmseed.alignment = str(contents)
+    aln = _PIR_alignment(msmseed.target_sequence, msmseed.target_id, msmseed.template_sequence, msmseed.template_id)
+    msmseed.alignment = str(aln)
     return msmseed
 
 def make_model(msmseed):
@@ -412,6 +451,9 @@ def make_model(msmseed):
         tmp_model_pdbfilename = a.outputs[0]['name']
         msmseed.target_model = app.PDBFile(tmp_model_pdbfilename)
         msmseed.target_restraints = open('%s.rsr' % msmseed.target_id, 'r').readlines()
+    except:
+        msmseed.error_message = 'MSMSeeder failed at the modelling stage'
+        msmseed.error_state = -2
     finally:
         shutil.rmtree(temp_dir)
     return msmseed
