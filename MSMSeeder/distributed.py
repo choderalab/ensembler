@@ -1,6 +1,6 @@
 __author__ = 'Patrick B. Grinaway'
 
-
+import PDB
 
 class MSMSeed(object):
     """
@@ -227,6 +227,8 @@ def blast_pdb_local(fasta_string, num_hits=1000):
     import subprocess
     import os
     import shlex
+    import StringIO
+    import simtk.openmm.app as app
     blast_data = os.getenv("DATA_HOME")
     blast_query = 'blastp -db %s/pdbaa -max_target_seqs %d -outfmt' % (blast_data, num_hits)
     out_fmt = '7 qseqid sseqid evalue bitscore'
@@ -240,9 +242,13 @@ def blast_pdb_local(fasta_string, num_hits=1000):
             res_data = result.split("\t")
             e_value = float(res_data[2])
             template_chain_code =  "_".join(res_data[1].split("|")[3:])
-            template_pdb = _retrieve_chain(template_chain_code)
-            template_fasta = _retrieve_fasta(template_chain_code)
-            msmseeds.append(MSMSeed(fasta_string, template_fasta, template_pdb, e_value))
+            raw_template_pdb = _retrieve_chain(template_chain_code)
+            template_fasta, pdb_resnums = _retrieve_fasta(template_chain_code)
+            template_pdb = StringIO.StringIO()
+            end_resnums = PDB.extract_residues_by_resnum(template_pdb,raw_template_pdb, pdb_resnums, template_chain_code.split("_")[1])
+            template_pdb.seek(0)
+            template_pdbfile = app.PDBFile(template_pdb)
+            msmseeds.append(MSMSeed(fasta_string, template_fasta, template_pdbfile, e_value))
     return msmseeds
 
 
@@ -303,8 +309,7 @@ def _retrieve_chain(pdb_code_input, model_id=0):
     io.save(outval)
     outval.seek(0)
     shutil.rmtree(temp_dir)
-    return app.PDBFile(outval)
-
+    return outval
 def _retrieve_fasta(pdb_code_input):
     from lxml import etree
     import StringIO
@@ -314,12 +319,15 @@ def _retrieve_fasta(pdb_code_input):
     siftsXML = etree.parse(StringIO.StringIO(sifts), parser).getroot()
     observed_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % chain_code)
     pdb_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in observed_residues])
-    return "\n".join(['>' + pdb_code_input, pdb_seq])
+    template_PDBresnums = [residue.get('dbResNum') for residue in observed_residues]
+    return "\n".join(['>' + pdb_code_input, pdb_seq]), template_PDBresnums
 
 def align_template_to_reference(msmseed, ref_msmseed):
     import modeller
     import tempfile
     import shutil
+    import copy
+    import os
     temp_dir = tempfile.mkdtemp()
     try:
         os.chdir(temp_dir)
@@ -341,12 +349,15 @@ def align_template_to_reference(msmseed, ref_msmseed):
         aln = modeller.alignment(env, file='aln_tmp.pir', align_codes=(ref_msmseed.template_id, msmseed.template_id))
         mdl  = modeller.model(env, file=ref_msmseed.template_id + '.pdb')
         mdl2 = modeller.model(env, file=msmseed.template_id+'.pdb')
-        mdl.pick_atoms(aln, pick_atoms_set=1, atom_types='CA')
-        x = mdl.superpose(mdl2, aln)
-        return x, mdl
+        atmsel = modeller.selection(mdl).only_atom_types('CA')
+        r = atmsel.superpose(mdl2, aln)
+        msmseed.rmsd_to_reference = copy.deepcopy(r.drms)
+    except Exception as e:
+        msmseed.error_message = e.message
     finally:
         shutil.rmtree(temp_dir)
-    return "=("
+    return msmseed
+
 
 
 
@@ -466,6 +477,10 @@ def make_model(msmseed):
     import modeller.automodel
     import shutil
     import simtk.openmm.app as app
+    #if the target and template are the same, modeller dies.
+    if msmseed.template_id == msmseed.target_id:
+        msmseed.target_model = msmseed.template_structure
+        return msmseed
     #first, we need to make a temp directory where we can put the files MODELLER needs
     temp_dir = tempfile.mkdtemp()
     try:
@@ -492,8 +507,8 @@ def make_model(msmseed):
         msmseed.target_model = app.PDBFile(tmp_model_pdbfilename)
         msmseed.target_restraints = open('%s.rsr' % msmseed.target_id, 'r').readlines()
     except:
-        msmseed.error_message = 'MSMSeeder failed at the modelling stage'
         msmseed.error_state = -2
+
     finally:
         shutil.rmtree(temp_dir)
     return msmseed
@@ -883,6 +898,16 @@ if __name__=="__main__":
     print test_msm_seed.alignment
     make_model(test_msm_seed)
     refine_implicitMD(test_msm_seed,niterations=1)
+    import os
+    os.chdir('/Users/grinawap/new-msmseeder/msmseeder/MSMSeeder')
+    import distributed
+    os.chdir('/Users/grinawap/kras_g12c')
+    fasta = "".join(open('target_seq.fasta', 'r').readlines())
+    msmseeds = distributed.blast_pdb_local(fasta, num_hits=10)
+    #results = [distributed.make_model(distributed.align_template_target(x)) for x in msmseeds]
+    msmseed_not_ref = msmseeds[1:]
+    aln_results = [distributed.align_template_to_reference(x, msmseeds[0]) for x in msmseed_not_ref]
+
 
 
 def load_fasta(filename):
