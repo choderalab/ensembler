@@ -235,16 +235,47 @@ def blast_pdb_local(fasta_string, num_hits=1000):
     p = subprocess.Popen(blast_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     blast_aln, error = p.communicate(input=fasta_string)
     msmseeds = []
-    for result in blast_aln:
-        res_data = result.split("\t")
-        e_value = float(res_data[2])
-        template_chain_code =  "_".join(res_data[1].split("|")[3:])
-        template_fasta, template_pdb = _retrieve_chain(template_chain_code)
-        msmseeds.append(MSMSeed(fasta_string, template_fasta, template_pdb, e_value))
+    for result in blast_aln.splitlines():
+        if result[0]!="#":
+            res_data = result.split("\t")
+            e_value = float(res_data[2])
+            template_chain_code =  "_".join(res_data[1].split("|")[3:])
+            template_pdb = _retrieve_chain(template_chain_code)
+            template_fasta = _retrieve_fasta(template_chain_code)
+            msmseeds.append(MSMSeed(fasta_string, template_fasta, template_pdb, e_value))
     return msmseeds
 
 
+def retrieve_sifts(pdb_id):
+    '''Retrieves a SIFTS .xml file, given a PDB ID. Works by modifying the PDBe download URL.
+    Also removes annoying namespace stuff.
+    '''
+    import re, gzip, StringIO, urllib2
+    sifts_download_base_url='ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/'
+    url = sifts_download_base_url + pdb_id.lower() + '.xml.gz'
+    response = urllib2.urlopen(url)
 
+    sifts_page = response.read(100000000) # Max 100MB
+    # Decompress string
+    sifts_page = gzip.GzipFile(fileobj=StringIO.StringIO(sifts_page)).read()
+
+    # Removing all attribs from the entry tag, and the rdf tag and contents
+    sifts_page_processed = ''
+    skip_rdf_tag_flag = False
+    for line in sifts_page.splitlines():
+        if line[0:6] == '<entry':
+            sifts_page_processed += '<entry>' + '\n'
+        elif line[0:7] == '  <rdf:':
+            skip_rdf_tag_flag = True
+            pass
+        elif line[0:8] == '  </rdf:':
+            skip_rdf_tag_flag = False
+            pass
+        else:
+            if skip_rdf_tag_flag:
+                continue
+            sifts_page_processed += line + '\n'
+    return sifts_page_processed
 
 
 
@@ -266,18 +297,24 @@ def _retrieve_chain(pdb_code_input, model_id=0):
     parser = pdb.PDBParser()
     structure = parser.get_structure(pdb_code, pdb_filepath)
     chain_result = structure[model_id][chain_code]
-    pp = pdb.PPBuilder()
-    seq = Bio.Seq.Seq('')
-    for peptide in pp.build_peptides(chain_result):
-        seq+=peptide.get_sequence()
-    fasta_result = ">%s_%s\n" % (pdb_code, chain_code) + seq
     outval = StringIO.StringIO()
     io = pdb.PDBIO()
     io.set_structure(chain_result)
     io.save(outval)
     outval.seek(0)
     shutil.rmtree(temp_dir)
-    return fasta_result, app.PDBFile(outval)
+    return app.PDBFile(outval)
+
+def _retrieve_fasta(pdb_code_input):
+    from lxml import etree
+    import StringIO
+    pdb_code, chain_code = pdb_code_input.split("_")
+    sifts = retrieve_sifts(pdb_code)
+    parser = etree.XMLParser(huge_tree=True)
+    siftsXML = etree.parse(StringIO.StringIO(sifts), parser).getroot()
+    observed_residues = siftsXML.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % chain_code)
+    pdb_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in observed_residues])
+    return "\n".join(['>' + pdb_code_input, pdb_seq])
 
 def align_template_to_reference(msmseed, ref_msmseed):
     import modeller
@@ -380,6 +417,9 @@ def _PIR_alignment(target_sequence, target_id, template_sequence, template_id):
     contents += aln[0][1] + '*\n'
     return contents
 
+def align_template_target(msmseed):
+    msmseed.alignment = _PIR_alignment(msmseed.target_sequence, msmseed.target_id, msmseed.template_sequence, msmseed.template_id)
+    return msmseed
 
 
 def target_template_alignment(msmseed):
@@ -843,3 +883,7 @@ if __name__=="__main__":
     print test_msm_seed.alignment
     make_model(test_msm_seed)
     refine_implicitMD(test_msm_seed,niterations=1)
+
+
+def load_fasta(filename):
+    return "".join(open(filename, 'r').readlines())
