@@ -80,6 +80,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
         if rank == 0:
             import yaml
             import msmseeder
+            import msmseeder.version
             import subprocess
             datestamp = msmseeder.core.get_utcnow_formatted()
             nsuccessful_models = subprocess.check_output(['find', models_target_dir, '-name', 'model.pdb']).count('\n')
@@ -447,6 +448,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
             metadata['cluster_models'] = {
                 'target_id': target.id,
                 'datestamp': datestamp,
+                'nunique_models': len(uniques),
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
                 'msmseeder_version': msmseeder.version.short_version,

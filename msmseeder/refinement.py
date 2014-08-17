@@ -172,15 +172,19 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 print ""
             else: print variants
 
-        for template_index in range(rank, len(templates), size):
-            template = templates[template_index]
-            if process_only_these_templates and (template.id not in process_only_these_templates): continue
+        if process_only_these_templates:
+            templates_to_process = process_only_these_templates
+        else:
+            templates_to_process = [template.id for template in templates]
+
+        for template_index in range(rank, len(templates_to_process), size):
+            template = templates_to_process[template_index]
 
             print "-------------------------------------------------------------------------"
-            print "Simulating %s => %s in implicit solvent for %.1f ps" % (target.id, template.id, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
+            print "Simulating %s => %s in implicit solvent for %.1f ps" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
             print "-------------------------------------------------------------------------"
             
-            model_dir = os.path.join(models_target_dir, template.id)
+            model_dir = os.path.join(models_target_dir, template)
             if not os.path.exists(model_dir): continue
 
             # Only simulate models that are unique following filtering by clustering.
@@ -217,7 +221,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             import subprocess
             import simtk.openmm.version
             datestamp = msmseeder.core.get_utcnow_formatted()
-            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'refined-implicit.pdb']).count('\n')
+            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb']).count('\n')
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             with open(meta_filepath) as meta_file:
@@ -237,7 +241,6 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             }
 
             metadata = msmseeder.core.ProjectMetadata(metadata)
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             metadata.write(meta_filepath)
 
     comm.Barrier()
@@ -296,16 +299,16 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         for template_index in range(rank, len(templates), size):
             template = templates[template_index]
 
-            print "-------------------------------------------------------------------------"
-            print "Solvating %s => %s in explicit solvent" % (target.id, template.id)
-            print "-------------------------------------------------------------------------"
-            
             model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
 
             model_filename = os.path.join(model_dir, 'implicit-refined.pdb')
             if not os.path.exists(model_filename): continue
 
+            print "-------------------------------------------------------------------------"
+            print "Solvating %s => %s in explicit solvent" % (target.id, template.id)
+            print "-------------------------------------------------------------------------"
+            
             # Pass if solvation has already been run for this model.
             nwaters_filename = os.path.join(model_dir, 'nwaters.txt')
             if os.path.exists(nwaters_filename): continue
@@ -341,6 +344,38 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                 # Add to rejection file.
                 reject_file.write('%s : %s\n' % (template.id, str(e)))
                 reject_file.flush()
+
+        if rank == 0:
+
+            # ========
+            # Metadata
+            # ========
+
+            import sys
+            import yaml
+            import msmseeder
+            import msmseeder.version
+            import simtk.openmm.version
+            datestamp = msmseeder.core.get_utcnow_formatted()
+
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            with open(meta_filepath) as meta_file:
+                metadata = yaml.load(meta_file)
+
+            metadata['solvate_models'] = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': sys.version,
+                'msmseeder_version': msmseeder.version.short_version,
+                'msmseeder_commit': msmseeder.version.git_revision,
+                'biopython_version': Bio.__version__,
+                'openmm_version': simtk.openmm.version.short_version,
+                'openmm_commit': simtk.openmm.version.git_revision
+            }
+
+            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:
@@ -414,6 +449,33 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
             filename = os.path.join(models_target_dir, 'nwaters-use.txt')
             with open(filename, 'w') as outfile:
                 outfile.write('%d\n' % nwaters_array[index68])
+
+            # ========
+            # Metadata
+            # ========
+
+            import sys
+            import yaml
+            import msmseeder
+            import msmseeder.version
+            datestamp = msmseeder.core.get_utcnow_formatted()
+
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            with open(meta_filepath) as meta_file:
+                metadata = yaml.load(meta_file)
+
+            metadata['determine_nwaters'] = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': sys.version,
+                'msmseeder_version': msmseeder.version.short_version,
+                'msmseeder_commit': msmseeder.version.git_revision,
+                'biopython_version': Bio.__version__,
+            }
+
+            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:
@@ -702,10 +764,15 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             line = infile.readline()
         nwaters = int(line)
 
-        for template_index in range(rank, len(templates), size):
-            template = templates[template_index]
+        if process_only_these_templates:
+            templates_to_process = process_only_these_templates
+        else:
+            templates_to_process = [template.id for template in templates]
 
-            model_dir = os.path.join(models_target_dir, template.id)
+        for template_index in range(rank, len(templates_to_process), size):
+            template = templates_to_process[template_index]
+
+            model_dir = os.path.join(models_target_dir, template)
             if not os.path.exists(model_dir): continue
 
             # Only simulate models that are unique following filtering by clustering.
@@ -744,7 +811,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                     pass
 
             print "-------------------------------------------------------------------------"
-            print "Simulating %s => %s in explicit solvent for %.1f ps" % (target.id, template.id, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
+            print "Simulating %s => %s in explicit solvent for %.1f ps" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
             print "-------------------------------------------------------------------------"
 
             try:
@@ -762,6 +829,40 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt')
                 with open(reject_file_path, 'w') as reject_file:
                     reject_file.write(trbk)
+
+        if rank == 0:
+
+            # ========
+            # Metadata
+            # ========
+            import sys
+            import yaml
+            import msmseeder
+            import msmseeder.version
+            import subprocess
+            import simtk.openmm.version
+            datestamp = msmseeder.core.get_utcnow_formatted()
+            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb']).count('\n')
+
+            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            with open(meta_filepath) as meta_file:
+                metadata = yaml.load(meta_file)
+
+            metadata['refine_explicit_md'] = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'nsuccessful_refinements': nsuccessful_refinements,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': sys.version,
+                'msmseeder_version': msmseeder.version.short_version,
+                'msmseeder_commit': msmseeder.version.git_revision,
+                'biopython_version': Bio.__version__,
+                'openmm_version': simtk.openmm.version.short_version,
+                'openmm_commit': simtk.openmm.version.git_revision
+            }
+
+            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:

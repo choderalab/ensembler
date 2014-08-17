@@ -31,7 +31,7 @@ def check_project_toplevel_dir():
 class ProjectMetadata:
     def __init__(self, data):
         # Listed in desired document order
-        self.project_metadata_categories = ['init', 'gather_targets', 'gather_templates', 'build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'refine_explicit_md', 'package_for_fah']
+        self.project_metadata_categories = ['init', 'gather_targets', 'gather_templates', 'build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md', 'package_for_fah']
         self.data = data
 
     def write(self, ofilepath):
