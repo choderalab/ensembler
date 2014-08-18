@@ -242,10 +242,12 @@ def blast_pdb_local(fasta_string, num_hits=1000):
             res_data = result.split("\t")
             e_value = float(res_data[2])
             template_chain_code =  "_".join(res_data[1].split("|")[3:])
-            raw_template_pdb = _retrieve_chain(template_chain_code)
+            raw_template_pdb = PDB.retrieve_pdb(template_chain_code.split("_")[0])
             template_fasta, pdb_resnums = _retrieve_fasta(template_chain_code)
             template_pdb = StringIO.StringIO()
-            end_resnums = PDB.extract_residues_by_resnum(template_pdb,raw_template_pdb, pdb_resnums, template_chain_code.split("_")[1])
+            raw_template_pdbio = StringIO.StringIO(raw_template_pdb)
+            raw_template_pdbio.seek(0)
+            end_resnums = PDB.extract_residues_by_resnum(template_pdb,raw_template_pdbio, pdb_resnums, template_chain_code.split("_")[1])
             template_pdb.seek(0)
             template_pdbfile = app.PDBFile(template_pdb)
             msmseeds.append(MSMSeed(fasta_string, template_fasta, template_pdbfile, e_value))
@@ -351,7 +353,7 @@ def align_template_to_reference(msmseed, ref_msmseed):
         mdl2 = modeller.model(env, file=msmseed.template_id+'.pdb')
         atmsel = modeller.selection(mdl).only_atom_types('CA')
         r = atmsel.superpose(mdl2, aln)
-        msmseed.rmsd_to_reference = copy.deepcopy(r.drms)
+        msmseed.rmsd_to_reference = copy.deepcopy(r.rms)
     except Exception as e:
         msmseed.error_message = e.message
     finally:
@@ -880,35 +882,26 @@ def refine_explicitMD(msmseed, openmm_platform='CPU', niterations=1, nsteps_per_
 
 
 
-
 if __name__=="__main__":
-    import os
-    import simtk.openmm.app as app
-    os.chdir("/Users/grinawap/musashi_modelling")
-    #os.environ['PYTHONPATH']='/Library/modeller-9.13/modlib:'
-
-    #get ready to model
-    target_sequence = "".join(open('rrm2.fasta','r').readlines())
-    template_sequence = "".join(open('rrm1.fasta','r').readlines())
-    template_structure = app.PDBFile("RRM1.pdb")
-    test_msm_seed = distributed.MSMSeed(target_sequence, template_sequence, template_structure)
-    print test_msm_seed.template_sequence
-    print test_msm_seed.target_sequence
-    make_PIR_alignment(test_msm_seed)
-    print test_msm_seed.alignment
-    make_model(test_msm_seed)
-    refine_implicitMD(test_msm_seed,niterations=1)
     import os
     os.chdir('/Users/grinawap/new-msmseeder/msmseeder/MSMSeeder')
     import distributed
+    import PDB
+    sc.addPyFile('/Users/grinawap/new-msmseeder/msmseeder/MSMSeeder/PDB.py')
+    sc.addPyFile('/Users/grinawap/new-msmseeder/msmseeder/MSMSeeder/distributed.py')
+    #import pyspark
     os.chdir('/Users/grinawap/kras_g12c')
     fasta = "".join(open('target_seq.fasta', 'r').readlines())
-    msmseeds = distributed.blast_pdb_local(fasta, num_hits=10)
-    #results = [distributed.make_model(distributed.align_template_target(x)) for x in msmseeds]
-    msmseed_not_ref = msmseeds[1:]
-    aln_results = [distributed.align_template_to_reference(x, msmseeds[0]) for x in msmseed_not_ref]
+    msmseeds = distributed.blast_pdb_local(fasta, num_hits=50)
+    #sc = pyspark.SparkContext(master = "spark://lski1690:7077")
+    p_msmseeds = sc.parallelize(msmseeds)
+    aligned_models = p_msmseeds.map(distributed.align_template_target)
+    models = aligned_models.map(distributed.make_model)
+
+    #msmseed_ref = msmseeds[0]
+    #aln_results = p_msmseeds.map(lambda x: distributed.align_template_to_reference(x, msmseed_ref))
+    #rmsds_evals = aln_results.map(lambda x: (x.rmsd_to_reference, x.blast_eval)).collect()
+    #rmsds_evals.sort(key=lambda x: x[0])
 
 
 
-def load_fasta(filename):
-    return "".join(open(filename, 'r').readlines())
