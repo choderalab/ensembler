@@ -583,7 +583,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         'python_version': sys.version.split('|')[0].strip(),
         'python_full_version': sys.version,
         'msmseeder_version': msmseeder.version.short_version,
-        'msmseeder_commit': msmseeder.version.git_revision()
+        'msmseeder_commit': msmseeder.version.git_revision
     }
 
     metadata = msmseeder.core.ProjectMetadata(metadata)
