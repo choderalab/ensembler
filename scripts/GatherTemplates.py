@@ -54,7 +54,7 @@ kinase" as well as "Protein kinase; 1" and "Protein kinase; 2"
 argparser.add_argument('--gather_from', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='UniProt')
 argparser.add_argument('--db_path', type=str, help='TargetExplorerDB database path', default=None)
 argparser.add_argument('--uniprot_query', type=str, help=helpstring_uniprot_query, default=None)
-argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex, required=True)
+argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex)
 argparser.add_argument('--structure_paths', help='(Optional) Local directories within which to search for PDB and SIFTS files (space-separated).', nargs='*')
 args = argparser.parse_args()
 
