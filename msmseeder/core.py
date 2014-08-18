@@ -8,7 +8,7 @@ src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 
 project_metadata_filename = 'project-data.yaml'
-manual_specifications_filename = 'manual-specifications.yaml'
+manual_overrides_filename = 'manual-overrides.yaml'
 
 template_acceptable_ratio_observed_residues = 0.7
 
@@ -144,3 +144,24 @@ def xpath_match_regex_case_insensitive(context, attrib_values, xpath_argument):
         regex = re.compile(xpath_argument, re.IGNORECASE)
         return bool( re.search(regex, attrib_values[0]) )
 
+def sequnwrap(sequence):
+    '''
+    Unwraps a wrapped sequence string
+    '''
+    unwrapped = sequence.strip()
+    unwrapped = ''.join(unwrapped.split('\n'))
+    return unwrapped
+
+def seqwrap(sequence, add_star=False):
+    '''
+    Wraps a sequence string to a width of 60.
+    If add_star is set to true, an asterisk will be added
+    to the end of the sequence, for compatibility with
+    Modeller.
+    '''
+    if add_star:
+        sequence += '*'
+    wrapped = ''
+    for i in range(0,len(sequence),60):
+        wrapped += sequence[i: i+60] + '\n'
+    return wrapped

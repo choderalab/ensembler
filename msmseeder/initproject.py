@@ -88,6 +88,18 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
     fasta_ofilepath = os.path.join('targets', 'targets.fa')
 
     # =========
+    # Read in project manual specifications
+    # =========
+
+    domain_spans = None
+    if os.path.exists(msmseeder.core.manual_overrides_filename):
+        with open(msmseeder.core.manual_overrides_filename, 'r') as manual_overrides_file:
+            manual_overrides = yaml.load(manual_overrides_file)
+        target_manual_overrides = manual_overrides.get('target-selection')
+        if target_manual_overrides != None:
+            domain_spans = target_manual_overrides.get('domain-spans')
+
+    # =========
     # Parse the TargetExplorer database path
     # =========
 
@@ -123,6 +135,12 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
             targetID = target_domain.get('targetID')
             targetseqnode = target_domain.find('sequence')
             targetseq = targetseqnode.text.strip()
+            # domain span override
+            if domain_spans != None and targetID in domain_spans:
+                fullseqnode = target_domain.find('../../isoforms/canonical_isoform/sequence')
+                fullseq = msmseeder.core.sequnwrap(fullseqnode.text)
+                start, end = [int(x)-1 for x in domain_spans[targetID].split('-')]
+                targetseq = msmseeder.core.seqwrap(fullseq[start:end+1]).strip()
 
             target_fasta_string = '>%s\n%s\n' % (targetID, targetseq)
 
@@ -290,16 +308,16 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
 
     min_domain_len = None
     max_domain_len = None
-    domain_span_manual_specifications = None
+    domain_span_manual_overrides = None
     skip_pdbs = None
-    if os.path.exists(msmseeder.core.manual_specifications_filename):
-        with open(msmseeder.core.manual_specifications_filename, 'r') as manual_specifications_file:
-            manual_specifications = yaml.load(manual_specifications_file)
-        template_manual_specifications = manual_specifications.get('template-selection')
-        min_domain_len = template_manual_specifications.get('min-domain-len')
-        max_domain_len = template_manual_specifications.get('max-domain-len')
-        domain_span_manual_specifications = template_manual_specifications.get('domain-spans')
-        skip_pdbs = template_manual_specifications.get('skip-pdbs')
+    if os.path.exists(msmseeder.core.manual_overrides_filename):
+        with open(msmseeder.core.manual_overrides_filename, 'r') as manual_overrides_file:
+            manual_overrides = yaml.load(manual_overrides_file)
+        template_manual_overrides = manual_overrides.get('template-selection')
+        min_domain_len = template_manual_overrides.get('min-domain-len')
+        max_domain_len = template_manual_overrides.get('max-domain-len')
+        domain_span_manual_overrides = template_manual_overrides.get('domain-spans')
+        skip_pdbs = template_manual_overrides.get('skip-pdbs')
 
     # =========
     # Make request to UniProt web server and parse the returned XML
@@ -372,8 +390,8 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         for domain in selected_domains:
             domainID = '%(entry_name)s_D%(domain_iter)d' % vars()
             domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
-            if domain_span_manual_specifications != None and domainID in domain_span_manual_specifications:
-                domain_span = [int(x) for x in domain_span_manual_specifications[domainID].split('-')]
+            if domain_span_manual_overrides != None and domainID in domain_span_manual_overrides:
+                domain_span = [int(x) for x in domain_span_manual_overrides[domainID].split('-')]
             domain_len = domain_span[1] - domain_span[0] + 1
             if (min_domain_len != None and domain_len < min_domain_len) or (max_domain_len != None and domain_len > max_domain_len):
                 continue
