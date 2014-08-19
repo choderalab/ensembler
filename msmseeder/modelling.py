@@ -1,5 +1,5 @@
 def get_modeller_version():
-    '''Hacky attempt to get Modeller version by regex searching the installation directory.
+    '''Hacky attempt to get Modeller version by regex searching the installation directory or README file.
     '''
     import os
     import re
