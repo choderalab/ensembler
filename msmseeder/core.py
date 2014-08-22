@@ -22,6 +22,11 @@ def get_utcnow_formatted():
     datestamp = now.strftime(datestamp_format_string)
     return datestamp
 
+def strf_timedelta(delta_t):
+    hours, remainder = divmod(delta_t.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return '%d:%d:%d' % (hours, minutes, seconds)
+
 def check_project_toplevel_dir():
     import os
     for dirpath in ['structures', 'templates', 'targets', 'models']:
