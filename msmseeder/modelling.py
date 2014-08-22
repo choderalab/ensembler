@@ -226,8 +226,9 @@ def build_model(target, template, verbose=False):
                 trbk = traceback.format_exc()
                 reject_file_path = os.path.join(models_target_dir, 'modelling-rejected.txt')
                 reject_file.write(trbk)
-        except:
-            pass
+        except Exception as e:
+            print e
+            print traceback.format_exc()
 
     finally:
         os.chdir(current_dir)
