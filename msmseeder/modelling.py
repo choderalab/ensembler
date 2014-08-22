@@ -60,11 +60,15 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
 
         models_target_dir = os.path.join(models_dir, target.id)
         if rank == 0:
+            import datetime
+            target_starttime = datetime.datetime.utcnow()
             print "========================================================================="
             print "Working on target '%s'" % (target.id)
             print "========================================================================="
             if not os.path.exists(models_target_dir):
                 os.mkdir(models_target_dir)
+
+        comm.Barrier()
 
         for template_index in range(rank, ntemplates, size):
             template = templates[template_index]
@@ -84,6 +88,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             import subprocess
             datestamp = msmseeder.core.get_utcnow_formatted()
             nsuccessful_models = subprocess.check_output(['find', models_target_dir, '-name', 'model.pdb']).count('\n')
+            target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             with open('meta.yaml') as meta_file:
                 metadata = yaml.load(meta_file)
@@ -95,6 +100,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             metadata['build_models'] = {
                 'target_id': target.id,
                 'datestamp': datestamp,
+                'timing': msmseeder.core.strf_timedelta(target_timedelta),
                 'nsuccessful_models': nsuccessful_models,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
@@ -222,9 +228,9 @@ def build_model(target, template, verbose=False):
 
     except:
         try:
+            reject_file_path = os.path.join(models_target_dir, 'modelling-rejected.txt')
             with open(reject_file_path, 'w') as reject_file:
                 trbk = traceback.format_exc()
-                reject_file_path = os.path.join(models_target_dir, 'modelling-rejected.txt')
                 reject_file.write(trbk)
         except Exception as e:
             print e

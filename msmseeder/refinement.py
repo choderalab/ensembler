@@ -142,8 +142,13 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
-        models_target_dir = os.path.join(models_dir, target.id)
-        if not os.path.exists(models_target_dir): continue
+        if rank == 0:
+            import datetime
+            target_starttime = datetime.datetime.utcnow()
+            models_target_dir = os.path.join(models_dir, target.id)
+            if not os.path.exists(models_target_dir): continue
+
+        comm.Barrier()
 
         # ========
         # Determine protonation state to use throughout
@@ -208,6 +213,8 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                 with open(reject_file_path, 'w') as reject_file:
                     reject_file.write(trbk)
 
+        comm.Barrier()
+
         if rank == 0:
 
             # ========
@@ -222,6 +229,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             import simtk.openmm.version
             datestamp = msmseeder.core.get_utcnow_formatted()
             nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb']).count('\n')
+            target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             with open(meta_filepath) as meta_file:
@@ -230,6 +238,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             metadata['refine_implicit_md'] = {
                 'target_id': target.id,
                 'datestamp': datestamp,
+                'timing': msmseeder.core.strf_timedelta(target_timedelta),
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
@@ -755,8 +764,13 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
-        models_target_dir = os.path.join(models_dir, target.id)
-        if not os.path.exists(models_target_dir): continue
+        if rank == 0:
+            import datetime
+            target_starttime = datetime.datetime.utcnow()
+            models_target_dir = os.path.join(models_dir, target.id)
+            if not os.path.exists(models_target_dir): continue
+
+        comm.Barrier()
 
         # Determine number of waters to use.
         nwaters_filename = os.path.join(models_target_dir, 'nwaters-use.txt')
@@ -843,6 +857,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             import simtk.openmm.version
             datestamp = msmseeder.core.get_utcnow_formatted()
             nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb']).count('\n')
+            target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             with open(meta_filepath) as meta_file:
@@ -851,6 +866,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             metadata['refine_explicit_md'] = {
                 'target_id': target.id,
                 'datestamp': datestamp,
+                'timing': msmseeder.core.strf_timedelta(target_timedelta),
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': sys.version,
