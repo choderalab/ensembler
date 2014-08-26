@@ -576,7 +576,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         templateID = template['templateID']
         template_PDBresnums = template['template_PDBresnums']
         pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb.gz')
-        template_filename = os.path.join('templates', 'structures', templateID + '.pdb.gz')
+        template_filename = os.path.join('templates', 'structures', templateID + '.pdb')
         nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
         if nresidues_extracted != len(template_PDBresnums):
             import ipdb; ipdb.set_trace()

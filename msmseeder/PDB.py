@@ -37,7 +37,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
     desired_resnums = [ '%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in desired_resnums ]
 
     if type(output_file) == str:
-        ofile = gzip.open(output_file, 'w')
+        ofile = open(output_file, 'w')
     else:
         ofile = output_file
     try:

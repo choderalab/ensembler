@@ -132,7 +132,11 @@ def build_model(target, template, verbose=False):
         templates/structures directory.
     '''
     # align target and template
-    import os, tempfile, shutil, gzip, traceback
+    import os
+    import tempfile
+    import shutil
+    import gzip
+    import traceback
     import Bio.pairwise2
     import Bio.SubsMat.MatrixInfo
 
