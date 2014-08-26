@@ -202,6 +202,63 @@ def gather_targets_from_UniProt():
 # Gather templates methods
 # =========
 
+def get_pdb_and_sifts_files(PDBID, structure_paths=[]):
+    import os
+    import gzip
+    import msmseeder.PDB
+    project_pdb_filepath = os.path.join('structures', 'pdb', PDBID + '.pdb.gz')
+    project_sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
+
+    # Check if PDB file/symlink already exists and is not empty
+    search_for_pdb = True
+    if os.path.exists(project_pdb_filepath):
+        if os.path.getsize(project_pdb_filepath) > 0:
+            search_for_pdb = False
+
+    # If not, search any user-defined paths and create a symlink if found
+    if search_for_pdb:
+        for structure_dir in structure_paths:
+            pdb_filepath = os.path.join(structure_dir, PDBID + '.pdb.gz')
+            if os.path.exists(pdb_filepath):
+                if os.path.getsize(pdb_filepath) > 0:
+                    if os.path.exists(project_pdb_filepath):
+                        os.remove(project_pdb_filepath)
+                    os.symlink(pdb_filepath, project_pdb_filepath)
+                    break
+
+        # If still not found, download the PDB file
+        if not os.path.exists(project_pdb_filepath):
+            print 'Downloading PDB file for:', PDBID
+            pdbgz_page = msmseeder.PDB.retrieve_pdb(PDBID, compressed='yes')
+            with open(project_pdb_filepath, 'w') as pdbgz_file:
+                pdbgz_file.write(pdbgz_page)    
+
+    # Check if SIFTS file already exists and is not empty
+    search_for_sifts = True
+    if os.path.exists(project_sifts_filepath):
+        if os.path.getsize(project_sifts_filepath) > 0:
+            search_for_sifts = False
+
+    # If not, search any user-defined paths and create a symlink if found
+    if search_for_sifts:
+        for structure_dir in structure_paths:
+            sifts_filepath = os.path.join(structure_dir, PDBID + '.xml.gz')
+            if os.path.exists(sifts_filepath):
+                if os.path.getsize(sifts_filepath) > 0:
+                    if os.path.exists(project_sifts_filepath):
+                        os.remove(project_sifts_filepath)
+                    os.symlink(sifts_filepath, project_sifts_filepath)
+                    break
+
+        # If still not found, download the SIFTS file
+        if not os.path.exists(project_sifts_filepath):
+            print 'Downloading sifts file for:', PDBID
+            sifts_page = msmseeder.PDB.retrieve_sifts(PDBID)
+            with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file: 
+                project_sifts_file.write(sifts_page)    
+
+
+
 def gather_templates_from_TargetExplorerDB(DB_path):
     '''Gather protein target data from an existing TargetExplorerDB database.'''
 
@@ -429,63 +486,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
     # =========
 
     for PDBchain in selected_PDBchains:
-        PDBID = PDBchain['PDBID']
-        chainID = PDBchain['chainID']
-
-        project_pdb_filepath = os.path.join('structures', 'pdb', PDBID + '.pdb')
-        project_sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
-
-        # Check if PDB file/symlink already exists and is not empty
-        search_for_pdb = True
-        if os.path.exists(project_pdb_filepath):
-            if os.path.getsize(project_pdb_filepath) > 0:
-                search_for_pdb = False
-
-        # If not, search any user-defined paths and create a symlink if found
-        if search_for_pdb:
-            for structure_dir in structure_paths:
-                pdb_filepath = os.path.join(structure_dir, PDBID + '.pdb')
-                if os.path.exists(pdb_filepath):
-                    if os.path.getsize(pdb_filepath) > 0:
-                        if os.path.exists(project_pdb_filepath):
-                            os.remove(project_pdb_filepath)
-                        os.symlink(pdb_filepath, project_pdb_filepath)
-                        break
-
-            # If still not found, download the PDB file
-            if not os.path.exists(project_pdb_filepath):
-                print 'Downloading PDB file for:', PDBID
-                pdbgz_page = msmseeder.PDB.retrieve_pdb(PDBID, compressed='yes')
-                with open(project_pdb_filepath + '.gz', 'w') as pdbgz_file:
-                    pdbgz_file.write(pdbgz_page)    
-                with gzip.open(project_pdb_filepath + '.gz', 'rb') as pdbgz_file_decoded:
-                    with open(project_pdb_filepath, 'w') as project_pdb_file:
-                        project_pdb_file.writelines(pdbgz_file_decoded)
-                os.remove(project_pdb_filepath + '.gz')
-
-        # Check if SIFTS file already exists and is not empty
-        search_for_sifts = True
-        if os.path.exists(project_sifts_filepath):
-            if os.path.getsize(project_sifts_filepath) > 0:
-                search_for_sifts = False
-
-        # If not, search any user-defined paths and create a symlink if found
-        if search_for_sifts:
-            for structure_dir in structure_paths:
-                sifts_filepath = os.path.join(structure_dir, PDBID + '.xml.gz')
-                if os.path.exists(sifts_filepath):
-                    if os.path.getsize(sifts_filepath) > 0:
-                        if os.path.exists(project_sifts_filepath):
-                            os.remove(project_sifts_filepath)
-                        os.symlink(sifts_filepath, project_sifts_filepath)
-                        break
-
-            # If still not found, download the SIFTS file
-            if not os.path.exists(project_sifts_filepath):
-                print 'Downloading sifts file for:', PDBID
-                sifts_page = msmseeder.PDB.retrieve_sifts(PDBID)
-                with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file: 
-                    project_sifts_file.write(sifts_page)    
+        get_pdb_and_sifts_files(PDBchain['PDBID'], structure_paths)
 
     # =========
     # Extract PDBchain residues using SIFTS files
@@ -574,11 +575,12 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         chainID = template['chainID']
         templateID = template['templateID']
         template_PDBresnums = template['template_PDBresnums']
-        pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb')
-        template_filename = os.path.join('templates', 'structures', templateID + '.pdb')
+        pdb_filename = os.path.join('structures', 'pdb', PDBID + '.pdb.gz')
+        template_filename = os.path.join('templates', 'structures', templateID + '.pdb.gz')
         nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_PDBresnums, chainID)
         if nresidues_extracted != len(template_PDBresnums):
-            raise Exception, 'Number of residues extracted from PDB file does not match desired number of residues.'
+            import ipdb; ipdb.set_trace()
+            raise Exception, 'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (nresidues_extracted, template_PDBresnums)
 
     # =========
     # Metadata

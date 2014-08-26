@@ -147,7 +147,7 @@ def build_model(target, template, verbose=False):
     current_dir = os.getcwd() 
 
     # Skip model-building if files already exist.
-    files_to_check = [model_dir, model_pdbfilename, seqid_filename, aln_filename, restraint_filename_gz]
+    files_to_check = [model_dir, model_pdbfilename+'.gz', seqid_filename, aln_filename, restraint_filename_gz]
     files_are_present = [os.path.exists(filename) for filename in files_to_check]
     if all(files_are_present):
         if verbose: print "Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id)
@@ -205,6 +205,10 @@ def build_model(target, template, verbose=False):
             os.mkdir(model_dir)
 
         target_model.write(file=model_pdbfilename)
+        with open(model_pdbfilename) as model_pdbfile:
+            with gzip.open(model_pdbfilename+'.gz', 'w') as model_pdbfilegz:
+                model_pdbfilegz.write(model_pdbfile.read())
+        os.remove(model_pdbfilename)
 
         # Write sequence identity.
         with open(seqid_filename, 'w') as seqid_file:
@@ -284,7 +288,7 @@ def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
             if verbose: print "Building list of valid models..."
             valid_templates = list()
             for template in templates:
-                model_filename = os.path.join(models_target_dir, template.id, 'model.pdb')
+                model_filename = os.path.join(models_target_dir, template.id, 'model.pdb.gz')
                 if os.path.exists(model_filename):
                     valid_templates.append(template)
 

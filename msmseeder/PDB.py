@@ -16,16 +16,17 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
     '''
     Parameters
     ----------
-    output_file: string or file_like
-    pdb_input_file: string or file_like
+    output_file: string or gzip.file_like
+    pdb_input_file: string or gzip.file_like
 
     Returns
     ----------
     int
         The number of lines extracted.
     '''
+    import gzip
     if type(pdb_input_file) == str:
-        with open(pdb_input_file, 'r') as pdb_file:
+        with gzip.open(pdb_input_file, 'r') as pdb_file:
             pdbtext = pdb_file.readlines()
     else:
         pdbtext = pdb_input_file.readlines()
@@ -36,7 +37,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
     desired_resnums = [ '%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in desired_resnums ]
 
     if type(output_file) == str:
-        ofile = open(output_file, 'w')
+        ofile = gzip.open(output_file, 'w')
     else:
         ofile = output_file
     try:
