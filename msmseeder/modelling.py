@@ -4,7 +4,6 @@ def get_modeller_version():
     import os
     import re
     import modeller
-    import msmseeder.version
     # first try a regex search of the install path
     regex = re.compile('/modeller-[0-9.]{2,6}/')
     match = re.search(regex, modeller.__file__)
@@ -38,6 +37,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     '''
     import sys
     import os
+    import traceback
     import Bio
     import Bio.SeqIO
     import mpi4py.MPI
@@ -73,7 +73,38 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
         for template_index in range(rank, ntemplates, size):
             template = templates[template_index]
             if process_only_these_templates and template.id not in process_only_these_templates: continue
-            build_model(target, template, verbose)
+
+            template_structure_dir = os.path.join(templates_dir, 'structures')
+            model_dir = os.path.join(models_target_dir, template.id)
+            if not os.path.exists(model_dir):
+                os.mkdir(model_dir)
+            aln_filepath = os.path.join(model_dir, 'alignment.pir')
+            seqid_filepath = os.path.join(model_dir, 'sequence-identity.txt')
+            model_pdbfilepath = os.path.join(model_dir, 'model.pdb.gz')
+            restraint_filepath = os.path.join(model_dir, 'restraints.rsr.gz')
+
+            try:
+                build_model(target,
+                            template,
+                            template_structure_dir=template_structure_dir,
+                            aln_filepath=aln_filepath,
+                            seqid_filepath=seqid_filepath,
+                            model_pdbfilepath=model_pdbfilepath,
+                            restraint_filepath=restraint_filepath,
+                            verbose=verbose)
+
+                if os.path.getsize(model_pdbfilepath) < 1:
+                    raise Exception, 'Output PDB file is empty.'
+
+            except:
+                try:
+                    reject_file_path = os.path.join(models_target_dir, 'modelling-rejected.txt')
+                    with open(reject_file_path, 'w') as reject_file:
+                        trbk = traceback.format_exc()
+                        reject_file.write(trbk)
+                except Exception as e:
+                    print e
+                    print traceback.format_exc()
 
         comm.Barrier()
 
@@ -87,7 +118,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             import msmseeder.version
             import subprocess
             datestamp = msmseeder.core.get_utcnow_formatted()
-            nsuccessful_models = subprocess.check_output(['find', models_target_dir, '-name', 'model.pdb']).count('\n')
+            nsuccessful_models = subprocess.check_output(['find', models_target_dir, '-name', 'model.pdb.gz']).count('\n')
             target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             with open('meta.yaml') as meta_file:
@@ -118,7 +149,15 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
 
         print 'Done.'
 
-def build_model(target, template, verbose=False):
+# def build_model(target, template, verbose=False):
+def build_model(target,
+                template,
+                template_structure_dir='templates/structures',
+                aln_filepath='alignment.pir',
+                seqid_filepath='sequence-identity.txt',
+                model_pdbfilepath='model.pdb.gz',
+                restraint_filepath='restraints.rsr.gz',
+                verbose=False):
     r'''Uses Modeller to build a homology model for a given target and
     template.
 
@@ -136,22 +175,30 @@ def build_model(target, template, verbose=False):
     import tempfile
     import shutil
     import gzip
-    import traceback
     import Bio.pairwise2
     import Bio.SubsMat.MatrixInfo
 
-    templates_dir = os.path.abspath('templates')
-    models_dir = os.path.abspath('models')
-    models_target_dir = os.path.join(models_dir, target.id)
-    model_dir = os.path.join(models_target_dir, template.id)
-    aln_filename = os.path.join(model_dir, 'alignment.pir')
-    seqid_filename = os.path.join(model_dir, 'sequence-identity.txt')
-    model_pdbfilename = os.path.join(model_dir, 'model.pdb')
-    restraint_filename_gz = os.path.join(model_dir, 'restraints.rsr.gz')
+    # templates_dir = os.path.abspath('templates')
+    # models_dir = os.path.abspath('models')
+    # models_target_dir = os.path.join(models_dir, target.id)
+    # model_dir = os.path.join(models_target_dir, template.id)
+    # aln_filename = os.path.join(model_dir, 'alignment.pir')
+    # seqid_filename = os.path.join(model_dir, 'sequence-identity.txt')
+    # model_pdbfilename = os.path.join(model_dir, 'model.pdb')
+    # restraint_filename_gz = os.path.join(model_dir, 'restraints.rsr.gz')
+    template_structure_dir = os.path.abspath(template_structure_dir)
+    aln_filepath = os.path.abspath(aln_filepath)
+    seqid_filepath = os.path.abspath(seqid_filepath)
+    model_pdbfilepath = os.path.abspath(model_pdbfilepath)
+    restraint_filepath = os.path.abspath(restraint_filepath)
     current_dir = os.getcwd() 
 
+    if model_pdbfilepath[-7:] != '.pdb.gz':
+        raise Exception, 'model_pdbfilepath (%s) should end in .pdb.gz' % model_pdbfilepath
+    model_pdbfilepath_uncompressed = model_pdbfilepath[:-3]
+
     # Skip model-building if files already exist.
-    files_to_check = [model_dir, model_pdbfilename+'.gz', seqid_filename, aln_filename, restraint_filename_gz]
+    files_to_check = [model_pdbfilepath, seqid_filepath, aln_filepath, restraint_filepath]
     files_are_present = [os.path.exists(filename) for filename in files_to_check]
     if all(files_are_present):
         if verbose: print "Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id)
@@ -190,7 +237,7 @@ def build_model(target, template, verbose=False):
         import modeller.automodel
         modeller.log.none()
         env = modeller.environ()
-        env.io.atom_files_directory = [os.path.join(templates_dir, 'structures')]
+        env.io.atom_files_directory = [template_structure_dir]
 
         a = modeller.automodel.allhmodel(env,
                                          # file with template codes and target sequence
@@ -204,46 +251,48 @@ def build_model(target, template, verbose=False):
         tmp_model_pdbfilename = a.outputs[0]['name']
         target_model = modeller.model(env, file=tmp_model_pdbfilename)
 
-        # Create directory to place final models in
-        if not os.path.exists(model_dir):
-            os.mkdir(model_dir)
+        # # Create directory to place final models in
+        # if not os.path.exists(model_dir):
+        #     os.mkdir(model_dir)
 
-        target_model.write(file=model_pdbfilename)
-        with open(model_pdbfilename) as model_pdbfile:
-            with gzip.open(model_pdbfilename+'.gz', 'w') as model_pdbfilegz:
+        target_model.write(file=model_pdbfilepath_uncompressed)
+        with open(model_pdbfilepath_uncompressed) as model_pdbfile:
+            with gzip.open(model_pdbfilepath, 'w') as model_pdbfilegz:
                 model_pdbfilegz.write(model_pdbfile.read())
-        os.remove(model_pdbfilename)
+
+        # Need to keep the uncompressed pdb file until the clustering step
+        # os.remove(model_pdbfilepath_uncompressed)
 
         # Write sequence identity.
-        with open(seqid_filename, 'w') as seqid_file:
+        with open(seqid_filepath, 'w') as seqid_file:
             seqid_file.write('%.1f\n' % target_model.seq_id)
 
         # Copy alignment            
-        shutil.move(tmp_aln_filename, aln_filename)
+        shutil.move(tmp_aln_filename, aln_filepath)
 
         # Copy restraints.
         with open('%s.rsr' % target.id, 'r') as rsrfile:
-            with gzip.open(restraint_filename_gz, 'wb') as rsrgzfile:
+            with gzip.open(restraint_filepath, 'wb') as rsrgzfile:
                 rsrgzfile.write(rsrfile.read())
 
-        if os.path.getsize(model_pdbfilename) < 1:
-            raise Exception, 'Output PDB file is empty. Could be a filesystem error.'
+        # XXX if os.path.getsize(model_pdbfilepath) < 1:
+        #     raise Exception, 'Output PDB file is empty.'
 
         text  = "---------------------------------------------------------------------------------\n"
         text += 'Successfully modeled target %s on template %s.\n' % (target.id, template.id)
         text += "Sequence identity was %.1f%%.\n" % (target_model.seq_id)
         return text
 
-    except:
-        try:
-            reject_file_path = os.path.join(models_target_dir, 'modelling-rejected.txt')
-            with open(reject_file_path, 'w') as reject_file:
-                trbk = traceback.format_exc()
-                reject_file.write(trbk)
-        except Exception as e:
-            print e
-            print traceback.format_exc()
-
+    # XXX except:
+    #     try:
+    #         reject_file_path = os.path.join(models_target_dir, 'modelling-rejected.txt')
+    #         with open(reject_file_path, 'w') as reject_file:
+    #             trbk = traceback.format_exc()
+    #             reject_file.write(trbk)
+    #     except Exception as e:
+    #         print e
+    #         print traceback.format_exc()
+    #
     finally:
         os.chdir(current_dir)
         shutil.rmtree(temp_dir)
@@ -362,7 +411,9 @@ def cluster_models(process_only_these_targets=None, verbose=False):
 
     Runs serially.
     '''
-    import os, glob
+    import os
+    import gzip
+    import glob
     import Bio.SeqIO
     import mdtraj
     import mpi4py.MPI
@@ -399,7 +450,13 @@ def cluster_models(process_only_these_targets=None, verbose=False):
                 model_dir = os.path.join(models_target_dir, template.id)
                 model_pdbfilename = os.path.join(model_dir, 'model.pdb')
                 if not os.path.exists(model_pdbfilename):
-                    continue
+                    model_pdbfilename_compressed = os.path.join(model_dir, 'model.pdb.gz')
+                    if not os.path.exists(model_pdbfilename_compressed):
+                        continue
+                    else:
+                        with gzip.open(model_pdbfilename_compressed) as model_pdbfile_compressed:
+                            with open(model_pdbfilename, 'w') as model_pdbfile:
+                                model_pdbfile.write(model_pdbfile_compressed.read())
                 model_pdbfilenames.append(model_pdbfilename)
                 valid_templateIDs.append(template.id)
 
@@ -447,6 +504,12 @@ def cluster_models(process_only_these_targets=None, verbose=False):
                 for u in uniques:
                     uniques_file.write(u+'\n')
                 print '%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff)
+
+            for template in templates:
+                model_dir = os.path.join(models_target_dir, template.id)
+                model_pdbfilename = os.path.join(model_dir, 'model.pdb')
+                if os.path.exists(model_pdbfilename):
+                    os.remove(model_pdbfilename)
 
             # ========
             # Metadata
