@@ -3,7 +3,9 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     MPI-enabled.
     '''
-    import os, traceback
+    import os
+    import traceback
+    import gzip
     import Bio.SeqIO
     import simtk.openmm as openmm
     import simtk.unit as unit
@@ -61,7 +63,8 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
 
         if verbose: print "Reading model..."
-        pdb = app.PDBFile(model_filename)
+        with gzip.open(model_filename) as model_file:
+            pdb = app.PDBFile(model_file)
 
         # Add missing protons.
         modeller = app.Modeller(pdb.topology, pdb.positions)
@@ -86,8 +89,8 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         if write_trajectory:
             # Open trajectory for writing.
             if verbose: print "Opening trajectory for writing..."
-            trajectory_filename = os.path.join(model_dir, 'implicit-trajectory.pdb')
-            trajectory_outfile = open(trajectory_filename, 'w')
+            trajectory_filename = os.path.join(model_dir, 'implicit-trajectory.pdb.gz')
+            trajectory_outfile = gzip.open(trajectory_filename, 'w')
             app.PDBFile.writeHeader(topology, file=trajectory_outfile)
 
         # Open energy trajectory for writing
@@ -118,7 +121,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
             if write_trajectory:
                 app.PDBFile.writeModel(topology, state.getPositions(), file=trajectory_outfile, modelIndex=iteration)
-                    
+
             # write data
             energy_outfile.write("  %8d %8.1f %8.3f %8.3f %.3f\n" % (iteration, simulation_time / unit.picoseconds, potential_energy / kT, kinetic_energy / kT, ns_per_day))
             energy_outfile.flush()
@@ -130,7 +133,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         energy_outfile.close()
 
         # Write final PDB file.
-        pdb_outfile = open(pdb_filename, 'w')
+        pdb_outfile = gzip.open(pdb_filename, 'w')
         app.PDBFile.writeHeader(topology, file=pdb_outfile)
         app.PDBFile.writeFile(topology, state.getPositions(), file=pdb_outfile)
         app.PDBFile.writeFooter(topology, file=pdb_outfile)
@@ -162,8 +165,9 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         if verbose: print "Using %s as highest identity model (%s%%)" % (reference_template, reference_identity)
         
         # Read PDB for reference model.
-        reference_pdb_filename = os.path.join(models_target_dir, reference_template, 'model.pdb')
-        reference_pdb = app.PDBFile(reference_pdb_filename)
+        reference_pdb_filename = os.path.join(models_target_dir, reference_template, 'model.pdb.gz')
+        with gzip.open(reference_pdb_filename) as reference_pdb_file:
+            reference_pdb = app.PDBFile(reference_pdb_file)
 
         # Add missing protons.
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
@@ -197,11 +201,11 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             if not unique_by_clustering: continue
 
             # Check to make sure the initial model file is present.
-            model_filename = os.path.join(model_dir, 'model.pdb')
+            model_filename = os.path.join(model_dir, 'model.pdb.gz')
             if not os.path.exists(model_filename): continue
 
             # Pass if this simulation has already been run.
-            pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb')
+            pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
             if os.path.exists(pdb_filename): continue
 
             try:
@@ -228,7 +232,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             import subprocess
             import simtk.openmm.version
             datestamp = msmseeder.core.get_utcnow_formatted()
-            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb']).count('\n')
+            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb.gz']).count('\n')
             target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
@@ -263,6 +267,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     MPI-enabled.
     '''
     import os
+    import gzip
     import Bio.SeqIO
     import simtk.unit as unit
     import simtk.openmm.app as app
@@ -311,7 +316,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
 
-            model_filename = os.path.join(model_dir, 'implicit-refined.pdb')
+            model_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
             if not os.path.exists(model_filename): continue
 
             print "-------------------------------------------------------------------------"
@@ -326,7 +331,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
             try:
                 if verbose: print "Reading model..."
-                pdb = app.PDBFile(model_filename)
+                with gzip.open(model_filename) as model_file:
+                    pdb = app.PDBFile(model_file)
 
                 # Count initial atoms.
                 natoms_initial = len(pdb.positions)
@@ -394,7 +400,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 def determine_nwaters(process_only_these_targets=None, process_only_these_templates=None, verbose=False):
     '''Determine distribution of nwaters, and select the value at the 68th percentile.
     '''
-    import os, numpy
+    import os
+    import numpy
     import Bio.SeqIO
     import mpi4py.MPI
     comm = mpi4py.MPI.COMM_WORLD
@@ -500,7 +507,9 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     MPI-enabled.
     '''
-    import os, traceback
+    import os
+    import traceback
+    import gzip
     import Bio.SeqIO
     import simtk.openmm as openmm
     import simtk.unit as unit
@@ -694,8 +703,8 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         if write_trajectory:
             # Open trajectory for writing.
             if verbose: print "Opening trajectory for writing..."
-            trajectory_filename = os.path.join(model_dir, 'explicit-trajectory.pdb')
-            trajectory_outfile = open(trajectory_filename, 'w')
+            trajectory_filename = os.path.join(model_dir, 'explicit-trajectory.pdb.gz')
+            trajectory_outfile = gzip.open(trajectory_filename, 'w')
             app.PDBFile.writeHeader(pdb.topology, file=trajectory_outfile)
 
         # Open energy trajectory for writing
@@ -738,7 +747,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         energy_outfile.close()
 
         state = context.getState(getPositions=True, enforcePeriodicBox=True)            
-        with open(pdb_filename, 'w') as pdb_outfile:
+        with gzip.open(pdb_filename, 'w') as pdb_outfile:
             app.PDBFile.writeHeader(topology, file=pdb_outfile)
             app.PDBFile.writeFile(topology, state.getPositions(), file=pdb_outfile)
             app.PDBFile.writeFooter(topology, file=pdb_outfile)
@@ -774,7 +783,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         # Determine number of waters to use.
         nwaters_filename = os.path.join(models_target_dir, 'nwaters-use.txt')
-        with open(nwaters_filename, 'r') as infile:
+        with gzip.open(nwaters_filename, 'r') as infile:
             line = infile.readline()
         nwaters = int(line)
 
@@ -794,11 +803,11 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             if not unique_by_clustering: continue
 
             # Check to make sure the initial model file is present.
-            model_filename = os.path.join(model_dir, 'implicit-refined.pdb')
+            model_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
             if not os.path.exists(model_filename): continue
 
             # Check if explicit solvent results are already available and usable.
-            pdb_filename = os.path.join(model_dir, 'explicit-refined.pdb')
+            pdb_filename = os.path.join(model_dir, 'explicit-refined.pdb.gz')
             system_filename = os.path.join(model_dir, 'explicit-system.xml')
             integrator_filename = os.path.join(model_dir, 'explicit-integrator.xml')
             state_filename = os.path.join(model_dir, 'explicit-state.xml')
@@ -830,7 +839,8 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
             try:
                 if verbose: print "Reading model..."
-                pdb = app.PDBFile(model_filename)
+                with gzip.open(model_filename) as model_file:
+                    pdb = app.PDBFile(model_file)
 
                 if verbose: print "Solvating model to achieve target of %d waters..." % nwaters
                 [positions, topology] = solvate_pdb(pdb, nwaters, verbose=verbose)
@@ -840,7 +850,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             except Exception:
                 # Record rejected models.
                 trbk = traceback.format_exc()
-                reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt')
+                reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt.gz')
                 with open(reject_file_path, 'w') as reject_file:
                     reject_file.write(trbk)
 
@@ -856,7 +866,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             import subprocess
             import simtk.openmm.version
             datestamp = msmseeder.core.get_utcnow_formatted()
-            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb']).count('\n')
+            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb.gz']).count('\n')
             target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
