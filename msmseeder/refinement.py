@@ -783,7 +783,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         # Determine number of waters to use.
         nwaters_filename = os.path.join(models_target_dir, 'nwaters-use.txt')
-        with gzip.open(nwaters_filename, 'r') as infile:
+        with open(nwaters_filename, 'r') as infile:
             line = infile.readline()
         nwaters = int(line)
 
