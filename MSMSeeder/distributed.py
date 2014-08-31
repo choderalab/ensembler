@@ -222,6 +222,14 @@ class MDSys(object):
     def positions(self):
         return self._positions
 
+def _read_local_repository(local_repo, pdb_code_input):
+    import os
+    import gzip
+    pdb_code = pdb_code_input.lower()
+    pdb_filename = 'pdb%s.ent.gz' % pdb_code
+    pdb_path = '%s/%s' %(pdb_code[1:3], pdb_filename)
+    filepath = os.path.join(local_repo, pdb_path)
+    return "".join(gzip.GzipFile(filename = filepath).readlines())
 
 def blast_pdb_local(fasta_string, num_hits=1000):
     import subprocess
@@ -237,18 +245,21 @@ def blast_pdb_local(fasta_string, num_hits=1000):
     p = subprocess.Popen(blast_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     blast_aln, error = p.communicate(input=fasta_string)
     msmseeds = []
+    local_pdb_repo = os.getenv("PDB_HOME")
     for result in blast_aln.splitlines():
         if result[0]!="#":
             res_data = result.split("\t")
             e_value = float(res_data[2])
             template_chain_code =  "_".join(res_data[1].split("|")[3:])
-            raw_template_pdb = PDB.retrieve_pdb(template_chain_code.split("_")[0])
+            raw_template_pdb = _read_local_repository(local_pdb_repo, template_chain_code.split("_")[0])
             template_fasta, pdb_resnums = _retrieve_fasta(template_chain_code)
             template_pdb = StringIO.StringIO()
             raw_template_pdbio = StringIO.StringIO(raw_template_pdb)
             raw_template_pdbio.seek(0)
             end_resnums = PDB.extract_residues_by_resnum(template_pdb,raw_template_pdbio, pdb_resnums, template_chain_code.split("_")[1])
             template_pdb.seek(0)
+            if template_pdb.len == 0:
+                continue
             template_pdbfile = app.PDBFile(template_pdb)
             msmseeds.append(MSMSeed(fasta_string, template_fasta, template_pdbfile, e_value))
     return msmseeds
@@ -533,7 +544,7 @@ def refine_implicitMD(msmseed, openmm_platform='CPU', niterations=100, nsteps_pe
 
 
     """
-
+    import os
     import simtk.openmm as openmm
     import simtk.unit as unit
     import simtk.openmm.app as app
@@ -671,6 +682,7 @@ def solvate_models_to_target(msmseed, target_nwaters):
 
     """
 
+    import os
     import simtk.openmm.app as app
     import simtk.unit as unit
     natoms_per_solvent = 3
@@ -788,7 +800,8 @@ def refine_explicitMD(msmseed, openmm_platform='CPU', niterations=1, nsteps_per_
     import time
     import StringIO
     import gzip
-
+    import os
+    import numpy
     platform = openmm.Platform.getPlatformByName(openmm_platform)
     #this will just be None if there is no gpu
     gpuid = os.getenv("CUDA_VISIBLE_DEVICES")
@@ -830,7 +843,13 @@ def refine_explicitMD(msmseed, openmm_platform='CPU', niterations=1, nsteps_per_
             # integrate dynamics
             integrator.step(nsteps_per_iteration)
             # get current state
-            state = context.getState(getEnergy=True)
+            state = context.getState(getEnergy=True, getPositions=True)
+            potential_energy = state.getPotentialEnergy()
+            kinetic_energy = state.getKineticEnergy()
+            if numpy.isnan(potential_energy/kT) or numpy.isnan(kinetic_energy/kT):
+                msmseed.error_status = -5
+                msmseed.error_message = 'The simulation has encountered NaNs in energies'
+                break
             simulation_time = state.getTime()
             potential_energy = state.getPotentialEnergy()
             kinetic_energy = state.getKineticEnergy()
@@ -841,67 +860,41 @@ def refine_explicitMD(msmseed, openmm_platform='CPU', niterations=1, nsteps_per_
             volume_in_nm3 = (box_vectors[0][0] * box_vectors[1][1] * box_vectors[2][2]) / (unit.nanometers**3) # TODO: Use full determinant
             remaining_time = elapsed_time * (niterations-iteration-1) / (iteration+1)
     state = context.getState(getPositions=True)
-
-    #save the pdb of the current model
-    explicit_model_pdb = StringIO.StringIO()
-    with gzip.GzipFile(fileobj = explicit_model_pdb, mode = 'w') as output:
-        app.PDBFile.writeHeader(solvated_model.topology, file=output)
-        app.PDBFile.writeModel(solvated_model.topology, state.getPositions(), file=output)
-        app.PDBFile.writeFooter(solvated_model.topology, file=output)
-    msmseed.explicit_refined_pdb = explicit_model_pdb.getvalue()
+    try: 
+        #save the pdb of the current model
+        explicit_model_pdb = StringIO.StringIO()
+        with gzip.GzipFile(fileobj = explicit_model_pdb, mode = 'w') as output:
+            app.PDBFile.writeHeader(solvated_model.topology, file=output)
+            app.PDBFile.writeModel(solvated_model.topology, state.getPositions(), file=output)
+            app.PDBFile.writeFooter(solvated_model.topology, file=output)
+        msmseed.explicit_refined_pdb = explicit_model_pdb.getvalue()
 
     #save the state
-    serialized_state_stringio = StringIO.StringIO()
-    state_xml = openmm.XmlSerializer.serialize(state)
-    with gzip.GzipFile(fileobj=serialized_state_stringio, mode = 'w') as output:
-         output.write(state_xml)
-    msmseed.explicit_refined_state = serialized_state_stringio.getvalue()
+        serialized_state_stringio = StringIO.StringIO()
+        state_xml = openmm.XmlSerializer.serialize(state)
+        with gzip.GzipFile(fileobj=serialized_state_stringio, mode = 'w') as output:
+             output.write(state_xml)
+        msmseed.explicit_refined_state = serialized_state_stringio.getvalue()
 
     #save the integrator
-    serialized_integrator_stringio = StringIO.StringIO()
-    integrator_xml = openmm.XmlSerializer.serialize(integrator)
-    with gzip.GzipFile(fileobj = serialized_integrator_stringio, mode = 'w') as buffer:
-        buffer.write(integrator_xml)
-    msmseed.explicit_refined_integrator = serialized_state_stringio.getvalue()
+        serialized_integrator_stringio = StringIO.StringIO()
+        integrator_xml = openmm.XmlSerializer.serialize(integrator)
+        with gzip.GzipFile(fileobj = serialized_integrator_stringio, mode = 'w') as buffer:
+            buffer.write(integrator_xml)
+        msmseed.explicit_refined_integrator = serialized_state_stringio.getvalue()
 
     #save the system
-    serialized_system_stringio = StringIO.StringIO()
-    system_xml = openmm.XmlSerializer.serialize(system)
-    with gzip.GzipFile(fileobj = serialized_system_stringio, mode = 'w') as buffer:
-       buffer.write(system_xml)
-    msmseed.explicit_refined_system = serialized_state_stringio.getvalue()
+        serialized_system_stringio = StringIO.StringIO()
+        system_xml = openmm.XmlSerializer.serialize(system)
+        with gzip.GzipFile(fileobj = serialized_system_stringio, mode = 'w') as buffer:
+           buffer.write(system_xml)
+        msmseed.explicit_refined_system = serialized_state_stringio.getvalue()
+    except:
+        msmseed.error_state = -5
+        msmseed.error_messsage = "Failed to save model"
+    finally:
+        return msmseed
 
-
-    return msmseed
-
-
-
-
-
-
-
-
-
-if __name__=="__main__":
-    import os
-    os.chdir('/Users/grinawap/new-msmseeder/msmseeder/MSMSeeder')
-    import distributed
-    import PDB
-    sc.addPyFile('/Users/grinawap/new-msmseeder/msmseeder/MSMSeeder/PDB.py')
-    sc.addPyFile('/Users/grinawap/new-msmseeder/msmseeder/MSMSeeder/distributed.py')
-    #import pyspark
-    os.chdir('/Users/grinawap/kras_g12c')
-    fasta = "".join(open('target_seq.fasta', 'r').readlines())
-    msmseeds = distributed.blast_pdb_local(fasta, num_hits=50)
-    #sc = pyspark.SparkContext(master = "spark://lski1690:7077")
-    p_msmseeds = sc.parallelize(msmseeds)
-    aligned_models = p_msmseeds.map(distributed.align_template_target)
-    models = aligned_models.map(distributed.make_model)
-
-    #msmseed_ref = msmseeds[0]
-    #aln_results = p_msmseeds.map(lambda x: distributed.align_template_to_reference(x, msmseed_ref))
-    #rmsds_evals = aln_results.map(lambda x: (x.rmsd_to_reference, x.blast_eval)).collect()
-    #rmsds_evals.sort(key=lambda x: x[0])
 
 
 
