@@ -84,7 +84,7 @@ if not release:
 write_version_py()
 setup(
     name = 'msmseeder',
-    version = '0.2',
+    version = __version__,
     author = 'Daniel L Parton',
     author_email = 'daniel.parton@choderalab.org',
     description = 'Generation of diverse protein structural ensembles, for the initialization of molecular dynamics simulations and subsequent construction of Markov state models. ',
