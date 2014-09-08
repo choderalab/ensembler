@@ -78,6 +78,24 @@ if not release:
         a.close()
 
 ##########################
+# Find packages
+##########################
+
+def find_packages():
+    """Find all of mdtraj's python packages.
+    Adapted from IPython's setupbase.py. Copyright IPython
+    contributors, licensed under the BSD license.
+    """
+    packages = []
+    for dir,subdirs,files in os.walk('msmseeder'):
+        package = dir.replace(os.path.sep, '.')
+        if '__init__.py' not in files:
+            # not a package
+            continue
+        packages.append(package.replace('MDTraj', 'mdtraj'))
+    return packages
+
+##########################
 # Setup
 ##########################
 
@@ -90,7 +108,9 @@ setup(
     description = 'Generation of diverse protein structural ensembles, for the initialization of molecular dynamics simulations and subsequent construction of Markov state models. ',
     license='GPLv2',
     long_description = read_readme('README.md'),
-    packages = ['msmseeder', 'tests'],
+    # packages = ['msmseeder'],
+    packages = find_packages(),
+    package_data = {'msmseeder.tests': ['resources/*']},
     scripts = ['scripts/InitMSMSeederProject.py', 'scripts/GatherTargets.py', 'scripts/GatherTemplates.py', 'scripts/BuildModels.py', 'scripts/RefineImplicitMD.py', 'scripts/Solvate.py', 'scripts/RefineExplicitMD.py', 'scripts/PackageModels.py'],
     data_files = [('', ['LICENSE']), ('templates', ['project-data.yaml-TEMPLATE', 'manual-specifications.yaml-TEMPLATE'])],
 )
