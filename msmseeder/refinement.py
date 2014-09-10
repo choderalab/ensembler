@@ -145,10 +145,10 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
+        models_target_dir = os.path.join(models_dir, target.id)
         if rank == 0:
             import datetime
             target_starttime = datetime.datetime.utcnow()
-            models_target_dir = os.path.join(models_dir, target.id)
             if not os.path.exists(models_target_dir): continue
 
         comm.Barrier()
