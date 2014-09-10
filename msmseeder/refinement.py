@@ -210,12 +210,15 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
             try:
                 simulate_implicitMD(model_dir, variants, gpuid, rank, verbose=verbose)
-            except Exception:
-                # Record rejected models.
-                trbk = traceback.format_exc()
-                reject_file_path = os.path.join(models_target_dir, 'implicit-rejected.txt')
-                with open(reject_file_path, 'w') as reject_file:
-                    reject_file.write(trbk)
+            except:
+                try:
+                    reject_file_path = os.path.join(models_target_dir, 'implicit-rejected.txt')
+                    trbk = traceback.format_exc()
+                    with open(reject_file_path, 'w') as reject_file:
+                        reject_file.write(trbk)
+                except Exception as e:
+                    print e
+                    print traceback.format_exc()
 
         comm.Barrier()
 
@@ -268,6 +271,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     '''
     import os
     import gzip
+    import traceback
     import Bio.SeqIO
     import simtk.unit as unit
     import simtk.openmm.app as app
@@ -304,10 +308,6 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
         models_target_dir = os.path.join(models_dir, target.id)
         if not os.path.exists(models_target_dir): continue
-
-        # Start a 'reject file'.
-        reject_filename = os.path.join(models_target_dir, 'reject-solvation.txt')
-        reject_file = open(reject_filename, 'w')
 
         # Process all templates.
         for template_index in range(rank, len(templates), size):
@@ -355,10 +355,15 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
                 os.chdir(original_dir)    
 
-            except Exception as e:
-                # Add to rejection file.
-                reject_file.write('%s : %s\n' % (template.id, str(e)))
-                reject_file.flush()
+            except:
+                try:
+                    reject_file_path = os.path.join(models_target_dir, 'solvation-rejected.txt')
+                    trbk = traceback.format_exc()
+                    with open(reject_file_path, 'w') as reject_file:
+                        reject_file.write(trbk)
+                except Exception as e:
+                    print e
+                    print traceback.format_exc()
 
         if rank == 0:
 
@@ -847,12 +852,15 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
                 simulate_explicitMD(model_dir, gpuid, rank, verbose=verbose)
 
-            except Exception:
-                # Record rejected models.
-                trbk = traceback.format_exc()
-                reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt.gz')
-                with open(reject_file_path, 'w') as reject_file:
-                    reject_file.write(trbk)
+            except:
+                try:
+                    reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt')
+                    trbk = traceback.format_exc()
+                    with open(reject_file_path, 'w') as reject_file:
+                        reject_file.write(trbk)
+                except Exception as e:
+                    print e
+                    print traceback.format_exc()
 
         if rank == 0:
 
