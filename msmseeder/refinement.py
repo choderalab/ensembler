@@ -210,15 +210,13 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
             try:
                 simulate_implicitMD(model_dir, variants, gpuid, rank, verbose=verbose)
-            except:
-                try:
-                    reject_file_path = os.path.join(models_target_dir, 'implicit-rejected.txt')
-                    trbk = traceback.format_exc()
-                    with open(reject_file_path, 'w') as reject_file:
-                        reject_file.write(trbk)
-                except Exception as e:
-                    print e
-                    print traceback.format_exc()
+            except Exception as e:
+                reject_file_path = os.path.join(model_dir, 'implicit-rejected.txt')
+                exception_str = '%r' % e
+                trbk = traceback.format_exc()
+                with open(reject_file_path, 'w') as reject_file:
+                    reject_file.write(exception_str + '\n')
+                    reject_file.write(trbk + '\n')
 
         comm.Barrier()
 
@@ -355,15 +353,13 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
                 os.chdir(original_dir)    
 
-            except:
-                try:
-                    reject_file_path = os.path.join(models_target_dir, 'solvation-rejected.txt')
-                    trbk = traceback.format_exc()
-                    with open(reject_file_path, 'w') as reject_file:
-                        reject_file.write(trbk)
-                except Exception as e:
-                    print e
-                    print traceback.format_exc()
+            except Exception as e:
+                reject_file_path = os.path.join(model_dir, 'solvation-rejected.txt')
+                exception_text = '%r' % e
+                trbk = traceback.format_exc()
+                with open(reject_file_path, 'w') as reject_file:
+                    reject_file.write(exception_text + '\n')
+                    reject_file.write(trbk + '\n')
 
         if rank == 0:
 
@@ -852,15 +848,13 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
                 simulate_explicitMD(model_dir, gpuid, rank, verbose=verbose)
 
-            except:
-                try:
-                    reject_file_path = os.path.join(models_target_dir, 'explicit-rejected.txt')
-                    trbk = traceback.format_exc()
-                    with open(reject_file_path, 'w') as reject_file:
-                        reject_file.write(trbk)
-                except Exception as e:
-                    print e
-                    print traceback.format_exc()
+            except Exception as e:
+                reject_file_path = os.path.join(model_dir, 'explicit-rejected.txt')
+                exception_text = '%r' % e
+                trbk = traceback.format_exc()
+                with open(reject_file_path, 'w') as reject_file:
+                    reject_file.write(exception_text + '\n')
+                    reject_file.write(trbk + '\n')
 
         if rank == 0:
 
