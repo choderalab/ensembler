@@ -6,6 +6,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     import os
     import traceback
     import gzip
+    import msmseeder
     import Bio.SeqIO
     import simtk.openmm as openmm
     import simtk.unit as unit
@@ -208,15 +209,23 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
             if os.path.exists(pdb_filename): continue
 
+            # Open log file
+            additional_log_data = {
+                'mpi_rank': rank,
+                'gpuid': gpuid,
+            }
+            log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
+            log_file = msmseeder.core.LogFile(log_filepath, additional_log_data=additional_log_data)
+
             try:
                 simulate_implicitMD(model_dir, variants, gpuid, rank, verbose=verbose)
             except Exception as e:
-                reject_file_path = os.path.join(model_dir, 'implicit-rejected.txt')
-                exception_str = '%r' % e
-                trbk = traceback.format_exc()
-                with open(reject_file_path, 'w') as reject_file:
-                    reject_file.write(exception_str + '\n')
-                    reject_file.write(trbk + '\n')
+                traceback = traceback.format_exc()
+                log_data = {
+                    'exception': e,
+                    'traceback': msmseeder.core.literal_str(traceback),
+                }
+                log_file.log(log_data)
 
         comm.Barrier()
 

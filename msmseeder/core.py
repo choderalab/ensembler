@@ -13,6 +13,28 @@ manual_overrides_filename = 'manual-overrides.yaml'
 template_acceptable_ratio_observed_residues = 0.7
 
 # ========
+# YAML
+# ========
+
+class literal_str(str): pass
+
+def change_style(style, representer):
+    def new_representer(dumper, data):
+        scalar = representer(dumper, data)
+        scalar.style = style
+        return scalar
+    return new_representer
+
+from yaml.representer import SafeRepresenter
+
+# represent_str does handle some corner cases, so use that
+# instead of calling represent_scalar directly
+represent_literal_str = change_style('|', SafeRepresenter.represent_str)
+
+import yaml
+yaml.add_representer(literal_str, represent_literal_str)
+
+# ========
 # Definitions
 # ========
 
@@ -32,6 +54,29 @@ def check_project_toplevel_dir():
     for dirpath in ['structures', 'templates', 'targets', 'models']:
         if not os.path.exists(dirpath):
             raise Exception, 'Current directory not recognized as the top-level directory of a project.'
+
+class LogFile:
+    def __init__(self, log_filepath, additional_log_data={}):
+        import socket
+        self.log_filepath = log_filepath
+        log_data = {
+            'datestamp': get_utcnow_formatted(),
+            'hostname': socket.gethostname(),
+        }
+
+        log_data.update(additional_log_data)
+
+        with open(self.log_filepath, 'w') as log_file:
+            yaml.dump(log_data, log_file, default_flow_style=False)
+
+    def log(self, new_log_data):
+        with open(self.log_filepath, 'r') as log_file:
+            log_data = yaml.load(log_file)
+
+        log_data.update(new_log_data)
+
+        with open(self.log_filepath, 'w') as log_file:
+            yaml.dump(log_data, log_file, default_flow_style=False)
 
 class ProjectMetadata:
     def __init__(self, data):
