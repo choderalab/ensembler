@@ -1,29 +1,43 @@
 MSMSeeder
 =========
 
-Generation of diverse structural ensembles from homology data, for the initialization of molecular dynamics simulation trajectories and construction of Markov state models.
+Software pipeline used to generate diverse protein structural ensembles, for
+the purpose of seeding multiple parallel molecular dynamics simulations, and
+subsequent construction of Markov state models. This branch contains a version of MSMSeeder which
+runs via the distributed computing framework Spark (https://spark.apache.org/)
 
 Authors
 -------
 
+* Daniel L. Parton | daniel.parton@choderalab.org
 * John D. Chodera | john.chodera@choderalab.org
-* Daniel L. Parton | danny.parton@choderalab.org
 * Patrick B. Grinaway | patrick.grinaway@choderalab.org
+
+Overview of pipeline
+--------------------
+
+1. Retrieve protein target sequences and template structures.
+2. Build models by mapping each target sequence onto every available template structure, using Modeller (http://salilab.org/modeller/).
+3. Filter out non-unique models (based on a RMSD cutoff).
+4. Refine models with implicit solvent molecular dynamics simulation.
+5. Refine models with explicit solvent molecular dynamics simulation.
+6. (_optional_) Package and/or compress the final models, ready for transfer or for set-up on other platforms such as [Folding@Home](http://folding.stanford.edu/).
 
 Manifest
 --------
 
-targets/ - target sequences
+scripts/ - Python wrapper scripts which accept parameters from the command-line or project metadata file
 
-templates/ - template sequences and structures
+MSMSeeder/ - main code; can be used as a standalone Python library package
 
-models/ - comparative models for initialization of simulations
+tests/ - to test whether the code is working correctly, run nosetests from this top-level directory
 
-simulations/ - simulation data
+Installation
+------------
 
-pylib/ - useful Python libraries
-
-spark-distributed/ - Library with map/reduce-able functions
+    git clone https://github.com/choderalab/msmseeder.git
+    cd msmseeder
+    python setup.py install
 
 Dependencies
 ------------
@@ -31,9 +45,9 @@ Dependencies
 * OpenMM - https://simtk.org/home/openmm
 * Modeller - http://salilab.org/modeller/
 * mpi4py - http://mpi4py.scipy.org/
-* MDAnalysis - https://code.google.com/p/mdanalysis/
-* Clustal Omega - http://www.clustal.org/omega/
+* mdtraj - http://mdtraj.org/
+* Spark  - https://spark.apache.org/
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
-* Stride (optional, for model alignment/visualization) - http://webclu.bio.wzw.tum.de/stride/ (also included as part of the VMD package - http://www.ks.uiuc.edu/Research/vmd/)
-* Many other Python packages. Recommended aproach is to install either Enthought Canopy (https://www.enthought.com/products/canopy/) or Continuum Anaconda (https://store.continuum.io/)
-* Apache Spark - http://spark.incubator.apache.org/
+* Various other Python packages commonly used in scientific computing. Recommended aproach is to install either Continuum Anaconda (https://store.continuum.io/) or Enthought Canopy (https://www.enthought.com/products/canopy/)
+
+
