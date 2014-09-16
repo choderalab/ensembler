@@ -41,6 +41,8 @@ class MSMSeed(object):
         object containing the output of MODELLER
     target_restraints: String
         containing .rsr file output of MODELLER
+    sequence_similarity : float
+        contains the sequence similarity between the target and template
     implicit_refined_model : MDSys
         object containing an openmm topology and positions of an implicitly-refined model
     error_message : String
@@ -129,6 +131,13 @@ class MSMSeed(object):
     @target_model.setter
     def target_model(self, new_target_model):
         self._target_model = new_target_model
+
+    @property
+    def sequence_similarity(self):
+        return self._sequence_similarity
+    @sequence_similarity.setter
+    def sequence_similarity(self, similarity):
+        self._sequence_similarity = similarity
 
     @property
     def target_restraints(self):
@@ -323,6 +332,7 @@ def _retrieve_chain(pdb_code_input, model_id=0):
     outval.seek(0)
     shutil.rmtree(temp_dir)
     return outval
+
 def _retrieve_fasta(pdb_code_input):
     from lxml import etree
     import StringIO
@@ -517,10 +527,12 @@ def make_model(msmseed):
                                          sequence = msmseed.target_id)
         a.make()
         tmp_model_pdbfilename = a.outputs[0]['name']
+        target_model = modeller.model(env, file=tmp_model_pdbfilename)
+        msmseed.sequence_similarity = target_model.seq_id
         msmseed.target_model = app.PDBFile(tmp_model_pdbfilename)
         msmseed.target_restraints = open('%s.rsr' % msmseed.target_id, 'r').readlines()
     except:
-        msmseed.error_state = -2
+        msmseed.error_state = -1
 
     finally:
         shutil.rmtree(temp_dir)
@@ -705,7 +717,7 @@ def solvate_models_to_target(msmseed, target_nwaters):
     residues = [ r for r in topology.residues() ] # build a list of residues
     nresidues_min = len(residues) # number of residues
     if nwaters_min > target_nwaters:
-        msmseed.error_state = -4
+        msmseed.error_state = -3
         msmseed.error_message = "The minimally solvated model has more than the target number of waters"
         return msmseed
 
@@ -890,7 +902,7 @@ def refine_explicitMD(msmseed, openmm_platform='CPU', niterations=1, nsteps_per_
            buffer.write(system_xml)
         msmseed.explicit_refined_system = serialized_state_stringio.getvalue()
     except:
-        msmseed.error_state = -5
+        msmseed.error_state = -4
         msmseed.error_messsage = "Failed to save model"
     finally:
         return msmseed
