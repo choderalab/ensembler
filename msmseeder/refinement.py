@@ -1,4 +1,4 @@
-def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False):
+def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False, pH=8.0):
     '''Run MD refinement in implicit solvent.
 
     MPI-enabled.
@@ -45,8 +45,6 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
-
-    pH = 8.0
 
     forcefield = app.ForceField(*forcefields_to_use)
 
