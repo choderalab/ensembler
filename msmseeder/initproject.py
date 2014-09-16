@@ -1,5 +1,3 @@
-import numpy as np
-
 # =========
 # Project initialization
 # =========
@@ -15,9 +13,6 @@ def init(project_toplevel_dir):
 
     import sys
     import os
-    import datetime
-    import json
-    import yaml
     import msmseeder
     import msmseeder.version
 
@@ -53,7 +48,7 @@ def init(project_toplevel_dir):
             'datestamp': datestamp,
             'init_path': os.path.abspath(project_toplevel_dir),
             'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': sys.version,
+            'python_full_version': msmseeder.core.literal_str(sys.version),
             'msmseeder_version': msmseeder.version.short_version,
             'msmseeder_commit': msmseeder.version.git_revision
         }
@@ -78,7 +73,6 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
 
     import sys
     import os
-    import datetime
     import imp
     import yaml
     import msmseeder
@@ -166,7 +160,7 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
             'database_path': DB_path
         },
         'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': sys.version,
+        'python_full_version': msmseeder.core.literal_str(sys.version),
         'msmseeder_version': msmseeder.version.short_version,
         'msmseeder_commit': msmseeder.version.git_revision
     }
@@ -268,7 +262,7 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     # Parameters
     # =========
 
-    import os, datetime
+    import os
     import msmseeder
     from lxml import etree
 
@@ -348,7 +342,6 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
 
     import sys
     import os
-    import datetime
     import yaml
     import gzip
     import msmseeder
@@ -601,7 +594,7 @@ def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, st
         },
         'structure_paths': structure_paths,
         'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': sys.version,
+        'python_full_version': msmseeder.core.literal_str(sys.version),
         'msmseeder_version': msmseeder.version.short_version,
         'msmseeder_commit': msmseeder.version.git_revision
     }

@@ -85,7 +85,6 @@ class ProjectMetadata:
         self.data = data
 
     def write(self, ofilepath):
-        import yaml
         with open(ofilepath, 'w') as ofile:
             for category in self.project_metadata_categories:
                 if category in self.data.keys():
