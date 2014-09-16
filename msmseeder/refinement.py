@@ -159,15 +159,21 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         # ========
         
         # Determine highest-identity model.
-        seqids_filename = os.path.join(models_target_dir, 'sequence-identities.txt')
-        with open(seqids_filename, 'r') as seqids_file:
+        seqids_filepath = os.path.join(models_target_dir, 'sequence-identities.txt')
+        if not os.path.exists(seqids_filepath):
+            print 'ERROR: sequence-identities.txt file not found at path %s' % seqids_filepath
+            continue
+        with open(seqids_filepath, 'r') as seqids_file:
             contents = seqids_file.readline() # first line is highest sequence identity
         [reference_template, reference_identity] = contents.split()
         if verbose: print "Using %s as highest identity model (%s%%)" % (reference_template, reference_identity)
         
         # Read PDB for reference model.
-        reference_pdb_filename = os.path.join(models_target_dir, reference_template, 'model.pdb.gz')
-        with gzip.open(reference_pdb_filename) as reference_pdb_file:
+        reference_pdb_filepath = os.path.join(models_target_dir, reference_template, 'model.pdb.gz')
+        if not os.path.exists(reference_pdb_filepath):
+            print 'ERROR: reference PDB model not found at path %s' % reference_pdb_filepath
+            continue
+        with gzip.open(reference_pdb_filepath) as reference_pdb_file:
             reference_pdb = app.PDBFile(reference_pdb_file)
 
         # Add missing protons.
