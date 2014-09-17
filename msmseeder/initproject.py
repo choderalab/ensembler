@@ -64,8 +64,18 @@ def init(project_toplevel_dir):
 # Gather targets methods
 # =========
 
-def gather_targets_from_TargetExplorerDB(DB_path, species=None):
-    '''Gather protein target data from an existing TargetExplorerDB database.'''
+def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
+    '''Gather protein target data from a TargetExplorerDB network API.
+    Pass the URI for the database API and a search string.
+    The search string uses SQLAlchemy syntax and standard TargetExplorer
+    frontend data fields.
+    Example:
+    dbapi_uri='http://plfah2.mskcc.org/kinomeDBAPI'
+    search_string='species="Human"'
+
+    To select all domains within the database:
+    search_string=''
+    '''
 
     # =========
     # Parameters
@@ -75,8 +85,10 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
     import os
     import imp
     import yaml
+    import json
     import msmseeder
     import msmseeder.version
+    import msmseeder.UniProt
     from lxml import etree
 
     fasta_ofilepath = os.path.join('targets', 'targets.fa')
@@ -94,29 +106,23 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
             domain_spans = target_manual_overrides.get('domain-spans')
 
     # =========
-    # Parse the TargetExplorer database path
+    # Get the original uniprot search strings from the db
     # =========
 
-    parser = etree.XMLParser(huge_tree=True)
-    DB_root = etree.parse(DB_path, parser).getroot()
+    db_metadata_jsonstr = msmseeder.UniProt.get_targetexplorer_metadata(dbapi_uri)
+    db_metadata = json.loads(db_metadata_jsonstr)
 
     # =========
-    # Extract target data from database
+    # Retrieve data from the TargetExplorer DB API
     # =========
 
-    print 'Extracting target data from database...'
-
-    if species != None:
-        target_domains = DB_root.findall('entry/UniProt[@NCBI_taxID="%s"]/domains/domain[@targetID]' % species)
+    if domain_spans != None:
+        targetexplorer_jsonstr = msmseeder.UniProt.retrieve_targetexplorer_domain_seqs(dbapi_uri, search_string, full_seqs=True)
     else:
-        target_domains = DB_root.findall('entry/UniProt/domains/domain[@targetID]')
+        targetexplorer_jsonstr = msmseeder.UniProt.retrieve_targetexplorer_domain_seqs(dbapi_uri, search_string)
+    targetexplorer_json = json.loads(targetexplorer_jsonstr)
 
-    # =========
-    # Also get the original uniprot search strings from the database project directory
-    # =========
-
-    db_config_path = os.path.abspath(os.path.join(os.path.dirname(DB_path), '..', 'project_config.py'))
-    target_explorer_db_project_config = imp.load_source('project_config', db_config_path)
+    targets = targetexplorer_json['results']
 
     # =========
     # Write target data to FASTA file
@@ -124,21 +130,23 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
 
     print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
 
+    ntarget_domains = 0
     with open(fasta_ofilepath, 'w') as fasta_ofile:
-        for target_domain in target_domains:
-            targetID = target_domain.get('targetID')
-            targetseqnode = target_domain.find('sequence')
-            targetseq = targetseqnode.text.strip()
-            # domain span override
-            if domain_spans != None and targetID in domain_spans:
-                fullseqnode = target_domain.find('../../isoforms/canonical_isoform/sequence')
-                fullseq = msmseeder.core.sequnwrap(fullseqnode.text)
-                start, end = [int(x)-1 for x in domain_spans[targetID].split('-')]
-                targetseq = msmseeder.core.seqwrap(fullseq[start:end+1]).strip()
+        for target in targets:
+            for target_domain in target['domains']:
+                targetid = target_domain.get('targetid')
+                targetseq = target_domain.get('sequence')
+                # domain span override
+                if domain_spans != None and targetid in domain_spans:
+                    fullseq = target.get('sequence')
+                    start, end = [int(x)-1 for x in domain_spans[targetid].split('-')]
+                    targetseq = fullseq[start:end+1]
 
-            target_fasta_string = '>%s\n%s\n' % (targetID, targetseq)
+                targetseq = msmseeder.core.seqwrap(targetseq).strip()
+                target_fasta_string = '>%s\n%s\n' % (targetid, targetseq)
 
-            fasta_ofile.write(target_fasta_string)
+                fasta_ofile.write(target_fasta_string)
+                ntarget_domains += 1
 
     # =========
     # Metadata
@@ -152,17 +160,17 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
     metadata['gather_targets'] = {
         'datestamp': datestamp,
         'method': 'TargetExplorerDB',
-        'ntargets': str(len(target_domains)),
+        'ntargets': str(ntarget_domains),
         'gather_from_target_explorer': {
-            'uniprot_query_string': target_explorer_db_project_config.uniprot_query_string,
-            'uniprot_domain_regex': target_explorer_db_project_config.uniprot_domain_regex,
-            'species_selector': species if not None else '',
-            'database_path': DB_path
+            'db_uniprot_query_string': str(db_metadata.get('uniprot_query_string')),
+            'db_uniprot_domain_regex': str(db_metadata.get('uniprot_domain_regex')),
+            'search_string': search_string,
+            'dbapi_uri': dbapi_uri,
         },
         'python_version': sys.version.split('|')[0].strip(),
         'python_full_version': msmseeder.core.literal_str(sys.version),
         'msmseeder_version': msmseeder.version.short_version,
-        'msmseeder_commit': msmseeder.version.git_revision
+        'msmseeder_commit': msmseeder.version.git_revision,
     }
 
     metadata = msmseeder.core.ProjectMetadata(metadata)
@@ -170,7 +178,7 @@ def gather_targets_from_TargetExplorerDB(DB_path, species=None):
 
     print 'Done.'
 
-def gather_targets_from_UniProt():
+def gather_targets_from_uniprot():
     '''# Searches UniProt for a set of target proteins with a user-defined
     query string, then saves target IDs and sequences.'''
 
@@ -253,7 +261,7 @@ def get_pdb_and_sifts_files(PDBID, structure_paths=[]):
 
 
 
-def gather_templates_from_TargetExplorerDB(DB_path):
+def gather_templates_from_targetexplorerdb(DB_path):
     '''Gather protein target data from an existing TargetExplorerDB database.'''
 
     raise Exception, 'Not implemented yet.'
@@ -332,7 +340,7 @@ def gather_templates_from_TargetExplorerDB(DB_path):
     print 'Done.'
 
 
-def gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, structure_paths=[]):
+def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, structure_paths=[]):
     '''# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures.'''
 

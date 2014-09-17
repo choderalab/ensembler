@@ -1,5 +1,9 @@
-import os, urllib, urllib2, datetime, tempfile, subprocess, shutil
-# import choderalab as clab
+import os
+import urllib
+import urllib2
+import tempfile
+import subprocess
+import shutil
 from lxml import etree
 
 def print_uniprot_xml_comparison(new_xml, old_xml):
@@ -98,7 +102,20 @@ def parse_uniprot_pdbref_chains(chains_span_str):
     return chains_span
 
 def encode_uniprot_query(UniProt_query):
-    return UniProt_query.replace(' ', '+').replace(':', '%3A').replace('(', '%28').replace(')', '%29')
+    def replace_all(text, replace_dict):
+        for i, j in replace_dict.iteritems():
+            text = text.replace(i, j)
+        return text
+
+    encoding_dict = {
+        ' ': '+',
+        ':': '%3A',
+        '(': '%28',
+        ')': '%29',
+        '"': '%22',
+        '=': '%3D',
+    }
+    return replace_all(UniProt_query, encoding_dict)
 
 def retrieve_uniprot(search_string, maxreadlength=100000000):
     '''
@@ -121,24 +138,43 @@ def retrieve_uniprot(search_string, maxreadlength=100000000):
 
     return page
 
-def update_metadata_uniprot_search(datestamp, uniprot_search_filepath):
+def retrieve_targetexplorer_domain_seqs(dbapi_uri, search_string, full_seqs=False, maxreadlength=10000000):
     '''
-    Update the datestamp and filepath stored in external-data/metadata.xml
+    Queries a TargetExplorer DB API database given the URI and a search string,
+    and returns a JSON string including domain sequences.
+    maxreadlength is the maximum size in bytes which will be read from the website
+    (default 10MB)
+    The search string uses SQLAlchemy syntax and standard TargetExplorer
+    frontend data fields.
+    Example: 'species="Human"'
+    Or to select all domains in the DB: ''
+    If full_seqs=True, the DB API will also return the full-length canonical
+    isoform sequences.
     '''
-    now = datetime.datetime.now()
-    datestamp = now.strftime(clab.DB.datestamp_format_string)
-    parser = etree.XMLParser(remove_blank_text=True)
-    metadata_root = etree.parse(clab.DB.external_data_metadata_filepath, parser).getroot()
-    uniprot_node = metadata_root.find('UniProt')
-    if uniprot_node == None:
-        uniprot_node = etree.SubElement(metadata_root, 'UniProt')
-    uniprot_search_node = uniprot_node.find('uniprot_search')
-    if uniprot_search_node == None:
-        uniprot_search_node = etree.SubElement(uniprot_node, 'uniprot_search')
-    uniprot_search_node.set('filepath', uniprot_search_filepath)
-    uniprot_search_node.set('datestamp', datestamp)
-    with open(clab.DB.external_data_metadata_filepath, 'w') as metadata_file:
-        metadata_file.write(etree.tostring(metadata_root, pretty_print=True))
+
+    base_uri = dbapi_uri + '/search?query='
+    search_string_encoded = encode_uniprot_query(search_string)
+    query_uri = base_uri + search_string_encoded + '&return=domain_seqs'
+    if full_seqs:
+        query_uri += ',seqs'
+    response = urllib2.urlopen(query_uri)
+    page = response.read(maxreadlength)
+
+    return page
+
+def get_targetexplorer_metadata(dbapi_uri, maxreadlength=100000):
+    '''
+    Gets metadata for a TargetExplorer DB, via the network API.
+    Metadata is returned as a JSON string.
+    maxreadlength is the maximum size in bytes which will be read from the website
+    (default 100kB)
+    '''
+
+    full_uri = dbapi_uri + '/get_metadata'
+    response = urllib2.urlopen(full_uri)
+    page = response.read(maxreadlength)
+
+    return page
 
 def get_uniprot_mapping(query_data_type, retrieve_data_type, query_data):
     '''

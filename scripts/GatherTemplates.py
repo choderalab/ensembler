@@ -88,8 +88,8 @@ elif template_selection_method == 'UniProt':
 # ========
 
 if template_selection_method == 'TargetExplorerDB':
-    msmseeder.initproject.gather_templates_from_TargetExplorerDB(DB_path)
+    msmseeder.initproject.gather_templates_from_targetexplorerdb(DB_path)
 
 if template_selection_method == 'UniProt':
-    msmseeder.initproject.gather_templates_from_UniProt(UniProt_query_string, UniProt_domain_regex, structure_paths)
+    msmseeder.initproject.gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, structure_paths)
 
