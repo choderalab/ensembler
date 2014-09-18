@@ -51,9 +51,10 @@ Example: '^Protein kinase(?!; truncated)(?!; inactive)' - matches "Protein
 kinase" as well as "Protein kinase; 1" and "Protein kinase; 2"
 ''')
 
-argparser.add_argument('--gather_from', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='UniProt')
-argparser.add_argument('--db_path', type=str, help='TargetExplorerDB database path', default=None)
-argparser.add_argument('--uniprot_query', type=str, help=helpstring_uniprot_query, default=None)
+argparser.add_argument('--gather_from', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='TargetExplorerDB')
+argparser.add_argument('--dbapi_uri', type=str, help='TargetExplorerDB API URI, e.g. "http://plfah2.mskcc.org/kiomeDBAPI"')
+argparser.add_argument('--query', type=str, help='Query string for TargetExplorer database API, e.g. \'species="Human"\'', default='')
+argparser.add_argument('--uniprot_query', type=str, help=helpstring_uniprot_query)
 argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex)
 argparser.add_argument('--structure_paths', help='(Optional) Local directories within which to search for PDB and SIFTS files (space-separated).', nargs='*')
 args = argparser.parse_args()
@@ -66,30 +67,18 @@ msmseeder.core.check_project_toplevel_dir()
 
 template_selection_method = args.gather_from
 
-# ========
-# Get method-specific parameters
-# ========
-
-if template_selection_method == 'TargetExplorerDB':
-
-    DB_path = args.db_path
-
-elif template_selection_method == 'UniProt':
-
-    UniProt_query_string = args.uniprot_query
-    UniProt_domain_regex = args.uniprot_domain_regex
-    if args.structure_paths != None:
-        structure_paths = [os.path.abspath(path) for path in args.structure_paths]
-    else:
-        structure_paths = []
+if args.structure_paths != None:
+    structure_paths = [os.path.abspath(path) for path in args.structure_paths]
+else:
+    structure_paths = []
 
 # ========
 # Run the selected gather templates method
 # ========
 
 if template_selection_method == 'TargetExplorerDB':
-    msmseeder.initproject.gather_templates_from_targetexplorerdb(DB_path)
+    msmseeder.initproject.gather_templates_from_targetexplorerdb(args.dbapi_uri, search_string=args.query, structure_paths=args.structure_paths)
 
 if template_selection_method == 'UniProt':
-    msmseeder.initproject.gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, structure_paths)
+    msmseeder.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_paths=args.structure_paths)
 

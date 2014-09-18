@@ -24,7 +24,7 @@ argument.
 "UniProt": Gather target data from UniProt with a user-defined query
 string.'''
 argparser.add_argument('--gather_from', type=str, help=helpstring_gatherfrom, choices=['TargetExplorerDB', 'UniProt'], default='TargetExplorerDB')
-argparser.add_argument('--dbapi_uri', type=str, help='TargetExplorer database API URI, e.g. "http://plfah2.mskcc.org/kinomeDBAPI"', required=True)
+argparser.add_argument('--dbapi_uri', type=str, help='TargetExplorer database API URI, e.g. "http://plfah2.mskcc.org/kinomeDBAPI"')
 argparser.add_argument('--query', type=str, help='Query string for TargetExplorer database API, e.g. \'species="Human"\'')
 args = argparser.parse_args()
 

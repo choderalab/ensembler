@@ -101,22 +101,6 @@ def parse_uniprot_pdbref_chains(chains_span_str):
             chains_span[c] = [begin, end]
     return chains_span
 
-def encode_uniprot_query(UniProt_query):
-    def replace_all(text, replace_dict):
-        for i, j in replace_dict.iteritems():
-            text = text.replace(i, j)
-        return text
-
-    encoding_dict = {
-        ' ': '+',
-        ':': '%3A',
-        '(': '%28',
-        ')': '%29',
-        '"': '%22',
-        '=': '%3D',
-    }
-    return replace_all(UniProt_query, encoding_dict)
-
 def retrieve_uniprot(search_string, maxreadlength=100000000):
     '''
     Searches the UniProt database given a search string, and retrieves an XML
@@ -128,51 +112,14 @@ def retrieve_uniprot(search_string, maxreadlength=100000000):
     The function also removes the xmlns attribute from <uniprot> tag, as this
     makes xpath searching annoying
     '''
+    import msmseeder.core
 
     base_url = 'http://www.uniprot.org/uniprot/?query='
-    search_string_encoded = encode_uniprot_query(search_string)
+    search_string_encoded = msmseeder.core.encode_url_query(search_string.replace('=', ':'))
     query_url = base_url + search_string_encoded + '&format=xml'
     response = urllib2.urlopen(query_url)
     page = response.read(maxreadlength)
     page = page.replace('xmlns="http://uniprot.org/uniprot" ', '', 1)
-
-    return page
-
-def retrieve_targetexplorer_domain_seqs(dbapi_uri, search_string, full_seqs=False, maxreadlength=10000000):
-    '''
-    Queries a TargetExplorer DB API database given the URI and a search string,
-    and returns a JSON string including domain sequences.
-    maxreadlength is the maximum size in bytes which will be read from the website
-    (default 10MB)
-    The search string uses SQLAlchemy syntax and standard TargetExplorer
-    frontend data fields.
-    Example: 'species="Human"'
-    Or to select all domains in the DB: ''
-    If full_seqs=True, the DB API will also return the full-length canonical
-    isoform sequences.
-    '''
-
-    base_uri = dbapi_uri + '/search?query='
-    search_string_encoded = encode_uniprot_query(search_string)
-    query_uri = base_uri + search_string_encoded + '&return=domain_seqs'
-    if full_seqs:
-        query_uri += ',seqs'
-    response = urllib2.urlopen(query_uri)
-    page = response.read(maxreadlength)
-
-    return page
-
-def get_targetexplorer_metadata(dbapi_uri, maxreadlength=100000):
-    '''
-    Gets metadata for a TargetExplorer DB, via the network API.
-    Metadata is returned as a JSON string.
-    maxreadlength is the maximum size in bytes which will be read from the website
-    (default 100kB)
-    '''
-
-    full_uri = dbapi_uri + '/get_metadata'
-    response = urllib2.urlopen(full_uri)
-    page = response.read(maxreadlength)
 
     return page
 

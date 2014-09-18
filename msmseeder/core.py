@@ -91,6 +91,22 @@ class ProjectMetadata:
                     subdict = {category: self.data[category]}
                     yaml.dump(subdict, ofile, default_flow_style=False)
 
+def encode_url_query(uniprot_query):
+    def replace_all(text, replace_dict):
+        for i, j in replace_dict.iteritems():
+            text = text.replace(i, j)
+        return text
+
+    encoding_dict = {
+        ' ': '+',
+        ':': '%3A',
+        '(': '%28',
+        ')': '%29',
+        '"': '%22',
+        '=': '%3D',
+    }
+    return replace_all(uniprot_query, encoding_dict)
+
 def xpath_match_regex_case_sensitive(context, attrib_values, xpath_argument):
     ''' To be used as an lxml XPath extension, for regex searches of attrib values.
     '''
