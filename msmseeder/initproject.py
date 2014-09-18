@@ -59,7 +59,6 @@ def init(project_toplevel_dir):
 
     print 'Done.'
 
-
 # =========
 # Gather targets methods
 # =========
@@ -95,13 +94,7 @@ def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
     # Read in project manual overrides
     # =========
 
-    domain_spans = None
-    if os.path.exists(msmseeder.core.manual_overrides_filename):
-        with open(msmseeder.core.manual_overrides_filename, 'r') as manual_overrides_file:
-            manual_overrides = yaml.load(manual_overrides_file)
-        target_manual_overrides = manual_overrides.get('target-selection')
-        if target_manual_overrides != None:
-            domain_spans = target_manual_overrides.get('domain-spans')
+    manual_overrides = msmseeder.core.ManualOverrides()
 
     # =========
     # Get the original uniprot search strings from the db
@@ -114,7 +107,7 @@ def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
     # Retrieve data from the TargetExplorer DB API
     # =========
 
-    if domain_spans != None:
+    if len(manual_overrides.target.domain_spans) > 0:
         targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(dbapi_uri, search_string, return_data='seqs')
     else:
         targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(dbapi_uri, search_string)
@@ -135,9 +128,9 @@ def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
                 targetid = target_domain.get('targetid')
                 targetseq = target_domain.get('sequence')
                 # domain span override
-                if domain_spans != None and targetid in domain_spans:
+                if targetid in manual_overrides.target.domain_spans:
                     fullseq = target.get('sequence')
-                    start, end = [int(x)-1 for x in domain_spans[targetid].split('-')]
+                    start, end = [int(x)-1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
                     targetseq = fullseq[start:end+1]
 
                 targetseq = msmseeder.core.seqwrap(targetseq).strip()
@@ -176,26 +169,159 @@ def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
 
     print 'Done.'
 
-def gather_targets_from_uniprot():
-    '''# Searches UniProt for a set of target proteins with a user-defined
+def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
+    '''Searches UniProt for a set of target proteins with a user-defined
     query string, then saves target IDs and sequences.'''
-
-    raise Exception, 'Not yet implemented.'
-
-    # TODO NOTE use 'ABL1_HUMAN_D0' style for targetIDs in this script. Don't bother with mutants. The gather_targets_from_TargetExplorerDB version of this routine will use whatever targetIDs it finds in the DB, which may include 'ABL1_HUMAN_D0_M0' for example.
-    # TODO NOTE read in manual exceptions file. Should at least handle manual exceptions for domain spans (e.g. for ABL1_HUMAN_D0)
 
     # =========
     # Parameters
     # =========
 
+    import sys
+    import os
+    import yaml
+    from lxml import etree
+    import msmseeder
+    import msmseeder.UniProt
+    import msmseeder.version
+
+    fasta_ofilepath = os.path.join('targets', 'targets.fa')
+
     # =========
-    # Get user-defined UniProt query string
+    # Read in project manual overrides
     # =========
 
-    # check for command-line arg
+    manual_overrides = msmseeder.core.ManualOverrides()
 
-    # and check the project metadata file
+    # =========
+    # Make request to UniProt web server and parse the returned XML
+    # =========
+
+    print 'Querying UniProt web server...'
+    uniprotxmlstring = msmseeder.UniProt.retrieve_uniprot(uniprot_query_string)
+    parser = etree.XMLParser(huge_tree=True)
+    uniprotxml = etree.fromstring(uniprotxmlstring, parser)
+    print 'Number of entries returned from initial UniProt search:', len(uniprotxml)
+    print ''
+
+    # =========
+    # If the UniProt query string contained a domain selector, print the set of
+    # unique UniProt domain names which would have been selected during the
+    # UniProt search (case-insensitive). This should aid users in the
+    # construction an appropriate regex for selecting an appropriate subset of
+    # these domains.
+    # =========
+
+    if 'domain:' in uniprot_query_string:
+
+        # First extract the domain selection
+        # Example query string: 'domain:"Protein kinase" AND reviewed:yes'
+        # Can assume that the domain selection will be bounded by double-quotes
+        query_string_split = uniprot_query_string.split('"')
+        query_string_domain_selection = query_string_split[ query_string_split.index('domain:') + 1 ]
+
+        uniprot_query_string_domains = uniprotxml.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_insensitive })
+
+        uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_query_string_domains])
+        print 'Set of unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s' % (query_string_domain_selection, uniprot_unique_domain_names)
+        print ''
+
+    else:
+        uniprot_domains = uniprotxml.xpath('entry/feature[@type="domain"]')
+        uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_domains])
+        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s' % (uniprot_query_string, uniprot_unique_domain_names)
+        print ''
+
+    # =========
+    # Print subset of domains returned following filtering with the UniProt_domain_regex (case sensitive)
+    # =========
+
+    if uniprot_domain_regex != None:
+        regex_matched_domains = uniprotxml.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
+
+        regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
+        print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s' % (uniprot_domain_regex, regex_matched_domains_unique_names)
+        print ''
+
+    # =========
+    # Go through all the UniProt entries, and generate id and seq data
+    # =========
+
+    targets = []
+
+    for entry in uniprotxml.findall('entry'):
+        entry_name = entry.find('name').text
+        fullseq = msmseeder.core.sequnwrap(entry.find('sequence').text)
+        targets.append({'entry_name': entry_name, 'sequence': fullseq})
+        if uniprot_domain_regex != None:
+            selected_domains = entry.xpath('feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
+        else:
+            selected_domains = entry.findall('feature[@type="domain"]')
+
+        domain_iter = 0
+
+        domain_data = []
+        for domain in selected_domains:
+            targetid = '%s_D%d' % (entry_name, domain_iter)
+
+            # domain span override
+            if targetid in manual_overrides.target.domain_spans:
+                start, end = [int(x)-1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
+            else:
+                start, end = [int(domain.find('location/begin').get('position'))-1, int(domain.find('location/end').get('position'))-1]
+
+            targetseq = fullseq[start:end+1]
+            domain_data.append({'targetid': targetid, 'sequence': targetseq})
+            domain_iter += 1
+
+        targets[-1]['domains'] = domain_data
+
+    # =========
+    # Write target data to FASTA file
+    # =========
+
+    print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
+
+    ntarget_domains = 0
+    with open(fasta_ofilepath, 'w') as fasta_ofile:
+        for target in targets:
+            for target_domain in target['domains']:
+                targetid = target_domain.get('targetid')
+                targetseq = target_domain.get('sequence')
+
+                targetseq = msmseeder.core.seqwrap(targetseq).strip()
+                target_fasta_string = '>%s\n%s\n' % (targetid, targetseq)
+
+                fasta_ofile.write(target_fasta_string)
+                ntarget_domains += 1
+
+    # =========
+    # Metadata
+    # =========
+
+    datestamp = msmseeder.core.get_utcnow_formatted()
+
+    with open('meta.yaml') as init_meta_file:
+        metadata = yaml.load(init_meta_file)
+
+    metadata['gather_targets'] = {
+        'datestamp': datestamp,
+        'method': 'UniProt',
+        'ntargets': str(ntarget_domains),
+        'gather_from_uniprot': {
+            'uniprot_query_string': uniprot_query_string,
+            'uniprot_domain_regex': uniprot_domain_regex if uniprot_domain_regex != None else '',
+        },
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision,
+    }
+
+    metadata = msmseeder.core.ProjectMetadata(metadata)
+    metadata.write('targets/meta.yaml')
+
+    print 'Done.'
 
 # =========
 # Gather templates methods
@@ -341,7 +467,6 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     import msmseeder.TargetExplorer
     import msmseeder.PDB
     import msmseeder.version
-    from lxml import etree
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
 
@@ -349,18 +474,7 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     # Read in project manual overrides
     # =========
 
-    min_domain_len = None
-    max_domain_len = None
-    domain_span_manual_overrides = None
-    skip_pdbs = None
-    if os.path.exists(msmseeder.core.manual_overrides_filename):
-        with open(msmseeder.core.manual_overrides_filename, 'r') as manual_overrides_file:
-            manual_overrides = yaml.load(manual_overrides_file)
-        template_manual_overrides = manual_overrides.get('template-selection')
-        min_domain_len = template_manual_overrides.get('min-domain-len')
-        max_domain_len = template_manual_overrides.get('max-domain-len')
-        domain_span_manual_overrides = template_manual_overrides.get('domain-spans')
-        skip_pdbs = template_manual_overrides.get('skip-pdbs')
+    manual_overrides = msmseeder.core.ManualOverrides()
 
     # =========
     # Get the original uniprot search strings from the TargetExplorer DB
@@ -373,9 +487,6 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     # Retrieve data from the TargetExplorer DB API
     # =========
 
-    # if domain_span_manual_overrides != None:
-    #     targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(dbapi_uri, search_string, return_data=['pdb_data', 'seqs'])
-    # else:
     targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(dbapi_uri, search_string, return_data='pdb_data')
     targetexplorer_json = json.loads(targetexplorer_jsonstr)
 
@@ -397,16 +508,18 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
                 pdbchain_data['templateid'] = templateid
                 pdbchain_data['domain_span'] = [int(pdbchain_data['seq_begin']), int(pdbchain_data['seq_end'])]
 
-                domain_len = pdbchain_data['seq_end'] - pdbchain_data['seq_begin'] + 1
-                if domain_len < min_domain_len or domain_len > max_domain_len:
-                    continue
-
                 # manual overrides
-                if skip_pdbs != None and pdbid in skip_pdbs:
+                domain_len = pdbchain_data['seq_end'] - pdbchain_data['seq_begin'] + 1
+                if manual_overrides.template.min_domain_len != None and domain_len < manual_overrides.template.min_domain_len:
+                    continue
+                if manual_overrides.template.max_domain_len != None and domain_len > manual_overrides.template.max_domain_len:
                     continue
 
-                if domain_span_manual_overrides != None and targetid in domain_span_manual_overrides:
-                    pdbchain_data['domain_span'] = [int(x) for x in domain_span_manual_overrides[targetid].split('-')]
+                if pdbid in manual_overrides.template.skip_pdbs:
+                    continue
+
+                if targetid in manual_overrides.template.domain_spans:
+                    pdbchain_data['domain_span'] = [int(x) for x in manual_overrides.template.domain_spans[targetid].split('-')]
 
                 selected_pdbchains.append(pdbchain_data)
 
@@ -518,18 +631,7 @@ def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, st
     # Read in project manual overrides
     # =========
 
-    min_domain_len = None
-    max_domain_len = None
-    domain_span_manual_overrides = None
-    skip_pdbs = None
-    if os.path.exists(msmseeder.core.manual_overrides_filename):
-        with open(msmseeder.core.manual_overrides_filename, 'r') as manual_overrides_file:
-            manual_overrides = yaml.load(manual_overrides_file)
-        template_manual_overrides = manual_overrides.get('template-selection')
-        min_domain_len = template_manual_overrides.get('min-domain-len')
-        max_domain_len = template_manual_overrides.get('max-domain-len')
-        domain_span_manual_overrides = template_manual_overrides.get('domain-spans')
-        skip_pdbs = template_manual_overrides.get('skip-pdbs')
+    manual_overrides = msmseeder.core.ManualOverrides()
 
     # =========
     # Make request to UniProt web server and parse the returned XML
@@ -600,12 +702,14 @@ def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, st
 
         domain_iter = 0
         for domain in selected_domains:
-            domainID = '%(entry_name)s_D%(domain_iter)d' % vars()
+            domainID = '%s_D%d' (entry_name, domain_iter)
             domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
-            if domain_span_manual_overrides != None and domainID in domain_span_manual_overrides:
-                domain_span = [int(x) for x in domain_span_manual_overrides[domainID].split('-')]
+            if domainID in manual_overrides.template.domain_spans:
+                domain_span = [int(x) for x in manual_overrides.template.domain_spans[domainID].split('-')]
             domain_len = domain_span[1] - domain_span[0] + 1
-            if (min_domain_len != None and domain_len < min_domain_len) or (max_domain_len != None and domain_len > max_domain_len):
+            if manual_overrides.template.min_domain_len != None and domain_len < manual_overrides.template.min_domain_len:
+                continue
+            if manual_overrides.template.max_domain_len != None and domain_len > manual_overrides.template.max_domain_len:
                 continue
 
             domain_iter += 1
@@ -613,7 +717,7 @@ def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, st
 
             for PDB in PDBs:
                 PDBID = PDB.get('id')
-                if skip_pdbs != None and PDBID in skip_pdbs:
+                if PDBID in manual_overrides.template.skip_pdbs:
                     continue
                 PDB_chain_span_nodes = PDB.findall('property[@type="chains"]')
 
@@ -705,7 +809,7 @@ def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, st
         'ntemplates': str(len(selected_templates)),
         'gather_from_uniprot': {
             'uniprot_query_string': UniProt_query_string,
-            'uniprot_domain_regex': UniProt_domain_regex if not None else ''
+            'uniprot_domain_regex': UniProt_domain_regex if UniProt_domain_regex != None else ''
         },
         'structure_paths': structure_paths,
         'python_version': sys.version.split('|')[0].strip(),

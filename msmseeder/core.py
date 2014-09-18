@@ -78,6 +78,66 @@ class LogFile:
         with open(self.log_filepath, 'w') as log_file:
             yaml.dump(log_data, log_file, default_flow_style=False)
 
+class TargetManualOverrides:
+    '''
+    Parameters
+    ----------
+    manual_overrides_yaml: dict
+
+    Attributes
+    ----------
+    domain_spans: dict
+        dict with structure {`targetid`: `domain_span`, ...} where
+        `domain_span` is a str e.g. '242-513'
+    '''
+    def __init__(self, manual_overrides_yaml):
+        target_dict = manual_overrides_yaml.get('target-selection')
+        if target_dict != None:
+            self.domain_spans = target_dict.get('domain-spans')
+        else:
+            self.domain_spans = {}
+
+class TemplateManualOverrides:
+    '''
+    Parameters
+    ----------
+    manual_overrides_yaml: dict
+
+    Attributes
+    ----------
+    min_domain_len: int or NoneType
+    max_domain_len: int or NoneType
+    domain_spans: dict
+        dict with structure {`targetid`: `domain_span`, ...} where
+        `domain_span` is a str e.g. '242-513'
+    skip_pdbs: list
+        list of PDB IDs to skip
+    '''
+    def __init__(self, manual_overrides_yaml):
+        template_dict = manual_overrides_yaml.get('template-selection')
+        if template_dict != None:
+            self.min_domain_len = template_dict.get('min-domain-len')
+            self.max_domain_len = template_dict.get('max-domain-len')
+            self.domain_spans = template_dict.get('domain-spans')
+            self.skip_pdbs = template_dict.get('skip-pdbs')
+        else:
+            self.min_domain_len = None
+            self.max_domain_len = None
+            self.domain_spans = {}
+            self.skip_pdbs = []
+
+class ManualOverrides:
+    def __init__(self):
+        import yaml
+        if os.path.exists(manual_overrides_filename):
+            with open(manual_overrides_filename, 'r') as manual_overrides_file:
+                manual_overrides_yaml = yaml.load(manual_overrides_file)
+        else:
+            manual_overrides_yaml = {}
+
+        self.target = TargetManualOverrides(manual_overrides_yaml)
+        self.template = TemplateManualOverrides(manual_overrides_yaml)
+
 class ProjectMetadata:
     def __init__(self, data):
         # Listed in desired document order

@@ -18,9 +18,8 @@ argparser = argparse.ArgumentParser(description='Gather template protein data - 
 
 helpstring_gatherfrom = r'''Choose a method for selecting the templates.
 
-"TargetExplorerDB": Select templates from an existing TargetExplorerDB
-database, specified via either the project metadata file or the --db_path
-argument.
+"TargetExplorerDB": Select templates from an existing TargetExplorer
+database network API, specified via --dbapi_uri argument.
 
 "UniProt": Select templates from UniProt with a user-defined query
 string, plus an optional subquery regex string.'''
@@ -35,10 +34,10 @@ domain names returned by the initial UniProt search, which can help with
 constructing a suitable string for --uniprot_domain_regex.
 
 Example: 'domain:"Protein kinase" AND reviewed:yes' - this will return reviewed
-UniProt entries containing "Protein kinase" domain annotations, but note that
-all domains contained with those entries (including domains which are not
-"Protein kinase") will be selected as templates, unless the
---uniprot_domain_refex flag is also set.
+UniProt entries containing "Protein kinase" domain annotations. Note that all
+domains contained with those entries (including domains which are not "Protein
+kinase") will be selected as templates, unless the --uniprot_domain_refex flag
+is also set.
 ''')
 
 helpstring_uniprot_domain_regex = (
