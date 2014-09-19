@@ -110,7 +110,7 @@ setup(
     long_description = read_readme('README.md'),
     packages = find_packages(),
     package_data = {'msmseeder.tests': ['resources/*']},
-    scripts = ['scripts/InitMSMSeederProject.py', 'scripts/GatherTargets.py', 'scripts/GatherTemplates.py', 'scripts/BuildModels.py', 'scripts/RefineImplicitMD.py', 'scripts/Solvate.py', 'scripts/RefineExplicitMD.py', 'scripts/PackageModels.py'],
+    scripts = ['scripts/MSMSeederInit.py', 'scripts/MSMSeederGatherTargets.py', 'scripts/MSMSeederGatherTemplates.py', 'scripts/MSMSeederBuildModels.py', 'scripts/MSMSeederRefineImplicitMD.py', 'scripts/MSMSeederSolvate.py', 'scripts/MSMSeederRefineExplicitMD.py', 'scripts/MSMSeederPackageModels.py'],
     # data_files = [('', ['LICENSE']), ('templates', ['project-data.yaml-TEMPLATE', 'manual-specifications.yaml-TEMPLATE'])],
 )
 
