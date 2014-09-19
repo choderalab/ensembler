@@ -23,10 +23,10 @@ requirements:
 
   run:
     - python
-    # - mpi4py
-    # - mdtraj
-    # - biopython
-    # - openmm
+    - mpi4py
+    - mdtraj
+    - biopython
+    - openmm
     - numpy
     - lxml
     - yaml
