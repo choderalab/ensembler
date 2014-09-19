@@ -86,7 +86,7 @@ def find_packages():
     Adapted from IPython's setupbase.py. Copyright IPython
     contributors, licensed under the BSD license.
     """
-    packages = []
+    packages = ['msmseeder.scripts']
     for dir,subdirs,files in os.walk('msmseeder'):
         package = dir.replace(os.path.sep, '.')
         if '__init__.py' not in files:
@@ -109,9 +109,13 @@ setup(
     license='GPLv2',
     long_description = read_readme('README.md'),
     packages = find_packages(),
+    package_dir = {'msmseeder.scripts': 'scripts'},
     package_data = {'msmseeder.tests': ['resources/*']},
-    scripts = ['scripts/MSMSeederInit.py', 'scripts/MSMSeederGatherTargets.py', 'scripts/MSMSeederGatherTemplates.py', 'scripts/MSMSeederBuildModels.py', 'scripts/MSMSeederRefineImplicitMD.py', 'scripts/MSMSeederSolvate.py', 'scripts/MSMSeederRefineExplicitMD.py', 'scripts/MSMSeederPackageModels.py'],
+    # scripts = ['scripts/MSMSeederInit.py', 'scripts/MSMSeederGatherTargets.py', 'scripts/MSMSeederGatherTemplates.py', 'scripts/MSMSeederBuildModels.py', 'scripts/MSMSeederRefineImplicitMD.py', 'scripts/MSMSeederSolvate.py', 'scripts/MSMSeederRefineExplicitMD.py', 'scripts/MSMSeederPackageModels.py'],
     # data_files = [('', ['LICENSE']), ('templates', ['project-data.yaml-TEMPLATE', 'manual-specifications.yaml-TEMPLATE'])],
+    entry_points = {'console_scripts':
+        ['MSMSeederInit = msmseeder.scripts.MSMSeederInit:main']
+    },
 )
 
 # Delete version.py file from this directory
