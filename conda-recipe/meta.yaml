@@ -7,7 +7,7 @@ source:
 
 build:
   entry_points:
-    - MSMSeederInit = mdtraj.scripts.MSMSeederInit:main
+    - MSMSeederInit = msmseeder.scripts.MSMSeederInit:main
 #     - MSMSeederGatherTargets.py = mdtraj.scripts.mdinspect:entry_point
 
 requirements:
