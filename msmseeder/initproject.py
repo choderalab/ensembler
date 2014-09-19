@@ -574,7 +574,6 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
         template_filename = os.path.join('templates', 'structures', templateid + '.pdb')
         nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_pdbresnums, chainid)
         if nresidues_extracted != len(template_pdbresnums):
-            import ipdb; ipdb.set_trace()
             raise Exception, 'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (nresidues_extracted, template_pdbresnums)
 
     # =========
@@ -791,7 +790,6 @@ def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, st
         template_filename = os.path.join('templates', 'structures', templateid + '.pdb')
         nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_pdbresnums, chainid)
         if nresidues_extracted != len(template_pdbresnums):
-            import ipdb; ipdb.set_trace()
             raise Exception, 'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (nresidues_extracted, template_pdbresnums)
 
     # =========

@@ -23,6 +23,13 @@ requirements:
 
   run:
     - python
+    - mpi4py
+    - mdtraj
+    - biopython
+    - openmm
+    - numpy
+    - lxml
+    - yaml
 
 about:
   home: https://github.com/choderalab/msmseeder
