@@ -1,6 +1,8 @@
 MSMSeeder
 =========
 
+[![Binstar Badge](https://binstar.org/dannyparton/msmseeder/badges/version.svg)](https://binstar.org/dannyparton/msmseeder)
+
 Software pipeline used to generate diverse protein structural ensembles, for
 the purpose of seeding multiple parallel molecular dynamics simulations, and
 subsequent construction of Markov state models.
@@ -34,6 +36,13 @@ tests/ - to test whether the code is working correctly, run nosetests from this 
 Installation
 ------------
 
+Using conda:
+
+    conda config --add channels http://conda.binstar.org/dannyparton
+    conda install msmseeder
+
+From source:
+
     git clone https://github.com/choderalab/msmseeder.git
     cd msmseeder
     python setup.py install
@@ -46,7 +55,9 @@ Dependencies
 * mpi4py - http://mpi4py.scipy.org/
 * mdtraj - http://mdtraj.org/
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
-* Various other Python packages commonly used in scientific computing. Recommended aproach is to install either Continuum Anaconda (https://store.continuum.io/) or Enthought Canopy (https://www.enthought.com/products/canopy/)
+* Other Python packages: BioPython, mpi4py, numpy, lxml, PyYAML
+
+Recommended approach is to install using conda (https://store.continuum.io/cshop/anaconda/). This will install all dependencies except for Modeller, which must be installed separately by the user.
 
 Basic Usage
 -----------
@@ -56,14 +67,13 @@ below, or by writing scripts to interact with the MSMSeeder Python library.
 Each script can be run from the command-line with a '-h' flag, which will print
 information on their usage. They are intended to be run in the following order:
 
-1. InitMSMSeederProject.py
-2. GatherTargets.py
-3. GatherTemplates.py
-4. BuildModels.py
-5. RefineImplicitMD.py
-6. Solvate.py
-7. RefineExplicitMD.py
-8. PackageModels.py
+1. MSMSeederInit
+2. MSMSeederGatherTargets
+3. MSMSeederGatherTemplates
+5. MSMSeederRefineImplicitMD
+6. MSMSeederSolvate
+7. MSMSeederRefineExplicitMD
+8. MSMSeederPackageModels
 
 The scripts have been parallelized with MPI where useful. Furthermore, the MD
 refinement steps use the OpenMM simulation package, which has particularly high
@@ -87,21 +97,21 @@ from UniProt, as well as minimum and maximum acceptable domain lengths.
 Example commands
 ----------------
 
-    InitMSMSeederProject.py
-    GatherTargets.py --gather_from TargetExplorerDB --db_path ~/kinomeDB/database/database.xml
-    GatherTemplates.py --gather_from UniProt --uniprot_query 'domain:"Protein kinase" AND reviewed:yes' --uniprot_domain_regex '^Protein kinase(?!; truncated)(?!; inactive)' --structure_paths ~/pdbfiles ~/siftsfiles
-    BuildModels.py --targets ABL1_HUMAN_D0
-    RefineImplicitMD.py --targets ABL1_HUMAN_D0
-    Solvate.py --targets ABL1_HUMAN_D0
-    RefineExplicitMD.py --targets ABL1_HUMAN_D0
-    PackageModels.py --targets ABL1_HUMAN_D0 --package_for FAH
+    MSMSeederInit
+    MSMSeederGatherTargets --gather_from TargetExplorerDB --db_path ~/kinomeDB/database/database.xml
+    MSMSeederGatherTemplates --gather_from UniProt --uniprot_query 'domain:"Protein kinase" AND reviewed:yes' --uniprot_domain_regex '^Protein kinase(?!; truncated)(?!; inactive)' --structure_paths ~/pdbfiles ~/siftsfiles
+    MSMSeederBuildModels --targets ABL1_HUMAN_D0
+    MSMSeederRefineImplicitMD --targets ABL1_HUMAN_D0
+    MSMSeederSolvate --targets ABL1_HUMAN_D0
+    MSMSeederRefineExplicitMD --targets ABL1_HUMAN_D0
+    MSMSeederPackageModels --targets ABL1_HUMAN_D0 --package_for FAH
 
 Additional notes on scripts
 ----------------
 
 (run each script with '-h' flag for general info)
 
-### GatherTargets.py and GatherTemplates.py
+### MSMSeederGatherTargets and MSMSeederGatherTemplates
 
 These scripts are used to provide target data (ids and sequences) and
 template data (ids, sequences and structures). Two different
@@ -126,7 +136,7 @@ of target sequences (targets/targets.fa), a list of template sequences
 (templates/templates.fa), and a set of template structures
 (templates/structures/[id].pdb). The subsequent model-building and refinement
 scripts can thus be run using any set of data specified in this way, allowing
-the GatherTargets.py and GatherTemplates.py scripts to be bypassed or modified
+the MSMSeederGatherTargets and MSMSeederGatherTemplates scripts to be bypassed or modified
 if necessary. The main restrictions are that modified residues (e.g.
 phosphotyrosines) cannot be included, and that ids and residues in the
 templates.fa file must match with the template structure files.
