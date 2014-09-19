@@ -29,7 +29,7 @@ requirements:
     - openmm
     - numpy
     - lxml
-    - yaml
+    - pyyaml
 
 about:
   home: https://github.com/choderalab/msmseeder
