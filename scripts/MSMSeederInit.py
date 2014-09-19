@@ -8,11 +8,11 @@ import os
 import argparse
 import msmseeder.initproject
 
-# ========
-# Parse command-line arguments
-# ========
-
 def main():
+    # ========
+    # Parse command-line arguments
+    # ========
+
     argparser = argparse.ArgumentParser(description='Initialize MSMSeeder project by creating necessary subdirectories and a project metadata .yaml file.')
     argparser.add_argument('--project_dir', type=str, default='.', help='(Default: ".") Optionally provide a directory path in which to initialize the project.')
     args = argparser.parse_args()

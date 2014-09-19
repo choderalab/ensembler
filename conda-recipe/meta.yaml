@@ -8,7 +8,13 @@ source:
 build:
   entry_points:
     - MSMSeederInit = msmseeder.scripts.MSMSeederInit:main
-#     - MSMSeederGatherTargets.py = mdtraj.scripts.mdinspect:entry_point
+    - MSMSeederGatherTargets = msmseeder.scripts.MSMSeederGatherTargets:main
+    - MSMSeederGatherTemplates = msmseeder.scripts.MSMSeederGatherTemplates:main
+    - MSMSeederBuildModels = msmseeder.scripts.MSMSeederBuildModels:main
+    - MSMSeederRefineImplicitMD = msmseeder.scripts.MSMSeederRefineImplicitMD:main
+    - MSMSeederSolvate = msmseeder.scripts.MSMSeederSolvate:main
+    - MSMSeederRefineExplicitMD = msmseeder.scripts.MSMSeederRefineExplicitMD:main
+    - MSMSeederPackage = msmseeder.scripts.MSMSeederPackage:main
 
 requirements:
   build:

@@ -114,7 +114,16 @@ setup(
     # scripts = ['scripts/MSMSeederInit.py', 'scripts/MSMSeederGatherTargets.py', 'scripts/MSMSeederGatherTemplates.py', 'scripts/MSMSeederBuildModels.py', 'scripts/MSMSeederRefineImplicitMD.py', 'scripts/MSMSeederSolvate.py', 'scripts/MSMSeederRefineExplicitMD.py', 'scripts/MSMSeederPackageModels.py'],
     # data_files = [('', ['LICENSE']), ('templates', ['project-data.yaml-TEMPLATE', 'manual-specifications.yaml-TEMPLATE'])],
     entry_points = {'console_scripts':
-        ['MSMSeederInit = msmseeder.scripts.MSMSeederInit:main']
+        [
+            'MSMSeederInit = msmseeder.scripts.MSMSeederInit:main',
+            'MSMSeederGatherTargets = msmseeder.scripts.MSMSeederGatherTargets:main',
+            'MSMSeederGatherTemplates = msmseeder.scripts.MSMSeederGatherTemplates:main',
+            'MSMSeederBuildModels = msmseeder.scripts.MSMSeederBuildModels:main',
+            'MSMSeederRefineImplicitMD = msmseeder.scripts.MSMSeederRefineImplicitMD:main',
+            'MSMSeederSolvate = msmseeder.scripts.MSMSeederSolvate:main',
+            'MSMSeederRefineExplicitMD = msmseeder.scripts.MSMSeederRefineExplicitMD:main',
+            'MSMSeederPackageModels = msmseeder.scripts.MSMSeederPackageModels:main',
+        ]
     },
 )
 
