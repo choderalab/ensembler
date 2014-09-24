@@ -56,27 +56,19 @@ def check_project_toplevel_dir():
             raise Exception, 'Current directory not recognized as the top-level directory of a project.'
 
 class LogFile:
-    def __init__(self, log_filepath, additional_log_data={}):
+    def __init__(self, log_filepath):
         import socket
         self.log_filepath = log_filepath
-        log_data = {
+        self.log_data = {
             'datestamp': get_utcnow_formatted(),
             'hostname': socket.gethostname(),
         }
 
-        log_data.update(additional_log_data)
+    def log(self, new_log_data={}):
+        self.log_data.update(new_log_data)
 
         with open(self.log_filepath, 'w') as log_file:
-            yaml.dump(log_data, log_file, default_flow_style=False)
-
-    def log(self, new_log_data):
-        with open(self.log_filepath, 'r') as log_file:
-            log_data = yaml.load(log_file)
-
-        log_data.update(new_log_data)
-
-        with open(self.log_filepath, 'w') as log_file:
-            yaml.dump(log_data, log_file, default_flow_style=False)
+            yaml.dump(self.log_data, log_file, default_flow_style=False)
 
 class TargetManualOverrides:
     '''

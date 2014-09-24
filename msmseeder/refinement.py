@@ -4,6 +4,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     MPI-enabled.
     '''
     import os
+    import datetime
     import traceback
     import gzip
     import msmseeder
@@ -50,7 +51,6 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     def simulate_implicitMD(model_dir, variants=None, gpuid=0, rank=0, verbose=False):
         os.chdir(model_dir)
-        if verbose: print 'rank %d gpuid %d working in model_dir %s' % (rank, gpuid, model_dir)
 
         # Choose platform.
         platform = openmm.Platform.getPlatformByName(openmm_platform)
@@ -146,7 +146,6 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
         models_target_dir = os.path.join(models_dir, target.id)
         if rank == 0:
-            import datetime
             target_starttime = datetime.datetime.utcnow()
             if not os.path.exists(models_target_dir): continue
 
@@ -194,10 +193,6 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         for template_index in range(rank, len(templates_to_process), size):
             template = templates_to_process[template_index]
 
-            print "-------------------------------------------------------------------------"
-            print "Simulating %s => %s in implicit solvent for %.1f ps" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
-            print "-------------------------------------------------------------------------"
-            
             model_dir = os.path.join(models_target_dir, template)
             if not os.path.exists(model_dir): continue
 
@@ -205,31 +200,50 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             unique_by_clustering = os.path.exists(os.path.join(model_dir, 'unique_by_clustering'))
             if not unique_by_clustering: continue
 
-            # Check to make sure the initial model file is present.
-            model_filename = os.path.join(model_dir, 'model.pdb.gz')
-            if not os.path.exists(model_filename): continue
-
             # Pass if this simulation has already been run.
             pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
             if os.path.exists(pdb_filename): continue
 
+            # Check to make sure the initial model file is present.
+            model_filename = os.path.join(model_dir, 'model.pdb.gz')
+            if not os.path.exists(model_filename):
+                if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template, rank, gpuid)
+                continue
+
+            print "-------------------------------------------------------------------------"
+            print "Simulating %s => %s in implicit solvent for %.1f ps (MPI rank: %d, GPU ID: %d)" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds, rank, gpuid)
+            print "-------------------------------------------------------------------------"
+            
             # Open log file
-            additional_log_data = {
+            log_data = {
                 'mpi_rank': rank,
                 'gpuid': gpuid,
+                'complete': False,
             }
             log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
-            log_file = msmseeder.core.LogFile(log_filepath, additional_log_data=additional_log_data)
+            log_file = msmseeder.core.LogFile(log_filepath)
+            log_file.log(new_log_data=log_data)
 
             try:
+                start = datetime.datetime.utcnow()
                 simulate_implicitMD(model_dir, variants, gpuid, rank, verbose=verbose)
+                end = datetime.datetime.utcnow()
+                timing = msmseeder.core.strf_timedelta(end - start)
+                log_data = {
+                    'complete': True,
+                    'timing': timing,
+                }
+                log_file.log(new_log_data=log_data)
             except Exception as e:
-                traceback = traceback.format_exc()
+                trbk = traceback.format_exc()
                 log_data = {
                     'exception': e,
-                    'traceback': msmseeder.core.literal_str(traceback),
+                    'traceback': msmseeder.core.literal_str(trbk),
                 }
-                log_file.log(log_data)
+                log_file.log(new_log_data=log_data)
+
+        if verbose:
+            print 'Finished template loop: rank %d' % rank
 
         comm.Barrier()
 

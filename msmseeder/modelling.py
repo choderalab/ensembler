@@ -251,24 +251,16 @@ def build_model(target,
         tmp_model_pdbfilename = a.outputs[0]['name']
         target_model = modeller.model(env, file=tmp_model_pdbfilename)
 
-        # # Create directory to place final models in
-        # if not os.path.exists(model_dir):
-        #     os.mkdir(model_dir)
-
         target_model.write(file=model_pdbfilepath_uncompressed)
         with open(model_pdbfilepath_uncompressed) as model_pdbfile:
             with gzip.open(model_pdbfilepath, 'w') as model_pdbfilegz:
                 model_pdbfilegz.write(model_pdbfile.read())
 
-        # Need to keep the uncompressed pdb file until the clustering step
-        # os.remove(model_pdbfilepath_uncompressed)
+        # Note that the uncompressed pdb file needs to be kept until after the clustering step has completed
 
         # Write sequence identity.
         with open(seqid_filepath, 'w') as seqid_file:
             seqid_file.write('%.1f\n' % target_model.seq_id)
-
-        # Copy alignment            
-        shutil.move(tmp_aln_filename, aln_filepath)
 
         # Copy restraints.
         with open('%s.rsr' % target.id, 'r') as rsrfile:
@@ -294,6 +286,9 @@ def build_model(target,
     #         print traceback.format_exc()
     #
     finally:
+        # Copy alignment            
+        shutil.move(tmp_aln_filename, aln_filepath)
+        # Move back to current dir
         os.chdir(current_dir)
         shutil.rmtree(temp_dir)
 
