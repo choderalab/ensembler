@@ -16,7 +16,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     comm = mpi4py.MPI.COMM_WORLD
     rank = comm.rank
     size = comm.size
-    gpuid = (rank % gpupn)
+    gpuid = rank % gpupn
 
     targets_dir = os.path.abspath("targets")
     templates_dir = os.path.abspath("templates")
@@ -49,7 +49,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
     forcefield = app.ForceField(*forcefields_to_use)
 
-    def simulate_implicitMD(model_dir, variants=None, gpuid=0, rank=0, verbose=False):
+    def simulate_implicitMD(model_dir, variants=None, gpuid=0, rank=0, openmm_platform='CUDA', verbose=False):
         os.chdir(model_dir)
 
         # Choose platform.
@@ -218,6 +218,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             log_data = {
                 'mpi_rank': rank,
                 'gpuid': gpuid,
+                'openmm_platform': openmm_platform,
                 'complete': False,
             }
             log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
@@ -226,7 +227,7 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
             try:
                 start = datetime.datetime.utcnow()
-                simulate_implicitMD(model_dir, variants, gpuid, rank, verbose=verbose)
+                simulate_implicitMD(model_dir, variants=variants, gpuid=gpuid, rank=rank, openmm_platform=openmm_platform, verbose=verbose)
                 end = datetime.datetime.utcnow()
                 timing = msmseeder.core.strf_timedelta(end - start)
                 log_data = {
