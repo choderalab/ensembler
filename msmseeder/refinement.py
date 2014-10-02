@@ -55,11 +55,12 @@ def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         # Choose platform.
         platform = openmm.Platform.getPlatformByName(openmm_platform)
 
-        # Set GPU id.
-        if openmm_platform == 'CUDA':
-            platform.setPropertyDefaultValue('CudaDeviceIndex', '%d' % gpuid)
-        elif openmm_platform == 'OpenCL':
-            platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
+        if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+            # Set GPU id.
+            if openmm_platform == 'CUDA':
+                platform.setPropertyDefaultValue('CudaDeviceIndex', '%d' % gpuid)
+            elif openmm_platform == 'OpenCL':
+                platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
 
         if verbose: print "Reading model..."
         with gzip.open(model_filename) as model_file:
