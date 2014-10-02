@@ -1,49 +1,65 @@
-# =========
-# Project initialization
-# =========
+import gzip
+import json
+import sys
+import os
 
-def init(project_toplevel_dir):
-    '''Initialize MSMSeeder project within the current directory. Creates
+import yaml
+import msmseeder
+import msmseeder.TargetExplorer
+import msmseeder.UniProt
+import msmseeder.PDB
+import msmseeder.version
+from lxml import etree
+from msmseeder.core import construct_fasta_str
+
+
+def write_metadata(new_metadata_dict, msmseeder_stage):
+    prev_metadata_file_mapper = {
+        'gather_targets': 'meta.yaml',
+        'gather_templates': os.path.join('targets', 'meta.yaml'),
+    }
+    metadata_file_mapper = {
+        'init': 'meta.yaml',
+        'gather_targets': os.path.join('targets', 'meta.yaml'),
+        'gather_templates': os.path.join('templates', 'meta.yaml'),
+    }
+
+    if msmseeder_stage == 'init':
+        prev_metadata_dict = {}
+    else:
+        with open(prev_metadata_file_mapper[msmseeder_stage]) as prev_meta_file:
+            prev_metadata_dict = yaml.load(prev_meta_file)
+
+    metadata_dict = prev_metadata_dict
+    metadata_dict.update(new_metadata_dict)
+    metadata = msmseeder.core.ProjectMetadata(metadata_dict)
+    metadata.write(metadata_file_mapper[msmseeder_stage])
+
+
+@msmseeder.utils.notify_when_done
+def initproject(project_toplevel_dir):
+    """Initialize MSMSeeder project within the given directory. Creates
     necessary subdirectories and a project metadata .yaml file.
-    '''
+    :param project_toplevel_dir: str
+    """
+    create_dirs(project_toplevel_dir)
+    init_metadata = gen_init_metadata(project_toplevel_dir)
+    write_metadata(init_metadata, msmseeder_stage='init')
 
-    # =========
-    # Parameters
-    # =========
 
-    import sys
-    import os
-    import msmseeder
-    import msmseeder.version
-
-    project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models']
-
-    datestamp = msmseeder.core.get_utcnow_formatted()
-
-    # =========
-    # Create necessary project directories
-    # =========
-
+def create_dirs(project_toplevel_dir):
+    project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models',
+                        os.path.join('structures', 'pdb'),
+                        os.path.join('structures', 'sifts'),
+                        os.path.join('templates', 'structures')]
     os.chdir(project_toplevel_dir)
-
     for dirname in project_dirnames:
-        try:
-            os.mkdir(dirname)
-            print 'Created directory "%s"' % dirname
-        except OSError as e:
-            if e.errno == 17:
-                print 'Directory "%s" already exists - will not overwrite' % dirname
-            else:
-                raise
-    os.mkdir(os.path.join('structures', 'pdb'))
-    os.mkdir(os.path.join('structures', 'sifts'))
-    os.mkdir(os.path.join('templates', 'structures'))
+        msmseeder.utils.create_dir(dirname)
 
-    # =========
-    # Metadata
-    # =========
 
-    metadata = {
+def gen_init_metadata(project_toplevel_dir):
+    datestamp = msmseeder.core.get_utcnow_formatted()
+    metadata_dict = {
         'init': {
             'datestamp': datestamp,
             'init_path': os.path.abspath(project_toplevel_dir),
@@ -53,18 +69,12 @@ def init(project_toplevel_dir):
             'msmseeder_commit': msmseeder.version.git_revision
         }
     }
+    return metadata_dict
 
-    metadata = msmseeder.core.ProjectMetadata(metadata)
-    metadata.write('meta.yaml')
 
-    print 'Done.'
-
-# =========
-# Gather targets methods
-# =========
-
+@msmseeder.utils.notify_when_done
 def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
-    '''Gather protein target data from a TargetExplorer DB network API.
+    """Gather protein target data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
     frontend data fields.
@@ -74,116 +84,110 @@ def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
 
     To select all domains within the database:
     search_string=''
-    '''
-
-    # =========
-    # Parameters
-    # =========
-
-    import sys
-    import os
-    import yaml
-    import json
-    import msmseeder
-    import msmseeder.TargetExplorer
-    import msmseeder.version
-
-    fasta_ofilepath = os.path.join('targets', 'targets.fa')
-
-    # =========
-    # Read in project manual overrides
-    # =========
-
+    """
     manual_overrides = msmseeder.core.ManualOverrides()
+    domain_span_overrides_present = True if len(manual_overrides.target.domain_spans) > 0 else False
 
-    # =========
-    # Get the original uniprot search strings from the db
-    # =========
+    targets_json = get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present)
+    targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
+    write_targets_to_fasta_file(targets)
 
-    db_metadata_jsonstr = msmseeder.TargetExplorer.get_targetexplorer_metadata(dbapi_uri)
-    db_metadata = json.loads(db_metadata_jsonstr)
+    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_targetexplorer_metadata)
+    write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
 
-    # =========
-    # Retrieve data from the TargetExplorer DB API
-    # =========
 
-    if len(manual_overrides.target.domain_spans) > 0:
-        targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(dbapi_uri, search_string, return_data='seqs')
+def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present=False):
+    """
+    :param dbapi_uri: str
+    :param search_string: str
+    :param manual_overrides: msmseeder.core.ManualOverrides
+    :return: list containing nested lists and dicts
+    """
+    if domain_span_overrides_present:
+        targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(
+            dbapi_uri, search_string, return_data='domain_seqs,seqs'
+        )
     else:
-        targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(dbapi_uri, search_string)
+        targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(
+            dbapi_uri, search_string, return_data='domain_seqs'
+        )
     targetexplorer_json = json.loads(targetexplorer_jsonstr)
-
     targets = targetexplorer_json['results']
+    return targets
 
-    # =========
-    # Write target data to FASTA file
-    # =========
 
+def extract_targets_from_targetexplorer_json(targets_json, manual_overrides=msmseeder.core.ManualOverrides()):
+    targets = []
+    for target in targets_json:
+        for target_domain in target['domains']:
+            targetid = target_domain.get('targetid')
+            targetseq = target_domain.get('sequence')
+            # domain span override
+            if targetid in manual_overrides.target.domain_spans:
+                fullseq = target.get('sequence')
+                start, end = [int(x) - 1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
+                targetseq = fullseq[start:end + 1]
+
+            targetseq = msmseeder.core.seqwrap(targetseq).strip()
+            targets.append((targetid, targetseq))
+
+    return targets
+
+
+def write_targets_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 'targets.fa')):
     print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
-
-    ntarget_domains = 0
     with open(fasta_ofilepath, 'w') as fasta_ofile:
         for target in targets:
-            for target_domain in target['domains']:
-                targetid = target_domain.get('targetid')
-                targetseq = target_domain.get('sequence')
-                # domain span override
-                if targetid in manual_overrides.target.domain_spans:
-                    fullseq = target.get('sequence')
-                    start, end = [int(x)-1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
-                    targetseq = fullseq[start:end+1]
+            targetid, targetseq = target
+            target_fasta_string = construct_fasta_str(targetid, targetseq)
+            fasta_ofile.write(target_fasta_string)
 
-                targetseq = msmseeder.core.seqwrap(targetseq).strip()
-                target_fasta_string = '>%s\n%s\n' % (targetid, targetseq)
 
-                fasta_ofile.write(target_fasta_string)
-                ntarget_domains += 1
-
-    # =========
-    # Metadata
-    # =========
-
-    datestamp = msmseeder.core.get_utcnow_formatted()
-
-    with open('meta.yaml') as init_meta_file:
-        metadata = yaml.load(init_meta_file)
-
-    metadata['gather_targets'] = {
-        'datestamp': datestamp,
-        'method': 'TargetExplorerDB',
-        'ntargets': str(ntarget_domains),
-        'gather_from_target_explorer': {
+def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
+    db_metadata = get_db_metadata(dbapi_uri)
+    metadata = {
+        'gather_from_targetexplorer': {
             'db_uniprot_query_string': str(db_metadata.get('uniprot_query_string')),
             'db_uniprot_domain_regex': str(db_metadata.get('uniprot_domain_regex')),
             'search_string': search_string,
             'dbapi_uri': dbapi_uri,
-        },
-        'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': msmseeder.core.literal_str(sys.version),
-        'msmseeder_version': msmseeder.version.short_version,
-        'msmseeder_commit': msmseeder.version.git_revision,
+        }
     }
+    return metadata
 
-    metadata = msmseeder.core.ProjectMetadata(metadata)
-    metadata.write('targets/meta.yaml')
 
-    print 'Done.'
+def get_db_metadata(dbapi_uri):
+    db_metadata_jsonstr = msmseeder.TargetExplorer.get_targetexplorer_metadata(dbapi_uri)
+    return json.loads(db_metadata_jsonstr)
 
+
+def gen_gather_targets_metadata(ntarget_domains, additional_metadata={}):
+    datestamp = msmseeder.core.get_utcnow_formatted()
+    metadata_init = {
+        'gather_targets': {
+            'datestamp': datestamp,
+            'method': 'TargetExplorerDB',
+            'ntargets': str(ntarget_domains),
+            'python_version': sys.version.split('|')[0].strip(),
+            'python_full_version': msmseeder.core.literal_str(sys.version),
+            'msmseeder_version': msmseeder.version.short_version,
+            'msmseeder_commit': msmseeder.version.git_revision,
+        }
+    }
+    metadata_init['gather_targets'].update(additional_metadata)
+    return metadata_init
+
+
+@msmseeder.utils.notify_when_done
 def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
-    '''Searches UniProt for a set of target proteins with a user-defined
-    query string, then saves target IDs and sequences.'''
+    """Searches UniProt for a set of target proteins with a user-defined
+    query string, then saves target IDs and sequences."""
 
     # =========
     # Parameters
     # =========
 
-    import sys
-    import os
-    import yaml
-    from lxml import etree
-    import msmseeder
-    import msmseeder.UniProt
-    import msmseeder.version
 
     fasta_ofilepath = os.path.join('targets', 'targets.fa')
 
@@ -220,16 +224,22 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
         query_string_split = uniprot_query_string.split('"')
         query_string_domain_selection = query_string_split[ query_string_split.index('domain:') + 1 ]
 
-        uniprot_query_string_domains = uniprotxml.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_insensitive })
+        uniprot_query_string_domains = uniprotxml.xpath(
+            'entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection,
+            extensions = {
+                (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_insensitive
+            }
+        )
 
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_query_string_domains])
-        print 'Set of unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s' % (query_string_domain_selection, uniprot_unique_domain_names)
-        print ''
+        print 'Set of unique domain names selected by the domain selector \'%s\'during the initial UniProt search:\n%s\n'\
+              % (query_string_domain_selection, uniprot_unique_domain_names)
 
     else:
         uniprot_domains = uniprotxml.xpath('entry/feature[@type="domain"]')
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_domains])
-        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s' % (uniprot_query_string, uniprot_unique_domain_names)
+        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s'\
+              % (uniprot_query_string, uniprot_unique_domain_names)
         print ''
 
     # =========
@@ -237,11 +247,14 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
     # =========
 
     if uniprot_domain_regex != None:
-        regex_matched_domains = uniprotxml.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
+        regex_matched_domains = uniprotxml.xpath(
+            'entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
+            extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive }
+        )
 
         regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
-        print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s' % (uniprot_domain_regex, regex_matched_domains_unique_names)
-        print ''
+        print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'\
+              % (uniprot_domain_regex, regex_matched_domains_unique_names)
 
     # =========
     # Go through all the UniProt entries, and generate id and seq data
@@ -321,16 +334,13 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
     metadata = msmseeder.core.ProjectMetadata(metadata)
     metadata.write('targets/meta.yaml')
 
-    print 'Done.'
 
 # =========
 # Gather templates methods
 # =========
 
 def get_pdb_and_sifts_files(PDBID, structure_paths=[]):
-    import os
-    import gzip
-    import msmseeder.PDB
+
     project_pdb_filepath = os.path.join('structures', 'pdb', PDBID + '.pdb.gz')
     project_sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
 
@@ -356,7 +366,7 @@ def get_pdb_and_sifts_files(PDBID, structure_paths=[]):
             print 'Downloading PDB file for:', PDBID
             pdbgz_page = msmseeder.PDB.retrieve_pdb(PDBID, compressed='yes')
             with open(project_pdb_filepath, 'w') as pdbgz_file:
-                pdbgz_file.write(pdbgz_page)    
+                pdbgz_file.write(pdbgz_page)
 
     # Check if SIFTS file already exists and is not empty
     search_for_sifts = True
@@ -379,15 +389,12 @@ def get_pdb_and_sifts_files(PDBID, structure_paths=[]):
         if not os.path.exists(project_sifts_filepath):
             print 'Downloading sifts file for:', PDBID
             sifts_page = msmseeder.PDB.retrieve_sifts(PDBID)
-            with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file: 
-                project_sifts_file.write(sifts_page)    
+            with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file:
+                project_sifts_file.write(sifts_page)
 
 def extract_pdb_template_seq(pdbchain):
     'Extract data from PDB chain'
-    import os
-    import gzip
-    import msmseeder
-    from lxml import etree
+
     templateid = pdbchain['templateid']
     chainid = pdbchain['chainid']
     pdbid = pdbchain['pdbid']
@@ -443,7 +450,7 @@ def extract_pdb_template_seq(pdbchain):
 
 
 def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structure_paths=[]):
-    '''Gather protein template data from a TargetExplorer DB network API.
+    """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
     frontend data fields.
@@ -453,20 +460,11 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
 
     To select all domains within the database:
     search_string=''
-    '''
+    """
 
     # =========
     # Parameters
     # =========
-
-    import sys
-    import os
-    import yaml
-    import json
-    import msmseeder
-    import msmseeder.TargetExplorer
-    import msmseeder.PDB
-    import msmseeder.version
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
 
@@ -589,7 +587,7 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
         'datestamp': datestamp,
         'method': 'TargetExplorerDB',
         'ntemplates': str(len(selected_templates)),
-        'gather_from_target_explorer': {
+        'gather_from_targetexplorer': {
             'db_uniprot_query_string': str(db_metadata.get('uniprot_query_string')),
             'db_uniprot_domain_regex': str(db_metadata.get('uniprot_domain_regex')),
             'search_string': search_string,
@@ -608,21 +606,12 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     print 'Done.'
 
 def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, structure_paths=[]):
-    '''# Searches UniProt for a set of template proteins with a user-defined
-    query string, then saves IDs, sequences and structures.'''
+    """# Searches UniProt for a set of template proteins with a user-defined
+    query string, then saves IDs, sequences and structures."""
 
     # =========
     # Parameters
     # =========
-
-    import sys
-    import os
-    import yaml
-    import msmseeder
-    import msmseeder.UniProt
-    import msmseeder.PDB
-    import msmseeder.version
-    from lxml import etree
 
     fasta_ofilepath = os.path.join('templates', 'templates.fa')
 

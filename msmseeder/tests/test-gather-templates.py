@@ -1,7 +1,8 @@
-def test_extract_residues_by_resnum_from_4CFE():
-    import os, StringIO
-    import msmseeder.PDB
+import os
+import StringIO
+import msmseeder.PDB
 
+def test_extract_residues_by_resnum_from_4CFE():
     # 4CFE contains a 'TPO' residue
     pdb_input_filepath = os.path.join('tests', 'resources', '4CFE.pdb.gz')
     desired_chainID = 'A'
@@ -16,9 +17,6 @@ def test_extract_residues_by_resnum_from_4CFE():
     assert nlines_extracted == len(desired_resnums)
 
 def test_extract_residues_by_resnum_from_3HLL():
-    import os, StringIO
-    import msmseeder.PDB
-
     # 3HLL contains resnums '56A' and '93B'
     pdb_input_filepath = os.path.join('tests', 'resources', '3HLL.pdb.gz')
     desired_chainID = 'A'
@@ -36,9 +34,6 @@ def test_extract_residues_by_resnum_from_3HLL():
     assert nlines_extracted == len(desired_resnums)
 
 def test_extract_residues_by_resnum_output():
-    import os, StringIO
-    import msmseeder.PDB
-
     pdb_input_filepath = os.path.join('tests', 'resources', '3HLL.pdb.gz')
     desired_chainID = 'A'
     desired_resnums = [str(x) for x in range(24, 172) + range(183, 309)]

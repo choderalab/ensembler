@@ -70,6 +70,20 @@ class LogFile:
         with open(self.log_filepath, 'w') as log_file:
             yaml.dump(self.log_data, log_file, default_flow_style=False)
 
+
+class ManualOverrides:
+    def __init__(self):
+        import yaml
+        if os.path.exists(manual_overrides_filename):
+            with open(manual_overrides_filename, 'r') as manual_overrides_file:
+                manual_overrides_yaml = yaml.load(manual_overrides_file)
+        else:
+            manual_overrides_yaml = {}
+
+        self.target = TargetManualOverrides(manual_overrides_yaml)
+        self.template = TemplateManualOverrides(manual_overrides_yaml)
+
+
 class TargetManualOverrides:
     '''
     Parameters
@@ -88,6 +102,7 @@ class TargetManualOverrides:
             self.domain_spans = target_dict.get('domain-spans')
         else:
             self.domain_spans = {}
+
 
 class TemplateManualOverrides:
     '''
@@ -118,17 +133,6 @@ class TemplateManualOverrides:
             self.domain_spans = {}
             self.skip_pdbs = []
 
-class ManualOverrides:
-    def __init__(self):
-        import yaml
-        if os.path.exists(manual_overrides_filename):
-            with open(manual_overrides_filename, 'r') as manual_overrides_file:
-                manual_overrides_yaml = yaml.load(manual_overrides_file)
-        else:
-            manual_overrides_yaml = {}
-
-        self.target = TargetManualOverrides(manual_overrides_yaml)
-        self.template = TemplateManualOverrides(manual_overrides_yaml)
 
 class ProjectMetadata:
     def __init__(self, data):
@@ -204,3 +208,8 @@ def seqwrap(sequence, add_star=False):
     for i in range(0,len(sequence),60):
         wrapped += sequence[i: i+60] + '\n'
     return wrapped
+
+
+def construct_fasta_str(seqid, seq):
+    target_fasta_string = '>%s\n%s\n' % (seqid, seq)
+    return target_fasta_string
