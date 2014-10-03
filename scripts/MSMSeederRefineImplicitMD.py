@@ -29,7 +29,7 @@ def main():
     # Run simulations
     # ========
 
-    msmseeder.refinement.refine_implicitMD(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)
+    msmseeder.refinement.refine_implicit_md(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)
 
 if __name__ == '__main__':
     main()

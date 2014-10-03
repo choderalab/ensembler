@@ -3,6 +3,8 @@
 # ========
 
 import os
+import msmseeder
+
 src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
@@ -11,6 +13,21 @@ project_metadata_filename = 'project-data.yaml'
 manual_overrides_filename = 'manual-overrides.yaml'
 
 template_acceptable_ratio_observed_residues = 0.7
+
+# listed in order
+msmseeder_stages = [
+    'init',
+    'gather_targets',
+    'gather_templates',
+    'build_models',
+    'sort_by_sequence_identity',
+    'cluster_models',
+    'refine_implicit_md',
+    'solvate_models',
+    'determine_nwaters',
+    'refine_explicit_md',
+    'package_for_fah',
+]
 
 # ========
 # YAML
@@ -136,16 +153,41 @@ class TemplateManualOverrides:
 
 class ProjectMetadata:
     def __init__(self, data):
-        # Listed in desired document order
-        self.project_metadata_categories = ['init', 'gather_targets', 'gather_templates', 'build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md', 'package_for_fah']
         self.data = data
 
     def write(self, ofilepath):
         with open(ofilepath, 'w') as ofile:
-            for category in self.project_metadata_categories:
-                if category in self.data.keys():
-                    subdict = {category: self.data[category]}
+            for stage in msmseeder_stages:
+                if stage in self.data.keys():
+                    subdict = {stage: self.data[stage]}
                     yaml.dump(subdict, ofile, default_flow_style=False)
+
+
+def write_metadata(new_metadata_dict, msmseeder_stage):
+    if msmseeder_stage == 'init':
+        metadata_dict = {}
+    else:
+        prev_msmseeder_stage = msmseeder_stages[msmseeder_stages.index(msmseeder_stage) - 1]
+        prev_metadata_filepath = metadata_file_mapper(prev_msmseeder_stage)
+        with open(prev_metadata_filepath) as prev_metadata_file:
+            metadata_dict = yaml.load(prev_metadata_file)
+
+    metadata_dict.update(new_metadata_dict)
+    metadata = ProjectMetadata(metadata_dict)
+    metadata.write(metadata_file_mapper(msmseeder_stage))
+
+
+def metadata_file_mapper(msmseeder_stage, target_id=None):
+    metadata_file_dict = {
+        'init': 'meta.yaml',
+        'gather_targets': os.path.join('targets', 'meta.yaml'),
+        'gather_templates': os.path.join('templates', 'meta.yaml'),
+    }
+    if msmseeder_stage in metadata_file_dict:
+        return metadata_file_dict[msmseeder_stage]
+    elif msmseeder_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+        return os.path.join('models', target_id, 'meta.yaml')
+
 
 def encode_url_query(uniprot_query):
     def replace_all(text, replace_dict):

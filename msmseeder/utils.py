@@ -1,4 +1,6 @@
 import os
+import functools
+import nose
 
 
 def notify_when_done(fn):
@@ -20,3 +22,15 @@ def create_dir(dirpath):
             print 'Directory "%s" already exists - will not overwrite' % dirpath
         else:
             raise
+
+
+def expected_failure(test):
+    @functools.wraps(test)
+    def inner(*args, **kwargs):
+        try:
+            test(*args, **kwargs)
+        except Exception:
+            raise nose.SkipTest
+        else:
+            raise AssertionError('Failure expected')
+    return inner

@@ -10,30 +10,7 @@ import msmseeder.UniProt
 import msmseeder.PDB
 import msmseeder.version
 from lxml import etree
-from msmseeder.core import construct_fasta_str
-
-
-def write_metadata(new_metadata_dict, msmseeder_stage):
-    prev_metadata_file_mapper = {
-        'gather_targets': 'meta.yaml',
-        'gather_templates': os.path.join('targets', 'meta.yaml'),
-    }
-    metadata_file_mapper = {
-        'init': 'meta.yaml',
-        'gather_targets': os.path.join('targets', 'meta.yaml'),
-        'gather_templates': os.path.join('templates', 'meta.yaml'),
-    }
-
-    if msmseeder_stage == 'init':
-        prev_metadata_dict = {}
-    else:
-        with open(prev_metadata_file_mapper[msmseeder_stage]) as prev_meta_file:
-            prev_metadata_dict = yaml.load(prev_meta_file)
-
-    metadata_dict = prev_metadata_dict
-    metadata_dict.update(new_metadata_dict)
-    metadata = msmseeder.core.ProjectMetadata(metadata_dict)
-    metadata.write(metadata_file_mapper[msmseeder_stage])
+from msmseeder.core import construct_fasta_str, write_metadata
 
 
 @msmseeder.utils.notify_when_done
@@ -44,7 +21,49 @@ def initproject(project_toplevel_dir):
     """
     create_dirs(project_toplevel_dir)
     init_metadata = gen_init_metadata(project_toplevel_dir)
-    write_metadata(init_metadata, msmseeder_stage='init')
+    msmseeder.core.write_metadata(init_metadata, msmseeder_stage='init')
+
+
+@msmseeder.utils.notify_when_done
+def gather_targets_from_targetexplorer(dbapi_uri, search_string=''):
+    """Gather protein target data from a TargetExplorer DB network API.
+    Pass the URI for the database API and a search string.
+    The search string uses SQLAlchemy syntax and standard TargetExplorer
+    frontend data fields.
+    Example:
+    dbapi_uri='http://plfah2.mskcc.org/kinomeDBAPI'
+    search_string='species="Human"'
+
+    To select all domains within the database:
+    search_string=''
+    """
+    manual_overrides = msmseeder.core.ManualOverrides()
+    domain_span_overrides_present = True if len(manual_overrides.target.domain_spans) > 0 else False
+
+    targets_json = get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present)
+    targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
+    write_targets_to_fasta_file(targets)
+
+    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_targetexplorer_metadata)
+    msmseeder.core.write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
+
+
+@msmseeder.utils.notify_when_done
+def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
+    """Searches UniProt for a set of target proteins with a user-defined
+    query string, then saves target IDs and sequences."""
+    manual_overrides = msmseeder.core.ManualOverrides()
+    uniprotxml = get_uniprot_xml(uniprot_query_string)
+    log_unique_domain_names(uniprot_query_string, uniprotxml)
+    if uniprot_domain_regex != None:
+        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
+    targets = extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
+    write_targets_to_fasta_file(targets)
+
+    gather_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
+    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_uniprot_metadata)
+    msmseeder.core.write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
 
 
 def create_dirs(project_toplevel_dir):
@@ -72,31 +91,6 @@ def gen_init_metadata(project_toplevel_dir):
     return metadata_dict
 
 
-@msmseeder.utils.notify_when_done
-def gather_targets_from_targetexplorerdb(dbapi_uri, search_string=''):
-    """Gather protein target data from a TargetExplorer DB network API.
-    Pass the URI for the database API and a search string.
-    The search string uses SQLAlchemy syntax and standard TargetExplorer
-    frontend data fields.
-    Example:
-    dbapi_uri='http://plfah2.mskcc.org/kinomeDBAPI'
-    search_string='species="Human"'
-
-    To select all domains within the database:
-    search_string=''
-    """
-    manual_overrides = msmseeder.core.ManualOverrides()
-    domain_span_overrides_present = True if len(manual_overrides.target.domain_spans) > 0 else False
-
-    targets_json = get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present)
-    targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
-    write_targets_to_fasta_file(targets)
-
-    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
-    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_targetexplorer_metadata)
-    write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
-
-
 def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present=False):
     """
     :param dbapi_uri: str
@@ -117,6 +111,15 @@ def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overri
     return targets
 
 
+def get_uniprot_xml(uniprot_query_string):
+    print 'Querying UniProt web server...'
+    uniprotxmlstring = msmseeder.UniProt.retrieve_uniprot(uniprot_query_string)
+    parser = etree.XMLParser(huge_tree=True)
+    uniprotxml = etree.fromstring(uniprotxmlstring, parser)
+    print 'Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml)
+    return uniprotxml
+
+
 def extract_targets_from_targetexplorer_json(targets_json, manual_overrides=msmseeder.core.ManualOverrides()):
     targets = []
     for target in targets_json:
@@ -131,6 +134,36 @@ def extract_targets_from_targetexplorer_json(targets_json, manual_overrides=msms
 
             targetseq = msmseeder.core.seqwrap(targetseq).strip()
             targets.append((targetid, targetseq))
+
+    return targets
+
+
+def extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides):
+    targets = []
+    for entry in uniprotxml.findall('entry'):
+        entry_name = entry.find('name').text
+        fullseq = msmseeder.core.sequnwrap(entry.find('sequence').text)
+        if uniprot_domain_regex != None:
+            selected_domains = entry.xpath(
+                'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
+                extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
+            )
+        else:
+            selected_domains = entry.findall('feature[@type="domain"]')
+
+        domain_iter = 0
+        for domain in selected_domains:
+            targetid = '%s_D%d' % (entry_name, domain_iter)
+            # domain span override
+            if targetid in manual_overrides.target.domain_spans:
+                start, end = [int(x) - 1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
+            else:
+                start, end = [int(domain.find('location/begin').get('position')) - 1,
+                              int(domain.find('location/end').get('position')) - 1]
+            targetseq = fullseq[start:end + 1]
+            targetseq = msmseeder.core.seqwrap(targetseq).strip()
+            targets.append((targetid, targetseq))
+            domain_iter += 1
 
     return targets
 
@@ -152,6 +185,16 @@ def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
             'db_uniprot_domain_regex': str(db_metadata.get('uniprot_domain_regex')),
             'search_string': search_string,
             'dbapi_uri': dbapi_uri,
+        }
+    }
+    return metadata
+
+
+def gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex):
+    metadata = {
+        'gather_from_uniprot': {
+            'uniprot_query_string': uniprot_query_string,
+            'uniprot_domain_regex': uniprot_domain_regex,
         }
     }
     return metadata
@@ -179,160 +222,44 @@ def gen_gather_targets_metadata(ntarget_domains, additional_metadata={}):
     return metadata_init
 
 
-@msmseeder.utils.notify_when_done
-def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
-    """Searches UniProt for a set of target proteins with a user-defined
-    query string, then saves target IDs and sequences."""
-
-    # =========
-    # Parameters
-    # =========
-
-
-    fasta_ofilepath = os.path.join('targets', 'targets.fa')
-
-    # =========
-    # Read in project manual overrides
-    # =========
-
-    manual_overrides = msmseeder.core.ManualOverrides()
-
-    # =========
-    # Make request to UniProt web server and parse the returned XML
-    # =========
-
-    print 'Querying UniProt web server...'
-    uniprotxmlstring = msmseeder.UniProt.retrieve_uniprot(uniprot_query_string)
-    parser = etree.XMLParser(huge_tree=True)
-    uniprotxml = etree.fromstring(uniprotxmlstring, parser)
-    print 'Number of entries returned from initial UniProt search:', len(uniprotxml)
-    print ''
-
-    # =========
-    # If the UniProt query string contained a domain selector, print the set of
-    # unique UniProt domain names which would have been selected during the
-    # UniProt search (case-insensitive). This should aid users in the
-    # construction an appropriate regex for selecting an appropriate subset of
-    # these domains.
-    # =========
-
+def log_unique_domain_names(uniprot_query_string, uniprotxml):
     if 'domain:' in uniprot_query_string:
-
         # First extract the domain selection
         # Example query string: 'domain:"Protein kinase" AND reviewed:yes'
         # Can assume that the domain selection will be bounded by double-quotes
         query_string_split = uniprot_query_string.split('"')
-        query_string_domain_selection = query_string_split[ query_string_split.index('domain:') + 1 ]
-
+        query_string_domain_selection = query_string_split[query_string_split.index('domain:') + 1]
         uniprot_query_string_domains = uniprotxml.xpath(
             'entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection,
-            extensions = {
+            extensions={
                 (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_insensitive
             }
         )
-
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_query_string_domains])
-        print 'Set of unique domain names selected by the domain selector \'%s\'during the initial UniProt search:\n%s\n'\
+        print 'Set of unique domain names selected by the domain selector \'%s\'during the initial UniProt search:\n%s\n' \
               % (query_string_domain_selection, uniprot_unique_domain_names)
 
     else:
         uniprot_domains = uniprotxml.xpath('entry/feature[@type="domain"]')
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_domains])
-        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s'\
+        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s\n' \
               % (uniprot_query_string, uniprot_unique_domain_names)
-        print ''
 
-    # =========
-    # Print subset of domains returned following filtering with the UniProt_domain_regex (case sensitive)
-    # =========
 
-    if uniprot_domain_regex != None:
-        regex_matched_domains = uniprotxml.xpath(
-            'entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
-            extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive }
-        )
+def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
+    regex_matched_domains = uniprotxml.xpath(
+        'entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
+        extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
+    )
+    regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
+    print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n' \
+          % (uniprot_domain_regex, regex_matched_domains_unique_names)
 
-        regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
-        print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'\
-              % (uniprot_domain_regex, regex_matched_domains_unique_names)
 
-    # =========
-    # Go through all the UniProt entries, and generate id and seq data
-    # =========
 
-    targets = []
 
-    for entry in uniprotxml.findall('entry'):
-        entry_name = entry.find('name').text
-        fullseq = msmseeder.core.sequnwrap(entry.find('sequence').text)
-        targets.append({'entry_name': entry_name, 'sequence': fullseq})
-        if uniprot_domain_regex != None:
-            selected_domains = entry.xpath('feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
-        else:
-            selected_domains = entry.findall('feature[@type="domain"]')
 
-        domain_iter = 0
 
-        domain_data = []
-        for domain in selected_domains:
-            targetid = '%s_D%d' % (entry_name, domain_iter)
-
-            # domain span override
-            if targetid in manual_overrides.target.domain_spans:
-                start, end = [int(x)-1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
-            else:
-                start, end = [int(domain.find('location/begin').get('position'))-1, int(domain.find('location/end').get('position'))-1]
-
-            targetseq = fullseq[start:end+1]
-            domain_data.append({'targetid': targetid, 'sequence': targetseq})
-            domain_iter += 1
-
-        targets[-1]['domains'] = domain_data
-
-    # =========
-    # Write target data to FASTA file
-    # =========
-
-    print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
-
-    ntarget_domains = 0
-    with open(fasta_ofilepath, 'w') as fasta_ofile:
-        for target in targets:
-            for target_domain in target['domains']:
-                targetid = target_domain.get('targetid')
-                targetseq = target_domain.get('sequence')
-
-                targetseq = msmseeder.core.seqwrap(targetseq).strip()
-                target_fasta_string = '>%s\n%s\n' % (targetid, targetseq)
-
-                fasta_ofile.write(target_fasta_string)
-                ntarget_domains += 1
-
-    # =========
-    # Metadata
-    # =========
-
-    datestamp = msmseeder.core.get_utcnow_formatted()
-
-    with open('meta.yaml') as init_meta_file:
-        metadata = yaml.load(init_meta_file)
-
-    metadata['gather_targets'] = {
-        'datestamp': datestamp,
-        'method': 'UniProt',
-        'ntargets': str(ntarget_domains),
-        'gather_from_uniprot': {
-            'uniprot_query_string': uniprot_query_string,
-            'uniprot_domain_regex': uniprot_domain_regex if uniprot_domain_regex != None else '',
-        },
-        'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': msmseeder.core.literal_str(sys.version),
-        'msmseeder_version': msmseeder.version.short_version,
-        'msmseeder_commit': msmseeder.version.git_revision,
-    }
-
-    metadata = msmseeder.core.ProjectMetadata(metadata)
-    metadata.write('targets/meta.yaml')
 
 
 # =========

@@ -14,4 +14,6 @@ def test_initproject():
     assert os.path.exists(os.path.join(tmpdir, 'meta.yaml'))
     shutil.rmtree(tmpdir)
 
-# TODO def test_gather_targets():
+# TODO def test_gather_targets_from_targetexplorer():
+
+# TODO def test_gather_targets_from_uniprot():

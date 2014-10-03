@@ -70,7 +70,7 @@ def main():
     # ========
 
     if target_selection_method == 'TargetExplorerDB':
-        msmseeder.initproject.gather_targets_from_targetexplorerdb(args.dbapi_uri, search_string=args.query)
+        msmseeder.initproject.gather_targets_from_targetexplorer(args.dbapi_uri, search_string=args.query)
 
     elif target_selection_method == 'UniProt':
         msmseeder.initproject.gather_targets_from_uniprot(args.uniprot_query, args.uniprot_domain_regex)

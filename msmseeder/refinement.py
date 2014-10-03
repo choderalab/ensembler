@@ -1,4 +1,4 @@
-def refine_implicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False, pH=8.0):
+def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False, pH=8.0):
     '''Run MD refinement in implicit solvent.
 
     MPI-enabled.
