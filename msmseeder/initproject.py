@@ -67,12 +67,8 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
 
 
 def create_dirs(project_toplevel_dir):
-    project_dirnames = ['targets', 'structures', 'templates', 'models', 'packaged-models',
-                        os.path.join('structures', 'pdb'),
-                        os.path.join('structures', 'sifts'),
-                        os.path.join('templates', 'structures')]
     os.chdir(project_toplevel_dir)
-    for dirname in project_dirnames:
+    for dirname in msmseeder.core.project_dirnames:
         msmseeder.utils.create_dir(dirname)
 
 
@@ -107,8 +103,7 @@ def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overri
             dbapi_uri, search_string, return_data='domain_seqs'
         )
     targetexplorer_json = json.loads(targetexplorer_jsonstr)
-    targets = targetexplorer_json['results']
-    return targets
+    return targetexplorer_json
 
 
 def get_uniprot_xml(uniprot_query_string):
@@ -122,7 +117,7 @@ def get_uniprot_xml(uniprot_query_string):
 
 def extract_targets_from_targetexplorer_json(targets_json, manual_overrides=msmseeder.core.ManualOverrides()):
     targets = []
-    for target in targets_json:
+    for target in targets_json['results']:
         for target_domain in target['domains']:
             targetid = target_domain.get('targetid')
             targetseq = target_domain.get('sequence')
@@ -465,7 +460,7 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
 
     for pdbchain in selected_pdbchains:
         extracted_pdb_template_seq_data = extract_pdb_template_seq(pdbchain)
-        if extracted_pdb_template_seq_data != None:
+        if extracted_pdb_template_seq_data is not None:
             selected_templates.append(extracted_pdb_template_seq_data)
 
     print '%d templates selected.' % len(selected_templates)

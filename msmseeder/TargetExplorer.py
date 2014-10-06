@@ -1,6 +1,7 @@
 import urllib
 import urllib2
 
+
 def query_targetexplorer(dbapi_uri, search_string, return_data=[], maxreadlength=10000000):
     '''
     Queries a TargetExplorer DB API database given the URI and a search string,
@@ -27,6 +28,7 @@ def query_targetexplorer(dbapi_uri, search_string, return_data=[], maxreadlength
     page = response.read(maxreadlength)
 
     return page
+
 
 def get_targetexplorer_metadata(dbapi_uri, maxreadlength=100000):
     '''

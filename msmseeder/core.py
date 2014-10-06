@@ -29,6 +29,13 @@ msmseeder_stages = [
     'package_for_fah',
 ]
 
+project_dirnames = [
+    'targets', 'structures', 'templates', 'models', 'packaged-models',
+    os.path.join('structures', 'pdb'),
+    os.path.join('structures', 'sifts'),
+    os.path.join('templates', 'structures')
+]
+
 # ========
 # YAML
 # ========

@@ -32,5 +32,18 @@ def expected_failure(test):
         except Exception:
             raise nose.SkipTest
         else:
-            raise AssertionError('Failure expected')
+            raise AssertionError(
+                'A failure was expected, but this test appeared to pass. You may want to remove the expected_failure decorator.'
+            )
+    return inner
+
+
+def return_to_cwd(fn):
+    @functools.wraps(fn)
+    def inner(*args, **kwargs):
+        cwd = os.getcwd()
+        try:
+            fn(*args, **kwargs)
+        finally:
+            os.chdir(cwd)
     return inner
