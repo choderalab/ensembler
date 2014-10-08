@@ -1,3 +1,6 @@
+import datetime
+import msmseeder
+
 def get_modeller_version():
     '''Hacky attempt to get Modeller version by regex searching the installation directory or README file.
     '''
@@ -82,6 +85,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             seqid_filepath = os.path.join(model_dir, 'sequence-identity.txt')
             model_pdbfilepath = os.path.join(model_dir, 'model.pdb.gz')
             restraint_filepath = os.path.join(model_dir, 'restraints.rsr.gz')
+            modeling_metadata_filepath = os.path.join(model_dir, 'modeling-meta.yaml')
 
             try:
                 build_model(target,
@@ -91,6 +95,8 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
                             seqid_filepath=seqid_filepath,
                             model_pdbfilepath=model_pdbfilepath,
                             restraint_filepath=restraint_filepath,
+                            modeling_metadata_filepath=modeling_metadata_filepath,
+                            rank=rank,
                             verbose=verbose)
 
                 if os.path.getsize(model_pdbfilepath) < 1:
@@ -157,6 +163,8 @@ def build_model(target,
                 seqid_filepath='sequence-identity.txt',
                 model_pdbfilepath='model.pdb.gz',
                 restraint_filepath='restraints.rsr.gz',
+                modeling_metadata_filepath='modeling-meta.yaml',
+                rank=0,
                 verbose=False):
     r'''Uses Modeller to build a homology model for a given target and
     template.
@@ -191,6 +199,7 @@ def build_model(target,
     seqid_filepath = os.path.abspath(seqid_filepath)
     model_pdbfilepath = os.path.abspath(model_pdbfilepath)
     restraint_filepath = os.path.abspath(restraint_filepath)
+    modeling_metadata_filepath = os.path.abspath(modeling_metadata_filepath)
     current_dir = os.getcwd() 
 
     if model_pdbfilepath[-7:] != '.pdb.gz':
@@ -216,7 +225,18 @@ def build_model(target,
 
     # Create temp dir for modelling, and chdir
     temp_dir = tempfile.mkdtemp()
+
+    # Open log file
+    log_data = {
+        'mpi_rank': rank,
+        'complete': False,
+    }
+    log_filepath = modeling_metadata_filepath
+    log_file = msmseeder.core.LogFile(log_filepath)
+    log_file.log(new_log_data=log_data)
+
     try:
+        start = datetime.datetime.utcnow()
         os.chdir(temp_dir)
 
         # Write Modeller-format PIR alignment file
@@ -269,6 +289,14 @@ def build_model(target,
 
         # XXX if os.path.getsize(model_pdbfilepath) < 1:
         #     raise Exception, 'Output PDB file is empty.'
+
+        end = datetime.datetime.utcnow()
+        timing = msmseeder.core.strf_timedelta(end - start)
+        log_data = {
+            'complete': True,
+            'timing': timing,
+        }
+        log_file.log(new_log_data=log_data)
 
         text  = "---------------------------------------------------------------------------------\n"
         text += 'Successfully modeled target %s on template %s.\n' % (target.id, template.id)
