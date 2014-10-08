@@ -123,6 +123,7 @@ setup(
             'MSMSeederSolvate = msmseeder.scripts.MSMSeederSolvate:main',
             'MSMSeederRefineExplicitMD = msmseeder.scripts.MSMSeederRefineExplicitMD:main',
             'MSMSeederPackageModels = msmseeder.scripts.MSMSeederPackageModels:main',
+            'MSMSeederInspect = msmseeder.scripts.MSMSeederInspect:main',
         ]
     },
 )
