@@ -4,13 +4,16 @@ import sys
 import os
 
 import yaml
-import msmseeder
-import msmseeder.TargetExplorer
-import msmseeder.UniProt
-import msmseeder.PDB
 import msmseeder.version
 from lxml import etree
-from msmseeder.core import construct_fasta_str, write_metadata
+
+import msmseeder
+import msmseeder.TargetExplorer
+
+import msmseeder.UniProt
+import msmseeder.PDB
+from msmseeder.core import construct_fasta_str
+from msmseeder.utils import file_exists_and_not_empty
 
 
 @msmseeder.utils.notify_when_done
@@ -261,116 +264,7 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
 # Gather templates methods
 # =========
 
-def get_pdb_and_sifts_files(PDBID, structure_paths=[]):
-
-    project_pdb_filepath = os.path.join('structures', 'pdb', PDBID + '.pdb.gz')
-    project_sifts_filepath = os.path.join('structures', 'sifts', PDBID + '.xml.gz')
-
-    # Check if PDB file/symlink already exists and is not empty
-    search_for_pdb = True
-    if os.path.exists(project_pdb_filepath):
-        if os.path.getsize(project_pdb_filepath) > 0:
-            search_for_pdb = False
-
-    # If not, search any user-defined paths and create a symlink if found
-    if search_for_pdb:
-        for structure_dir in structure_paths:
-            pdb_filepath = os.path.join(structure_dir, PDBID + '.pdb.gz')
-            if os.path.exists(pdb_filepath):
-                if os.path.getsize(pdb_filepath) > 0:
-                    if os.path.exists(project_pdb_filepath):
-                        os.remove(project_pdb_filepath)
-                    os.symlink(pdb_filepath, project_pdb_filepath)
-                    break
-
-        # If still not found, download the PDB file
-        if not os.path.exists(project_pdb_filepath):
-            print 'Downloading PDB file for:', PDBID
-            pdbgz_page = msmseeder.PDB.retrieve_pdb(PDBID, compressed='yes')
-            with open(project_pdb_filepath, 'w') as pdbgz_file:
-                pdbgz_file.write(pdbgz_page)
-
-    # Check if SIFTS file already exists and is not empty
-    search_for_sifts = True
-    if os.path.exists(project_sifts_filepath):
-        if os.path.getsize(project_sifts_filepath) > 0:
-            search_for_sifts = False
-
-    # If not, search any user-defined paths and create a symlink if found
-    if search_for_sifts:
-        for structure_dir in structure_paths:
-            sifts_filepath = os.path.join(structure_dir, PDBID + '.xml.gz')
-            if os.path.exists(sifts_filepath):
-                if os.path.getsize(sifts_filepath) > 0:
-                    if os.path.exists(project_sifts_filepath):
-                        os.remove(project_sifts_filepath)
-                    os.symlink(sifts_filepath, project_sifts_filepath)
-                    break
-
-        # If still not found, download the SIFTS file
-        if not os.path.exists(project_sifts_filepath):
-            print 'Downloading sifts file for:', PDBID
-            sifts_page = msmseeder.PDB.retrieve_sifts(PDBID)
-            with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file:
-                project_sifts_file.write(sifts_page)
-
-def extract_pdb_template_seq(pdbchain):
-    'Extract data from PDB chain'
-
-    templateid = pdbchain['templateid']
-    chainid = pdbchain['chainid']
-    pdbid = pdbchain['pdbid']
-    domain_span = pdbchain['domain_span']
-
-    # parse SIFTS XML document
-    sifts_filepath = os.path.join('structures', 'sifts', pdbid + '.xml.gz')
-    with gzip.open(sifts_filepath, 'rb') as sifts_file:
-        parser = etree.XMLParser(huge_tree=True)
-        siftsxml = etree.parse(sifts_file, parser).getroot()
-
-    # firstly, add "PDB modified" tags to certain phosphorylated residue types, which sometimes do not have such tags in the SIFTS file
-    # known cases: 4BCP, 4BCG, 4I5C, 4IVB, 4IAC
-    modified_residues = []
-    modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="TPO"]')
-    modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="PTR"]')
-    modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="SEP"]')
-    for mr in modified_residues:
-        if mr == None:
-            continue
-        residue_detail_modified = etree.Element('residueDetail')
-        residue_detail_modified.set('dbSource','MSD')
-        residue_detail_modified.set('property','Annotation')
-        residue_detail_modified.text = 'PDB\n          modified'
-        mr.append(residue_detail_modified)
-
-    # now extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
-    selected_residues = siftsxml.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, domain_span[0], domain_span[1]))
-    # calculate the ratio of observed residues - if less than a certain amount, discard pdbchain
-    all_PDB_domain_residues = siftsxml.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1]))
-    if len(selected_residues) == 0 or len(all_PDB_domain_residues) == 0:
-        return
-
-    ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
-    if ratio_observed < msmseeder.core.template_acceptable_ratio_observed_residues:
-        return
-
-    # make a single-letter aa code sequence
-    template_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
-    # store as strings to match resnums in PDB file directly. Important because PDB resnums may be e.g. '56A' in 3HLL
-    template_pdbresnums = [residue.get('dbResNum') for residue in selected_residues]
-
-    # store data
-    template_data = {
-    'pdbid': pdbid,
-    'chainid': chainid,
-    'templateid': templateid,
-    'template_seq': template_seq,
-    'template_pdbresnums': template_pdbresnums
-    }
-
-    return template_data
-
-
+@msmseeder.utils.notify_when_done
 def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structure_paths=[]):
     """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
@@ -525,7 +419,107 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     metadata = msmseeder.core.ProjectMetadata(metadata)
     metadata.write('templates/meta.yaml')
 
-    print 'Done.'
+
+def attempt_symlink_structure_files(pdbid, project_structure_filepath, structure_paths, structure_type='pdb'):
+    for structure_dir in structure_paths:
+        if structure_type == 'pdb':
+            structure_filepath = os.path.join(structure_dir, pdbid + '.pdb.gz')
+        elif structure_type == 'sifts':
+            structure_filepath = os.path.join(structure_dir, pdbid + '.pdb.gz')
+        if os.path.exists(structure_filepath):
+            if file_exists_and_not_empty(structure_filepath) > 0:
+                if os.path.exists(project_structure_filepath):
+                    os.remove(project_structure_filepath)
+                os.symlink(structure_filepath, project_structure_filepath)
+                break
+
+
+def download_pdb_file(pdbid, project_pdb_filepath):
+    print 'Downloading PDB file for:', pdbid
+    pdbgz_page = msmseeder.PDB.retrieve_pdb(pdbid, compressed='yes')
+    with open(project_pdb_filepath, 'w') as pdbgz_file:
+        pdbgz_file.write(pdbgz_page)
+
+
+def download_sifts_file(pdbid, project_sifts_filepath):
+    print 'Downloading sifts file for:', pdbid
+    sifts_page = msmseeder.PDB.retrieve_sifts(pdbid)
+    with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file:
+        project_sifts_file.write(sifts_page)
+
+
+def get_pdb_and_sifts_files(pdbid, structure_paths=[]):
+
+    project_pdb_filepath = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
+    project_sifts_filepath = os.path.join('structures', 'sifts', pdbid + '.xml.gz')
+
+    if not file_exists_and_not_empty(project_pdb_filepath):
+        attempt_symlink_structure_files(pdbid, project_pdb_filepath, structure_paths, structure_type='pdb')
+        if not os.path.exists(project_pdb_filepath):
+            download_pdb_file(pdbid, project_pdb_filepath)
+
+    if not file_exists_and_not_empty(project_sifts_filepath):
+        attempt_symlink_structure_files(pdbid, project_pdb_filepath, structure_paths, structure_type='sifts')
+        if not os.path.exists(project_sifts_filepath):
+            download_sifts_file(pdbid, project_sifts_filepath)
+
+
+def extract_pdb_template_seq(pdbchain):
+    'Extract data from PDB chain'
+
+    templateid = pdbchain['templateid']
+    chainid = pdbchain['chainid']
+    pdbid = pdbchain['pdbid']
+    domain_span = pdbchain['domain_span']
+
+    # parse SIFTS XML document
+    sifts_filepath = os.path.join('structures', 'sifts', pdbid + '.xml.gz')
+    with gzip.open(sifts_filepath, 'rb') as sifts_file:
+        parser = etree.XMLParser(huge_tree=True)
+        siftsxml = etree.parse(sifts_file, parser).getroot()
+
+    # firstly, add "PDB modified" tags to certain phosphorylated residue types, which sometimes do not have such tags in the SIFTS file
+    # known cases: 4BCP, 4BCG, 4I5C, 4IVB, 4IAC
+    modified_residues = []
+    modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="TPO"]')
+    modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="PTR"]')
+    modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="SEP"]')
+    for mr in modified_residues:
+        if mr == None:
+            continue
+        residue_detail_modified = etree.Element('residueDetail')
+        residue_detail_modified.set('dbSource','MSD')
+        residue_detail_modified.set('property','Annotation')
+        residue_detail_modified.text = 'PDB\n          modified'
+        mr.append(residue_detail_modified)
+
+    # now extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
+    selected_residues = siftsxml.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, domain_span[0], domain_span[1]))
+    # calculate the ratio of observed residues - if less than a certain amount, discard pdbchain
+    all_PDB_domain_residues = siftsxml.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1]))
+    if len(selected_residues) == 0 or len(all_PDB_domain_residues) == 0:
+        return
+
+    ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
+    if ratio_observed < msmseeder.core.template_acceptable_ratio_observed_residues:
+        return
+
+    # make a single-letter aa code sequence
+    template_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
+    # store as strings to match resnums in PDB file directly. Important because PDB resnums may be e.g. '56A' in 3HLL
+    template_pdbresnums = [residue.get('dbResNum') for residue in selected_residues]
+
+    # store data
+    template_data = {
+    'pdbid': pdbid,
+    'chainid': chainid,
+    'templateid': templateid,
+    'template_seq': template_seq,
+    'template_pdbresnums': template_pdbresnums
+    }
+
+    return template_data
+
 
 def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, structure_paths=[]):
     """# Searches UniProt for a set of template proteins with a user-defined

@@ -17,8 +17,8 @@ import sys
 # Process only these targets, if specified.
 # e.g. -targets '["SRC_HUMAN_PK0_P12931", "ABL1_HUMAN_PK0_P00519"]'
 try:
-    process_only_these_targets = sys.argv[ sys.argv.index('-targets') + 1 ]
-else:
+    process_only_these_targets = sys.argv[sys.argv.index('-targets') + 1]
+except:
     process_only_these_targets = False
 
 # OpenMM parameters

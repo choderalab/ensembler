@@ -17,15 +17,8 @@ def test_initproject():
         shutil.rmtree(tmpdir)
 
 
-# TODO def test_gather_targets_from_targetexplorer():
-
-
-# TODO def test_gather_targets_from_uniprot():
-
-
 @msmseeder.utils.return_to_cwd
 def test_create_dirs():
-    #cwd = os.getcwd()
     tmpdir = tempfile.mkdtemp()
     print tmpdir
     try:
@@ -34,7 +27,6 @@ def test_create_dirs():
             assert os.path.exists(os.path.join(tmpdir, dirpath))
     finally:
         shutil.rmtree(tmpdir)
-        #os.chdir(cwd)
 
 
 def test_gen_init_metadata():

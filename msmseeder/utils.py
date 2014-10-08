@@ -24,6 +24,13 @@ def create_dir(dirpath):
             raise
 
 
+def file_exists_and_not_empty(filepath):
+    if os.path.exists(filepath):
+        if os.path.getsize(filepath) > 0:
+            return True
+    return False
+
+
 def expected_failure(test):
     @functools.wraps(test)
     def inner(*args, **kwargs):
