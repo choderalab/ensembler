@@ -16,6 +16,7 @@ from msmseeder.core import construct_fasta_str
 from msmseeder.utils import file_exists_and_not_empty
 
 
+
 @msmseeder.utils.notify_when_done
 def initproject(project_toplevel_dir):
     """Initialize MSMSeeder project within the given directory. Creates
@@ -45,7 +46,7 @@ def gather_targets_from_targetexplorer(dbapi_uri, search_string=''):
 
     targets_json = get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present)
     targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
-    write_targets_to_fasta_file(targets)
+    write_seqs_to_fasta_file(targets)
 
     gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
     gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_targetexplorer_metadata)
@@ -62,7 +63,7 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
     if uniprot_domain_regex != None:
         log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
     targets = extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
-    write_targets_to_fasta_file(targets)
+    write_seqs_to_fasta_file(targets)
 
     gather_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
     gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_uniprot_metadata)
@@ -119,6 +120,11 @@ def get_uniprot_xml(uniprot_query_string):
 
 
 def extract_targets_from_targetexplorer_json(targets_json, manual_overrides=msmseeder.core.ManualOverrides()):
+    """
+    :param targets_json:
+    :param manual_overrides:
+    :return: list of tuples: [(id, seq), (id, seq), ...]
+    """
     targets = []
     for target in targets_json['results']:
         for target_domain in target['domains']:
@@ -166,7 +172,11 @@ def extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_ov
     return targets
 
 
-def write_targets_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 'targets.fa')):
+def write_seqs_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 'targets.fa')):
+    """
+    :param targets: list of tuples [(id, seq), (id, seq), ...]
+    :param fasta_ofilepath: str
+    """
     print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
     with open(fasta_ofilepath, 'w') as fasta_ofile:
         for target in targets:
@@ -205,7 +215,7 @@ def get_db_metadata(dbapi_uri):
 
 def gen_gather_targets_metadata(ntarget_domains, additional_metadata={}):
     datestamp = msmseeder.core.get_utcnow_formatted()
-    metadata_init = {
+    metadata = {
         'gather_targets': {
             'datestamp': datestamp,
             'method': 'TargetExplorerDB',
@@ -216,8 +226,8 @@ def gen_gather_targets_metadata(ntarget_domains, additional_metadata={}):
             'msmseeder_commit': msmseeder.version.git_revision,
         }
     }
-    metadata_init['gather_targets'].update(additional_metadata)
-    return metadata_init
+    metadata['gather_targets'].update(additional_metadata)
+    return metadata
 
 
 def log_unique_domain_names(uniprot_query_string, uniprotxml):
@@ -277,39 +287,40 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     To select all domains within the database:
     search_string=''
     """
-
-    # =========
-    # Parameters
-    # =========
-
-    fasta_ofilepath = os.path.join('templates', 'templates.fa')
-
-    # =========
-    # Read in project manual overrides
-    # =========
-
     manual_overrides = msmseeder.core.ManualOverrides()
 
-    # =========
-    # Get the original uniprot search strings from the TargetExplorer DB
-    # =========
+    templates_json = get_targetexplorer_templates_json(dbapi_uri, search_string)
+    selected_pdbchains = extract_template_pdbchains_from_targetexplorer_json(templates_json, manual_overrides=manual_overrides)
 
-    db_metadata_jsonstr = msmseeder.TargetExplorer.get_targetexplorer_metadata(dbapi_uri)
-    db_metadata = json.loads(db_metadata_jsonstr)
+    for pdbchain in selected_pdbchains:
+        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_paths)
 
-    # =========
-    # Retrieve data from the TargetExplorer DB API
-    # =========
+    selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
+    write_template_seqs_to_fasta_file(selected_templates)
+    extract_template_structures_from_pdb_files(selected_templates)
 
-    targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(dbapi_uri, search_string, return_data='pdb_data')
+    additional_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    additional_metadata['structure_paths'] = structure_paths
+    gather_templates_metadata = gen_gather_templates_metadata(len(selected_templates), additional_metadata)
+    msmseeder.core.write_metadata(gather_templates_metadata, msmseeder_stage='gather_templates')
+
+
+def get_targetexplorer_templates_json(dbapi_uri, search_string):
+    """
+    :param dbapi_uri: str
+    :param search_string: str
+    :param manual_overrides: msmseeder.core.ManualOverrides
+    :return: list containing nested lists and dicts
+    """
+    targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(
+        dbapi_uri, search_string, return_data='pdb_data'
+    )
     targetexplorer_json = json.loads(targetexplorer_jsonstr)
+    return targetexplorer_json
 
-    # =========
-    # Extract and process template data from JSON
-    # =========
 
+def extract_template_pdbchains_from_targetexplorer_json(targetexplorer_json, manual_overrides):
     selected_pdbchains = []
-
     for target in targetexplorer_json['results']:
         entry_name = target['entry_name']
         for pdb_data in target['pdbs']:
@@ -321,111 +332,24 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
                 templateid = '%s_%s_%s' % (targetid, pdbid, pdbchain_data['chainid'])
                 pdbchain_data['templateid'] = templateid
                 pdbchain_data['domain_span'] = [int(pdbchain_data['seq_begin']), int(pdbchain_data['seq_end'])]
-
                 # manual overrides
                 domain_len = pdbchain_data['seq_end'] - pdbchain_data['seq_begin'] + 1
                 if manual_overrides.template.min_domain_len != None and domain_len < manual_overrides.template.min_domain_len:
                     continue
                 if manual_overrides.template.max_domain_len != None and domain_len > manual_overrides.template.max_domain_len:
                     continue
-
                 if pdbid in manual_overrides.template.skip_pdbs:
                     continue
-
                 if targetid in manual_overrides.template.domain_spans:
                     pdbchain_data['domain_span'] = [int(x) for x in manual_overrides.template.domain_spans[targetid].split('-')]
-
                 selected_pdbchains.append(pdbchain_data)
-
-    # =========
-    # Search for PDB and SIFTS files; download if necessary
-    # =========
-
-    for pdbchain in selected_pdbchains:
-        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_paths)
-
-    # =========
-    # Extract PDBchain residues using SIFTS files
-    # =========
-
-    print 'Extracting residues from PDB chains...'
-
-    selected_templates = []
-
-    for pdbchain in selected_pdbchains:
-        extracted_pdb_template_seq_data = extract_pdb_template_seq(pdbchain)
-        if extracted_pdb_template_seq_data is not None:
-            selected_templates.append(extracted_pdb_template_seq_data)
-
-    print '%d templates selected.' % len(selected_templates)
-    print ''
-
-    # =========
-    # Write template IDs and sequences to file
-    # =========
-
-    print 'Writing template IDs and sequences to file:', fasta_ofilepath
-
-    with open(fasta_ofilepath, 'w') as fasta_ofile:
-        for template in selected_templates:
-            templateid = template['templateid']
-            templateseq = msmseeder.core.seqwrap(template['template_seq']).strip()
-            template_fasta_string = '>%s\n%s\n' % (templateid, templateseq)
-            fasta_ofile.write(template_fasta_string)
-
-    # =========
-    # Extract template structures from PDB files and write to file
-    # =========
-
-    print 'Writing template structures...'
-
-    for template in selected_templates:
-        pdbid = template['pdbid']
-        chainid = template['chainid']
-        templateid = template['templateid']
-        template_pdbresnums = template['template_pdbresnums']
-        pdb_filename = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
-        template_filename = os.path.join('templates', 'structures', templateid + '.pdb')
-        nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_pdbresnums, chainid)
-        if nresidues_extracted != len(template_pdbresnums):
-            raise Exception, 'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (nresidues_extracted, template_pdbresnums)
-
-    # =========
-    # Metadata
-    # =========
-
-    datestamp = msmseeder.core.get_utcnow_formatted()
-
-    with open('meta.yaml') as init_meta_file:
-        metadata = yaml.load(init_meta_file)
-
-    metadata['gather_templates'] = {
-        'datestamp': datestamp,
-        'method': 'TargetExplorerDB',
-        'ntemplates': str(len(selected_templates)),
-        'gather_from_targetexplorer': {
-            'db_uniprot_query_string': str(db_metadata.get('uniprot_query_string')),
-            'db_uniprot_domain_regex': str(db_metadata.get('uniprot_domain_regex')),
-            'search_string': search_string,
-            'dbapi_uri': dbapi_uri,
-        },
-        'structure_paths': structure_paths,
-        'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': msmseeder.core.literal_str(sys.version),
-        'msmseeder_version': msmseeder.version.short_version,
-        'msmseeder_commit': msmseeder.version.git_revision
-    }
-
-    metadata = msmseeder.core.ProjectMetadata(metadata)
-    metadata.write('templates/meta.yaml')
+    return selected_pdbchains
 
 
-def attempt_symlink_structure_files(pdbid, project_structure_filepath, structure_paths, structure_type='pdb'):
-    for structure_dir in structure_paths:
-        if structure_type == 'pdb':
-            structure_filepath = os.path.join(structure_dir, pdbid + '.pdb.gz')
-        elif structure_type == 'sifts':
-            structure_filepath = os.path.join(structure_dir, pdbid + '.pdb.gz')
+def attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dirs, structure_type='pdb'):
+    project_structure_filepath = os.path.join(project_structures_dir, pdbid + structure_type_file_extension_mapper[structure_type])
+    for structure_dir in structure_dirs:
+        structure_filepath = os.path.join(structure_dir, pdbid + structure_type_file_extension_mapper[structure_type])
         if os.path.exists(structure_filepath):
             if file_exists_and_not_empty(structure_filepath) > 0:
                 if os.path.exists(project_structure_filepath):
@@ -448,20 +372,28 @@ def download_sifts_file(pdbid, project_sifts_filepath):
         project_sifts_file.write(sifts_page)
 
 
-def get_pdb_and_sifts_files(pdbid, structure_paths=[]):
+def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
+    if type(structure_dirs) != list:
+        structure_dirs = []
+    project_structures_dir = 'structures'
+    for structure_type in ['pdb', 'sifts']:
+        project_structure_filepath = os.path.join(project_structures_dir, pdbid + structure_type_file_extension_mapper[structure_type])
+        if not file_exists_and_not_empty(project_structure_filepath):
+            attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dirs, structure_type=structure_type)
+            if not os.path.exists(project_structure_filepath):
+                structure_downloader = structure_downloader_mapper[structure_type]
+                structure_downloader(pdbid, project_structure_filepath)
 
-    project_pdb_filepath = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
-    project_sifts_filepath = os.path.join('structures', 'sifts', pdbid + '.xml.gz')
 
-    if not file_exists_and_not_empty(project_pdb_filepath):
-        attempt_symlink_structure_files(pdbid, project_pdb_filepath, structure_paths, structure_type='pdb')
-        if not os.path.exists(project_pdb_filepath):
-            download_pdb_file(pdbid, project_pdb_filepath)
-
-    if not file_exists_and_not_empty(project_sifts_filepath):
-        attempt_symlink_structure_files(pdbid, project_pdb_filepath, structure_paths, structure_type='sifts')
-        if not os.path.exists(project_sifts_filepath):
-            download_sifts_file(pdbid, project_sifts_filepath)
+def extract_template_pdb_chain_residues(selected_pdbchains):
+    print 'Extracting residues from PDB chains...'
+    selected_templates = []
+    for pdbchain in selected_pdbchains:
+        extracted_pdb_template_seq_data = extract_pdb_template_seq(pdbchain)
+        if extracted_pdb_template_seq_data is not None:
+            selected_templates.append(extracted_pdb_template_seq_data)
+    print '%d templates selected.\n' % len(selected_templates)
+    return selected_templates
 
 
 def extract_pdb_template_seq(pdbchain):
@@ -519,6 +451,57 @@ def extract_pdb_template_seq(pdbchain):
     }
 
     return template_data
+
+
+def write_template_seqs_to_fasta_file(selected_templates):
+    selected_template_seq_tuples = [(template['templateid'], template['template_seq']) for template in selected_templates]
+    write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates.fa'))
+
+
+def extract_template_structures_from_pdb_files(selected_templates):
+    print 'Writing template structures...'
+    for template in selected_templates:
+        pdbid = template['pdbid']
+        chainid = template['chainid']
+        templateid = template['templateid']
+        template_pdbresnums = template['template_pdbresnums']
+        pdb_filename = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
+        template_filename = os.path.join('templates', 'structures', templateid + '.pdb')
+        nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename,
+                                                                       template_pdbresnums, chainid)
+        if nresidues_extracted != len(template_pdbresnums):
+            raise Exception, 'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (
+            nresidues_extracted, template_pdbresnums)
+
+
+def gen_gather_templates_metadata(nselected_templates, additional_metadata={}):
+    datestamp = msmseeder.core.get_utcnow_formatted()
+    metadata = {
+        'gather_templates': {
+            'datestamp': datestamp,
+            'method': 'TargetExplorerDB',
+            'ntemplates': str(nselected_templates),
+            'python_version': sys.version.split('|')[0].strip(),
+            'python_full_version': msmseeder.core.literal_str(sys.version),
+            'msmseeder_version': msmseeder.version.short_version,
+            'msmseeder_commit': msmseeder.version.git_revision
+        }
+    }
+    metadata['gather_templates'].update(additional_metadata)
+    return metadata
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, structure_paths=[]):
@@ -725,3 +708,6 @@ def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, st
     metadata.write('templates/meta.yaml')
 
     print 'Done.'
+
+structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
+structure_downloader_mapper = {'pdb': download_pdb_file, 'sifts': download_sifts_file}

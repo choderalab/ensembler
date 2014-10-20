@@ -85,7 +85,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             seqid_filepath = os.path.join(model_dir, 'sequence-identity.txt')
             model_pdbfilepath = os.path.join(model_dir, 'model.pdb.gz')
             restraint_filepath = os.path.join(model_dir, 'restraints.rsr.gz')
-            modeling_metadata_filepath = os.path.join(model_dir, 'modeling-meta.yaml')
+            modeling_log_filepath = os.path.join(model_dir, 'modeling-log.yaml')
 
             try:
                 build_model(target,
@@ -95,7 +95,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
                             seqid_filepath=seqid_filepath,
                             model_pdbfilepath=model_pdbfilepath,
                             restraint_filepath=restraint_filepath,
-                            modeling_metadata_filepath=modeling_metadata_filepath,
+                            modeling_log_filepath=modeling_log_filepath,
                             rank=rank,
                             verbose=verbose)
 
@@ -163,7 +163,7 @@ def build_model(target,
                 seqid_filepath='sequence-identity.txt',
                 model_pdbfilepath='model.pdb.gz',
                 restraint_filepath='restraints.rsr.gz',
-                modeling_metadata_filepath='modeling-meta.yaml',
+                modeling_log_filepath='modeling-log.yaml',
                 rank=0,
                 verbose=False):
     r'''Uses Modeller to build a homology model for a given target and
@@ -199,7 +199,7 @@ def build_model(target,
     seqid_filepath = os.path.abspath(seqid_filepath)
     model_pdbfilepath = os.path.abspath(model_pdbfilepath)
     restraint_filepath = os.path.abspath(restraint_filepath)
-    modeling_metadata_filepath = os.path.abspath(modeling_metadata_filepath)
+    modeling_log_filepath = os.path.abspath(modeling_log_filepath)
     current_dir = os.getcwd() 
 
     if model_pdbfilepath[-7:] != '.pdb.gz':
@@ -231,7 +231,7 @@ def build_model(target,
         'mpi_rank': rank,
         'complete': False,
     }
-    log_filepath = modeling_metadata_filepath
+    log_filepath = modeling_log_filepath
     log_file = msmseeder.core.LogFile(log_filepath)
     log_file.log(new_log_data=log_data)
 

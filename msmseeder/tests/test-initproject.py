@@ -1,32 +1,15 @@
 import os
-import shutil
-import tempfile
 import msmseeder.initproject
+import msmseeder.tests
 import msmseeder.core
 
 
-@msmseeder.utils.return_to_cwd
 def test_initproject():
-    tmpdir = tempfile.mkdtemp()
-    try:
-        msmseeder.initproject.initproject(tmpdir)
+    with msmseeder.tests.utils.enter_temp_directory():
+        msmseeder.initproject.initproject('.')
         for dirpath in msmseeder.core.project_dirnames:
-            assert os.path.exists(os.path.join(tmpdir, dirpath))
-        assert os.path.exists(os.path.join(tmpdir, 'meta.yaml'))
-    finally:
-        shutil.rmtree(tmpdir)
-
-
-@msmseeder.utils.return_to_cwd
-def test_create_dirs():
-    tmpdir = tempfile.mkdtemp()
-    print tmpdir
-    try:
-        msmseeder.initproject.create_dirs(tmpdir)
-        for dirpath in msmseeder.core.project_dirnames:
-            assert os.path.exists(os.path.join(tmpdir, dirpath))
-    finally:
-        shutil.rmtree(tmpdir)
+            assert os.path.exists(dirpath)
+        assert os.path.exists('meta.yaml')
 
 
 def test_gen_init_metadata():
@@ -83,3 +66,13 @@ def test_extract_targets_from_targetexplorer_json():
     targets = msmseeder.initproject.extract_targets_from_targetexplorer_json(targets_json)
     assert targets[0] == ('AFC1_ARATH_D0', 'YQILSKMGEGTFGQVLECFDNKNKEVVAIKVIRSINKYREAAMIEIDVLQRLTRHDVGGS\nRCVQIRNWFDYRNHICIVFEKLGPSLYDFLRKNSYRSFPIDLVRELGRQLLESVAYMHDL\nRLIHTDLKPENILLVSSEYIKIPDYKFLSRPTKDGSYFKNLPKSSAIKLIDFGSTTFEHQ\nDHNYIVSTRHYRAPEVILGVGWNYPCDLWSIGCILVELCSGEALFQTHENLEHLAMMERV\nLGPLPPHMVLRADRRSEKYFRRGAKLDWPEGATSRDSLKAVWKLPRLPNLIMQHVDHSAG\nDLIDLLQGLLRYDPTERFKAREALNHPFF')
     assert targets[1] == ('AFC2_ARATH_D0', 'YKIYSKMGEGTFGQVLECWDRERKEMVAVKIVRGVKKYREAAMIEIEMLQQLGKHDKGGN\nRCVQIRNWFDYRNHICIVFEKLGSSLYDFLRKNNYRSFPIDLVREIGWQLLECVAFMHDL\nRMIHTDLKPENILLVSSDYVKIPEYKGSRLQRDVCYKRVPKSSAIKVIDFGSTTYERQDQ\nTYIVSTRHYRAPEVILGLGWSYPCDVWSVGCIIVELCTGEALFQTHENLEHLAMMERVLG\nPFPQQMLKKVDRHSEKYVRRGRLDWPDGATSRDSLKAVLKLPRLQNLIMQHVDHSAGELI\nNMVQGLLRFDPSERITAREALRHPFF')
+
+
+def test_attempt_symlink_structure_files():
+    pdbid = '4CFE'
+    structure_paths = [os.path.abspath(os.path.join('tests', 'resources'))]
+    with msmseeder.tests.utils.enter_temp_directory():
+        project_pdb_filepath = os.path.join(pdbid + '.pdb.gz')
+        structure_type = 'pdb'
+        msmseeder.initproject.attempt_symlink_structure_files(pdbid, '.', structure_paths, structure_type)
+        assert os.path.exists(project_pdb_filepath)
