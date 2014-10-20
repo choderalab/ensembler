@@ -7,7 +7,6 @@ from mock import Mock
 
 
 def test_build_model():
-    os.getcwd()
     template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
 
     with msmseeder.tests.utils.enter_temp_directory():

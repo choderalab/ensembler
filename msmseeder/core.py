@@ -260,5 +260,5 @@ def seqwrap(sequence, add_star=False):
 
 
 def construct_fasta_str(seqid, seq):
-    target_fasta_string = '>%s\n%s\n' % (seqid, seq)
+    target_fasta_string = '>%s\n%s\n' % (seqid, seqwrap(seq).strip())
     return target_fasta_string

@@ -135,8 +135,6 @@ def extract_targets_from_targetexplorer_json(targets_json, manual_overrides=msms
                 fullseq = target.get('sequence')
                 start, end = [int(x) - 1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
                 targetseq = fullseq[start:end + 1]
-
-            targetseq = msmseeder.core.seqwrap(targetseq).strip()
             targets.append((targetid, targetseq))
 
     return targets
@@ -165,7 +163,6 @@ def extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_ov
                 start, end = [int(domain.find('location/begin').get('position')) - 1,
                               int(domain.find('location/end').get('position')) - 1]
             targetseq = fullseq[start:end + 1]
-            targetseq = msmseeder.core.seqwrap(targetseq).strip()
             targets.append((targetid, targetseq))
             domain_iter += 1
 
@@ -213,7 +210,9 @@ def get_db_metadata(dbapi_uri):
     return json.loads(db_metadata_jsonstr)
 
 
-def gen_gather_targets_metadata(ntarget_domains, additional_metadata={}):
+def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
+    if additional_metadata is None:
+        additional_metadata = {}
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
         'gather_targets': {
@@ -264,18 +263,12 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
           % (uniprot_domain_regex, regex_matched_domains_unique_names)
 
 
-
-
-
-
-
-
 # =========
 # Gather templates methods
 # =========
 
 @msmseeder.utils.notify_when_done
-def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structure_paths=[]):
+def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structure_dirs=None):
     """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
@@ -291,16 +284,15 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
 
     templates_json = get_targetexplorer_templates_json(dbapi_uri, search_string)
     selected_pdbchains = extract_template_pdbchains_from_targetexplorer_json(templates_json, manual_overrides=manual_overrides)
-
     for pdbchain in selected_pdbchains:
-        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_paths)
+        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
 
     additional_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
-    additional_metadata['structure_paths'] = structure_paths
+    additional_metadata['structure_dirs'] = structure_dirs
     gather_templates_metadata = gen_gather_templates_metadata(len(selected_templates), additional_metadata)
     msmseeder.core.write_metadata(gather_templates_metadata, msmseeder_stage='gather_templates')
 
@@ -347,7 +339,7 @@ def extract_template_pdbchains_from_targetexplorer_json(targetexplorer_json, man
 
 
 def attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dirs, structure_type='pdb'):
-    project_structure_filepath = os.path.join(project_structures_dir, pdbid + structure_type_file_extension_mapper[structure_type])
+    project_structure_filepath = os.path.join(project_structures_dir, structure_type, pdbid + structure_type_file_extension_mapper[structure_type])
     for structure_dir in structure_dirs:
         structure_filepath = os.path.join(structure_dir, pdbid + structure_type_file_extension_mapper[structure_type])
         if os.path.exists(structure_filepath):
@@ -377,7 +369,7 @@ def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
         structure_dirs = []
     project_structures_dir = 'structures'
     for structure_type in ['pdb', 'sifts']:
-        project_structure_filepath = os.path.join(project_structures_dir, pdbid + structure_type_file_extension_mapper[structure_type])
+        project_structure_filepath = os.path.join(project_structures_dir, structure_type, pdbid + structure_type_file_extension_mapper[structure_type])
         if not file_exists_and_not_empty(project_structure_filepath):
             attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dirs, structure_type=structure_type)
             if not os.path.exists(project_structure_filepath):
@@ -420,8 +412,8 @@ def extract_pdb_template_seq(pdbchain):
         if mr == None:
             continue
         residue_detail_modified = etree.Element('residueDetail')
-        residue_detail_modified.set('dbSource','MSD')
-        residue_detail_modified.set('property','Annotation')
+        residue_detail_modified.set('dbSource', 'MSD')
+        residue_detail_modified.set('property', 'Annotation')
         residue_detail_modified.text = 'PDB\n          modified'
         mr.append(residue_detail_modified)
 
@@ -467,14 +459,20 @@ def extract_template_structures_from_pdb_files(selected_templates):
         template_pdbresnums = template['template_pdbresnums']
         pdb_filename = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
         template_filename = os.path.join('templates', 'structures', templateid + '.pdb')
-        nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename,
-                                                                       template_pdbresnums, chainid)
+        nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(
+            template_filename, pdb_filename, template_pdbresnums, chainid
+        )
         if nresidues_extracted != len(template_pdbresnums):
-            raise Exception, 'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (
-            nresidues_extracted, template_pdbresnums)
+            raise Exception(
+                'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (
+                    nresidues_extracted, template_pdbresnums
+                )
+            )
 
 
-def gen_gather_templates_metadata(nselected_templates, additional_metadata={}):
+def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
+    if additional_metadata is None:
+        additional_metadata = {}
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
         'gather_templates': {
@@ -491,108 +489,49 @@ def gen_gather_templates_metadata(nselected_templates, additional_metadata={}):
     return metadata
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, structure_paths=[]):
+@msmseeder.utils.notify_when_done
+def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
     """# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures."""
-
-    # =========
-    # Parameters
-    # =========
-
-    fasta_ofilepath = os.path.join('templates', 'templates.fa')
-
-    # =========
-    # Read in project manual overrides
-    # =========
-
     manual_overrides = msmseeder.core.ManualOverrides()
+    uniprotxml = get_uniprot_xml(uniprot_query_string)
+    log_unique_domain_names(uniprot_query_string, uniprotxml)
+    if uniprot_domain_regex != None:
+        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
 
-    # =========
-    # Make request to UniProt web server and parse the returned XML
-    # =========
+    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
+    for pdbchain in selected_pdbchains:
+        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
 
-    print 'Querying UniProt web server...'
-    UniProtXMLstring = msmseeder.UniProt.retrieve_uniprot(UniProt_query_string)
-    parser = etree.XMLParser(huge_tree=True)
-    UniProtXML = etree.fromstring(UniProtXMLstring, parser)
-    print 'Number of entries returned from initial UniProt search:', len(UniProtXML)
-    print ''
+    selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
+    write_template_seqs_to_fasta_file(selected_templates)
+    extract_template_structures_from_pdb_files(selected_templates)
 
-    # =========
-    # If the UniProt query string contained a domain selector, print the set of
-    # unique UniProt domain names which would have been selected during the
-    # UniProt search (case-insensitive). This should aid users in the
-    # construction an appropriate regex for selecting an appropriate subset of
-    # these domains.
-    # =========
+    additional_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
+    additional_metadata['structure_dirs'] = structure_dirs
+    gather_templates_metadata = gen_gather_templates_metadata(len(selected_templates), additional_metadata)
+    msmseeder.core.write_metadata(gather_templates_metadata, msmseeder_stage='gather_templates')
 
-    if 'domain:' in UniProt_query_string:
 
-        # First extract the domain selection
-        # Example query string: 'domain:"Protein kinase" AND reviewed:yes'
-        # Can assume that the domain selection will be bounded by double-quotes
-        query_string_split = UniProt_query_string.split('"')
-        query_string_domain_selection = query_string_split[ query_string_split.index('domain:') + 1 ]
-
-        UniProt_query_string_domains = UniProtXML.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_insensitive })
-
-        UniProt_unique_domain_names = set([domain.get('description') for domain in UniProt_query_string_domains])
-        print 'Set of unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s' % (query_string_domain_selection, UniProt_unique_domain_names)
-        print ''
-
-    else:
-        UniProt_domains = UniProtXML.xpath('entry/feature[@type="domain"]')
-        UniProt_unique_domain_names = set([domain.get('description') for domain in UniProt_domains])
-        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s' % (UniProt_query_string, UniProt_unique_domain_names)
-        print ''
-
-    # =========
-    # Print subset of domains returned following filtering with the UniProt_domain_regex (case sensitive)
-    # =========
-
-    if UniProt_domain_regex != None:
-        regex_matched_domains = UniProtXML.xpath('entry/feature[@type="domain"][match_regex(@description, "%s")]' % UniProt_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
-
-        regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
-        print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s' % (UniProt_domain_regex, regex_matched_domains_unique_names)
-        print ''
-
-    # =========
-    # Now go through all the UniProt entries, domains, PDBs and chains, do some filtering, and store data for the selected PDB chains
-    # =========
-
-    all_UniProt_entries = UniProtXML.findall('entry')
-
-    selected_PDBchains = []
-
-    print 'Extracting information from returned UniProt data...'
-
-    for entry in all_UniProt_entries:
+def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides):
+    selected_pdbchains = []
+    all_uniprot_entries = uniprotxml.findall('entry')
+    for entry in all_uniprot_entries:
         entry_name = entry.find('name').text
-        if UniProt_domain_regex != None:
-            selected_domains = entry.xpath('feature[@type="domain"][match_regex(@description, "%s")]' % UniProt_domain_regex, extensions = { (None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive })
+        if uniprot_domain_regex != None:
+            selected_domains = entry.xpath(
+                'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
+                extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
+            )
         else:
             selected_domains = entry.findall('feature[@type="domain"]')
 
         domain_iter = 0
         for domain in selected_domains:
-            domainID = '%s_D%d' (entry_name, domain_iter)
+            domain_id = '%s_D%d' % (entry_name, domain_iter)
             domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
-            if domainID in manual_overrides.template.domain_spans:
-                domain_span = [int(x) for x in manual_overrides.template.domain_spans[domainID].split('-')]
+            if domain_id in manual_overrides.template.domain_spans:
+                domain_span = [int(x) for x in manual_overrides.template.domain_spans[domain_id].split('-')]
             domain_len = domain_span[1] - domain_span[0] + 1
             if manual_overrides.template.min_domain_len != None and domain_len < manual_overrides.template.min_domain_len:
                 continue
@@ -600,114 +539,34 @@ def gather_templates_from_uniprot(UniProt_query_string, UniProt_domain_regex, st
                 continue
 
             domain_iter += 1
-            PDBs = domain.getparent().xpath('dbReference[@type="PDB"]/property[@type="method"][@value="X-ray" or @value="NMR"]/..')
+            pdbs = domain.getparent().xpath(
+                'dbReference[@type="PDB"]/property[@type="method"][@value="X-ray" or @value="NMR"]/..')
 
-            for PDB in PDBs:
-                PDBID = PDB.get('id')
-                if PDBID in manual_overrides.template.skip_pdbs:
+            for pdb in pdbs:
+                pdbid = pdb.get('id')
+                if pdbid in manual_overrides.template.skip_pdbs:
                     continue
-                PDB_chain_span_nodes = PDB.findall('property[@type="chains"]')
+                PDB_chain_span_nodes = pdb.findall('property[@type="chains"]')
 
                 for PDB_chain_span_node in PDB_chain_span_nodes:
                     chain_span_string = PDB_chain_span_node.get('value')
                     chain_spans = msmseeder.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
 
-                    for chainID in chain_spans.keys():
-                        span = chain_spans[chainID]
-                        if (span[0] < domain_span[0]+30) & (span[1] > domain_span[1]-30):
-                            templateID = '%(domainID)s_%(PDBID)s_%(chainID)s' % vars()
+                    for chainid in chain_spans.keys():
+                        span = chain_spans[chainid]
+                        if (span[0] < domain_span[0] + 30) & (span[1] > domain_span[1] - 30):
+                            templateid = '%s_%s_%s' % (domain_id, pdbid, chainid)
                             data = {
-                            'templateid': templateID,
-                            'pdbid': PDBID,
-                            'chainid': chainID,
-                            'domain_span': domain_span
+                                'templateid': templateid,
+                                'pdbid': pdbid,
+                                'chainid': chainid,
+                                'domain_span': domain_span
                             }
-                            selected_PDBchains.append(data)
-
-    print '%d PDB chains selected.' % len(selected_PDBchains)
+                            selected_pdbchains.append(data)
+    print '%d PDB chains selected.' % len(selected_pdbchains)
     print ''
+    return selected_pdbchains
 
-    # =========
-    # Search for PDB and SIFTS files; download if necessary
-    # =========
-
-    for PDBchain in selected_PDBchains:
-        get_pdb_and_sifts_files(PDBchain['pdbid'], structure_paths)
-
-    # =========
-    # Extract PDBchain residues using SIFTS files
-    # =========
-
-    print 'Extracting residues from PDB chains...'
-
-    selected_templates = []
-
-    for pdbchain in selected_PDBchains:
-        extracted_pdb_template_seq_data = extract_pdb_template_seq(pdbchain)
-        if extracted_pdb_template_seq_data != None:
-            selected_templates.append(extracted_pdb_template_seq_data)
-
-    print '%d templates selected.' % len(selected_templates)
-    print ''
-
-    # =========
-    # Write template IDs and sequences to file
-    # =========
-
-    print 'Writing template IDs and sequences to file:', fasta_ofilepath
-
-    with open(fasta_ofilepath, 'w') as fasta_ofile:
-        for template in selected_templates:
-            templateid = template['templateid']
-            templateseq = msmseeder.core.seqwrap(template['template_seq']).strip()
-            template_fasta_string = '>%s\n%s\n' % (templateid, templateseq)
-            fasta_ofile.write(template_fasta_string)
-
-    # =========
-    # Extract template structures from PDB files and write to file
-    # =========
-
-    print 'Writing template structures...'
-
-    for template in selected_templates:
-        pdbid = template['pdbid']
-        chainid = template['chainid']
-        templateid = template['templateid']
-        template_pdbresnums = template['template_pdbresnums']
-        pdb_filename = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
-        template_filename = os.path.join('templates', 'structures', templateid + '.pdb')
-        nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(template_filename, pdb_filename, template_pdbresnums, chainid)
-        if nresidues_extracted != len(template_pdbresnums):
-            raise Exception, 'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (nresidues_extracted, template_pdbresnums)
-
-    # =========
-    # Metadata
-    # =========
-
-    datestamp = msmseeder.core.get_utcnow_formatted()
-
-    with open('meta.yaml') as init_meta_file:
-        metadata = yaml.load(init_meta_file)
-
-    metadata['gather_templates'] = {
-        'datestamp': datestamp,
-        'method': 'UniProt',
-        'ntemplates': str(len(selected_templates)),
-        'gather_from_uniprot': {
-            'uniprot_query_string': UniProt_query_string,
-            'uniprot_domain_regex': UniProt_domain_regex if UniProt_domain_regex != None else ''
-        },
-        'structure_paths': structure_paths,
-        'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': msmseeder.core.literal_str(sys.version),
-        'msmseeder_version': msmseeder.version.short_version,
-        'msmseeder_commit': msmseeder.version.git_revision
-    }
-
-    metadata = msmseeder.core.ProjectMetadata(metadata)
-    metadata.write('templates/meta.yaml')
-
-    print 'Done.'
 
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
 structure_downloader_mapper = {'pdb': download_pdb_file, 'sifts': download_sifts_file}
