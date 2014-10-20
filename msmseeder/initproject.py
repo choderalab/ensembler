@@ -2,19 +2,14 @@ import gzip
 import json
 import sys
 import os
-
-import yaml
 import msmseeder.version
 from lxml import etree
-
 import msmseeder
 import msmseeder.TargetExplorer
-
 import msmseeder.UniProt
 import msmseeder.PDB
 from msmseeder.core import construct_fasta_str
 from msmseeder.utils import file_exists_and_not_empty
-
 
 
 @msmseeder.utils.notify_when_done
@@ -95,7 +90,7 @@ def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overri
     """
     :param dbapi_uri: str
     :param search_string: str
-    :param manual_overrides: msmseeder.core.ManualOverrides
+    :param domain_span_overrides_present: bool
     :return: list containing nested lists and dicts
     """
     if domain_span_overrides_present:
@@ -145,7 +140,7 @@ def extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_ov
     for entry in uniprotxml.findall('entry'):
         entry_name = entry.find('name').text
         fullseq = msmseeder.core.sequnwrap(entry.find('sequence').text)
-        if uniprot_domain_regex != None:
+        if uniprot_domain_regex is not None:
             selected_domains = entry.xpath(
                 'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
                 extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
@@ -263,10 +258,6 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
           % (uniprot_domain_regex, regex_matched_domains_unique_names)
 
 
-# =========
-# Gather templates methods
-# =========
-
 @msmseeder.utils.notify_when_done
 def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structure_dirs=None):
     """Gather protein template data from a TargetExplorer DB network API.
@@ -301,7 +292,6 @@ def get_targetexplorer_templates_json(dbapi_uri, search_string):
     """
     :param dbapi_uri: str
     :param search_string: str
-    :param manual_overrides: msmseeder.core.ManualOverrides
     :return: list containing nested lists and dicts
     """
     targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(
@@ -326,9 +316,9 @@ def extract_template_pdbchains_from_targetexplorer_json(targetexplorer_json, man
                 pdbchain_data['domain_span'] = [int(pdbchain_data['seq_begin']), int(pdbchain_data['seq_end'])]
                 # manual overrides
                 domain_len = pdbchain_data['seq_end'] - pdbchain_data['seq_begin'] + 1
-                if manual_overrides.template.min_domain_len != None and domain_len < manual_overrides.template.min_domain_len:
+                if manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
                     continue
-                if manual_overrides.template.max_domain_len != None and domain_len > manual_overrides.template.max_domain_len:
+                if manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
                     continue
                 if pdbid in manual_overrides.template.skip_pdbs:
                     continue
@@ -389,7 +379,7 @@ def extract_template_pdb_chain_residues(selected_pdbchains):
 
 
 def extract_pdb_template_seq(pdbchain):
-    'Extract data from PDB chain'
+    """Extract data from PDB chain"""
 
     templateid = pdbchain['templateid']
     chainid = pdbchain['chainid']
@@ -409,7 +399,7 @@ def extract_pdb_template_seq(pdbchain):
     modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="PTR"]')
     modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="SEP"]')
     for mr in modified_residues:
-        if mr == None:
+        if mr is None:
             continue
         residue_detail_modified = etree.Element('residueDetail')
         residue_detail_modified.set('dbSource', 'MSD')
@@ -418,13 +408,19 @@ def extract_pdb_template_seq(pdbchain):
         mr.append(residue_detail_modified)
 
     # now extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
-    selected_residues = siftsxml.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])][not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, domain_span[0], domain_span[1]))
+    selected_residues = siftsxml.xpath(
+        'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])]'
+        '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])]'
+        '[not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, domain_span[0], domain_span[1])
+    )
     # calculate the ratio of observed residues - if less than a certain amount, discard pdbchain
-    all_PDB_domain_residues = siftsxml.xpath('entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1]))
-    if len(selected_residues) == 0 or len(all_PDB_domain_residues) == 0:
+    all_pdb_domain_residues = siftsxml.xpath(
+        'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
+    )
+    if len(selected_residues) == 0 or len(all_pdb_domain_residues) == 0:
         return
 
-    ratio_observed = float(len(selected_residues)) / float(len(all_PDB_domain_residues))
+    ratio_observed = float(len(selected_residues)) / float(len(all_pdb_domain_residues))
     if ratio_observed < msmseeder.core.template_acceptable_ratio_observed_residues:
         return
 
@@ -496,7 +492,7 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
     manual_overrides = msmseeder.core.ManualOverrides()
     uniprotxml = get_uniprot_xml(uniprot_query_string)
     log_unique_domain_names(uniprot_query_string, uniprotxml)
-    if uniprot_domain_regex != None:
+    if uniprot_domain_regex is not None:
         log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
 
     selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
@@ -518,7 +514,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
     all_uniprot_entries = uniprotxml.findall('entry')
     for entry in all_uniprot_entries:
         entry_name = entry.find('name').text
-        if uniprot_domain_regex != None:
+        if uniprot_domain_regex is not None:
             selected_domains = entry.xpath(
                 'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
                 extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
@@ -533,9 +529,9 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
             if domain_id in manual_overrides.template.domain_spans:
                 domain_span = [int(x) for x in manual_overrides.template.domain_spans[domain_id].split('-')]
             domain_len = domain_span[1] - domain_span[0] + 1
-            if manual_overrides.template.min_domain_len != None and domain_len < manual_overrides.template.min_domain_len:
+            if manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
                 continue
-            if manual_overrides.template.max_domain_len != None and domain_len > manual_overrides.template.max_domain_len:
+            if manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
                 continue
 
             domain_iter += 1
@@ -546,9 +542,9 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
                 pdbid = pdb.get('id')
                 if pdbid in manual_overrides.template.skip_pdbs:
                     continue
-                PDB_chain_span_nodes = pdb.findall('property[@type="chains"]')
+                pdb_chain_span_nodes = pdb.findall('property[@type="chains"]')
 
-                for PDB_chain_span_node in PDB_chain_span_nodes:
+                for PDB_chain_span_node in pdb_chain_span_nodes:
                     chain_span_string = PDB_chain_span_node.get('value')
                     chain_spans = msmseeder.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
 
