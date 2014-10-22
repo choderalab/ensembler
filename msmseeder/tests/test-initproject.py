@@ -7,8 +7,14 @@ import msmseeder.core
 def test_initproject():
     with msmseeder.tests.utils.enter_temp_directory():
         msmseeder.initproject.initproject('.')
-        for dirpath in msmseeder.core.project_dirnames:
-            assert os.path.exists(dirpath)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.targets)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.templates)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.structures)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.models)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.packaged_models)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.structures_pdb)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.structures_sifts)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.templates_structures)
         assert os.path.exists('meta.yaml')
 
 

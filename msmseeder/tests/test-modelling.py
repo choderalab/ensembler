@@ -4,34 +4,34 @@ import msmseeder
 import msmseeder.tests
 import msmseeder.modelling
 from mock import Mock
+import datetime
 
 
 def test_build_model():
     template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
 
     with msmseeder.tests.utils.enter_temp_directory():
-        # given
         target = Mock()
         template = Mock()
+        target_setup_data = Mock()
         target.id = 'mock_target'
         target.seq = 'YILGDTLGVGGKVKVGKH'
         template.id = 'mock_template'
         template.seq = 'YQNLSPVGSGAYGSVCAAFD'
+        target_setup_data.target_starttime = datetime.datetime.utcnow()
+        target_setup_data.models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
+        os.mkdir(msmseeder.core.default_project_dirnames.models)
+        os.mkdir(msmseeder.core.default_project_dirnames.templates)
+        os.mkdir(msmseeder.core.default_project_dirnames.templates_structures)
+        os.mkdir(target_setup_data.models_target_dir)
 
-        shutil.copy(template_filepath, '.')
+        shutil.copy(template_filepath, msmseeder.core.default_project_dirnames.templates_structures)
 
-        # when
-        output_text = msmseeder.modelling.build_model(
+        msmseeder.modelling.build_model(
             target,
             template,
-            template_structure_dir='.',
-            aln_filepath='alignment.pir',
-            seqid_filepath='sequence-identity.txt',
-            model_pdbfilepath='model.pdb.gz',
-            restraint_filepath='restraints.rsr.gz'
+            target_setup_data=target_setup_data
         )
-
-        # then
 
         # Example model.pdb.gz contents (not testing this as it may be dependent
         # upon Modeller version as well as modelling stochasticity):
@@ -42,5 +42,6 @@ def test_build_model():
         # ATOM      1  N   TYR     1      48.812  50.583  13.949  1.00110.28           N
         # ATOM      2  CA  TYR     1      49.070  50.334  15.387  1.00110.28           C
 
-        assert os.path.exists('model.pdb.gz')
-        assert os.path.getsize('model.pdb.gz') > 0
+        model_filepath = os.path.join(target_setup_data.models_target_dir, template.id, 'model.pdb.gz')
+        assert os.path.exists(model_filepath)
+        assert os.path.getsize(model_filepath) > 0

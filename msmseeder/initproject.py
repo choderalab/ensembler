@@ -2,14 +2,17 @@ import gzip
 import json
 import sys
 import os
-import msmseeder.version
+import logging
 from lxml import etree
 import msmseeder
 import msmseeder.TargetExplorer
 import msmseeder.UniProt
 import msmseeder.PDB
+import msmseeder.version
 from msmseeder.core import construct_fasta_str
 from msmseeder.utils import file_exists_and_not_empty
+
+logger = logging.getLogger('info')
 
 
 @msmseeder.utils.notify_when_done
@@ -18,7 +21,7 @@ def initproject(project_toplevel_dir):
     necessary subdirectories and a project metadata .yaml file.
     :param project_toplevel_dir: str
     """
-    create_dirs(project_toplevel_dir)
+    create_project_dirs(project_toplevel_dir)
     init_metadata = gen_init_metadata(project_toplevel_dir)
     msmseeder.core.write_metadata(init_metadata, msmseeder_stage='init')
 
@@ -65,10 +68,16 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
     msmseeder.core.write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
 
 
-def create_dirs(project_toplevel_dir):
+def create_project_dirs(project_toplevel_dir):
     os.chdir(project_toplevel_dir)
-    for dirname in msmseeder.core.project_dirnames:
-        msmseeder.utils.create_dir(dirname)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.targets)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.models)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.packaged_models)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures_pdb)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures_sifts)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures)
 
 
 def gen_init_metadata(project_toplevel_dir):
@@ -106,11 +115,11 @@ def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overri
 
 
 def get_uniprot_xml(uniprot_query_string):
-    print 'Querying UniProt web server...'
+    logger.info('Querying UniProt web server...')
     uniprotxmlstring = msmseeder.UniProt.retrieve_uniprot(uniprot_query_string)
     parser = etree.XMLParser(huge_tree=True)
     uniprotxml = etree.fromstring(uniprotxmlstring, parser)
-    print 'Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml)
+    logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
     return uniprotxml
 
 
@@ -169,7 +178,7 @@ def write_seqs_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 't
     :param targets: list of tuples [(id, seq), (id, seq), ...]
     :param fasta_ofilepath: str
     """
-    print 'Writing target data to FASTA file "%s"...' % fasta_ofilepath
+    logger.info('Writing target data to FASTA file "%s"...' % fasta_ofilepath)
     with open(fasta_ofilepath, 'w') as fasta_ofile:
         for target in targets:
             targetid, targetseq = target
@@ -178,7 +187,7 @@ def write_seqs_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 't
 
 
 def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
-    db_metadata = get_db_metadata(dbapi_uri)
+    db_metadata = get_targetexplorer_db_metadata(dbapi_uri)
     metadata = {
         'gather_from_targetexplorer': {
             'db_uniprot_query_string': str(db_metadata.get('uniprot_query_string')),
@@ -200,7 +209,7 @@ def gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
     return metadata
 
 
-def get_db_metadata(dbapi_uri):
+def get_targetexplorer_db_metadata(dbapi_uri):
     db_metadata_jsonstr = msmseeder.TargetExplorer.get_targetexplorer_metadata(dbapi_uri)
     return json.loads(db_metadata_jsonstr)
 
@@ -238,14 +247,14 @@ def log_unique_domain_names(uniprot_query_string, uniprotxml):
             }
         )
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_query_string_domains])
-        print 'Set of unique domain names selected by the domain selector \'%s\'during the initial UniProt search:\n%s\n' \
-              % (query_string_domain_selection, uniprot_unique_domain_names)
+        logger.info('Set of unique domain names selected by the domain selector \'%s\'during the initial UniProt search:\n%s\n'
+              % (query_string_domain_selection, uniprot_unique_domain_names))
 
     else:
         uniprot_domains = uniprotxml.xpath('entry/feature[@type="domain"]')
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_domains])
-        print 'Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s\n' \
-              % (uniprot_query_string, uniprot_unique_domain_names)
+        logger.info('Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s\n'
+              % (uniprot_query_string, uniprot_unique_domain_names))
 
 
 def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
@@ -254,8 +263,8 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
         extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
     )
     regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
-    print 'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n' \
-          % (uniprot_domain_regex, regex_matched_domains_unique_names)
+    logger.info('Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'
+          % (uniprot_domain_regex, regex_matched_domains_unique_names))
 
 
 @msmseeder.utils.notify_when_done
@@ -340,15 +349,22 @@ def attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dir
                 break
 
 
+def download_structure_file(pdbid, project_structure_filepath, structure_type='pdb'):
+    if structure_type == 'pdb':
+        download_pdb_file(pdbid, project_structure_filepath)
+    elif structure_type == 'sifts':
+        download_sifts_file(pdbid, project_structure_filepath)
+
+
 def download_pdb_file(pdbid, project_pdb_filepath):
-    print 'Downloading PDB file for:', pdbid
+    logger.info('Downloading PDB file for:', pdbid)
     pdbgz_page = msmseeder.PDB.retrieve_pdb(pdbid, compressed='yes')
     with open(project_pdb_filepath, 'w') as pdbgz_file:
         pdbgz_file.write(pdbgz_page)
 
 
 def download_sifts_file(pdbid, project_sifts_filepath):
-    print 'Downloading sifts file for:', pdbid
+    logger.info('Downloading sifts file for:', pdbid)
     sifts_page = msmseeder.PDB.retrieve_sifts(pdbid)
     with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file:
         project_sifts_file.write(sifts_page)
@@ -363,18 +379,17 @@ def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
         if not file_exists_and_not_empty(project_structure_filepath):
             attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dirs, structure_type=structure_type)
             if not os.path.exists(project_structure_filepath):
-                structure_downloader = structure_downloader_mapper[structure_type]
-                structure_downloader(pdbid, project_structure_filepath)
+                download_structure_file(pdbid, project_structure_filepath, structure_type=structure_type)
 
 
 def extract_template_pdb_chain_residues(selected_pdbchains):
-    print 'Extracting residues from PDB chains...'
+    logger.info('Extracting residues from PDB chains...')
     selected_templates = []
     for pdbchain in selected_pdbchains:
         extracted_pdb_template_seq_data = extract_pdb_template_seq(pdbchain)
         if extracted_pdb_template_seq_data is not None:
             selected_templates.append(extracted_pdb_template_seq_data)
-    print '%d templates selected.\n' % len(selected_templates)
+    logger.info('%d templates selected.\n' % len(selected_templates))
     return selected_templates
 
 
@@ -447,7 +462,7 @@ def write_template_seqs_to_fasta_file(selected_templates):
 
 
 def extract_template_structures_from_pdb_files(selected_templates):
-    print 'Writing template structures...'
+    logger.info('Writing template structures...')
     for template in selected_templates:
         pdbid = template['pdbid']
         chainid = template['chainid']
@@ -559,10 +574,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
                                 'domain_span': domain_span
                             }
                             selected_pdbchains.append(data)
-    print '%d PDB chains selected.' % len(selected_pdbchains)
-    print ''
+    logger.info('%d PDB chains selected.' % len(selected_pdbchains))
     return selected_pdbchains
 
-
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
-structure_downloader_mapper = {'pdb': download_pdb_file, 'sifts': download_sifts_file}

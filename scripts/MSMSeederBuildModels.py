@@ -23,11 +23,14 @@ def main():
 
     msmseeder.core.check_project_toplevel_dir()
 
+    if args.verbose:
+        loglevel = 'debug'
+
     # ========
     # Build models
     # ========
 
-    msmseeder.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)
+    msmseeder.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, loglevel=loglevel)
 
     # ========
     # Write a list of models sorted by sequence identity

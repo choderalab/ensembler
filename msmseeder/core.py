@@ -1,9 +1,12 @@
+import os
+import logging
+import sys
+from collections import namedtuple
+
 # ========
 # Global package variables
 # ========
-
-import os
-import msmseeder
+import Bio
 
 src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -29,12 +32,27 @@ msmseeder_stages = [
     'package_for_fah',
 ]
 
-project_dirnames = [
-    'targets', 'structures', 'templates', 'models', 'packaged-models',
-    os.path.join('structures', 'pdb'),
-    os.path.join('structures', 'sifts'),
-    os.path.join('templates', 'structures')
-]
+ProjectDirNames = namedtuple(
+    'ProjectDirNames',
+    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures']
+)
+
+default_project_dirnames = ProjectDirNames(
+    targets='targets',
+    templates='templates',
+    structures='structures',
+    models='models',
+    packaged_models='packaged_models',
+    structures_pdb=os.path.join('structures', 'pdb'),
+    structures_sifts=os.path.join('structures', 'sifts'),
+    templates_structures=os.path.join('templates', 'structures'),
+)
+
+logger = logging.getLogger('info')
+default_loglevel = 'info'
+loglevel_obj = getattr(logging, default_loglevel.upper())
+logger.setLevel(loglevel_obj)
+logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
 # ========
 # YAML
@@ -170,18 +188,18 @@ class ProjectMetadata:
                     yaml.dump(subdict, ofile, default_flow_style=False)
 
 
-def write_metadata(new_metadata_dict, msmseeder_stage):
+def write_metadata(new_metadata_dict, msmseeder_stage, target_id=None):
     if msmseeder_stage == 'init':
         metadata_dict = {}
     else:
         prev_msmseeder_stage = msmseeder_stages[msmseeder_stages.index(msmseeder_stage) - 1]
-        prev_metadata_filepath = metadata_file_mapper(prev_msmseeder_stage)
+        prev_metadata_filepath = metadata_file_mapper(prev_msmseeder_stage, target_id=target_id)
         with open(prev_metadata_filepath) as prev_metadata_file:
             metadata_dict = yaml.load(prev_metadata_file)
 
     metadata_dict.update(new_metadata_dict)
     metadata = ProjectMetadata(metadata_dict)
-    metadata.write(metadata_file_mapper(msmseeder_stage))
+    metadata.write(metadata_file_mapper(msmseeder_stage, target_id=target_id))
 
 
 def metadata_file_mapper(msmseeder_stage, target_id=None):
@@ -262,3 +280,23 @@ def seqwrap(sequence, add_star=False):
 def construct_fasta_str(seqid, seq):
     target_fasta_string = '>%s\n%s\n' % (seqid, seqwrap(seq).strip())
     return target_fasta_string
+
+
+def get_targets():
+    targets_dir = os.path.abspath('targets')
+    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
+    targets = list(Bio.SeqIO.parse(targets_fasta_filename, 'fasta'))
+    return targets
+
+
+def get_templates():
+    templates_dir = os.path.abspath('templates')
+    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
+    templates = list(Bio.SeqIO.parse(templates_fasta_filename, 'fasta'))
+    return templates
+
+
+def get_targets_and_templates():
+    targets = get_targets()
+    templates = get_templates()
+    return targets, templates
