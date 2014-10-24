@@ -117,7 +117,7 @@ def build_models_setup_target(target, comm=None, rank=0):
 def gen_build_models_metadata(target, target_setup_data):
     """
     Generate build_models metadata for a given target.
-    :param target:
+    :param target: BioPython SeqRecord
     :param target_setup_data:
     :return: metadata: dict
     """
