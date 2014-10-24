@@ -19,7 +19,7 @@ metadata_filenames = {
 
 
 def main():
-    args = parse_args()
+    args, process_only_these_targets = parse_args()
     targets_dir = os.path.abspath("targets")
     models_dir = os.path.abspath("models")
 
@@ -29,7 +29,7 @@ def main():
     print_col_headers(args)
 
     for target in targets:
-        if args.targets is not None and target.id not in args.targets:
+        if process_only_these_targets is not None and target.id not in process_only_these_targets:
             continue
 
         target_models_dir = os.path.join('models', target.id)
@@ -45,10 +45,24 @@ def main():
 
 def parse_args():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--targets', nargs='+')
+    argparser.add_argument(
+        '--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")'
+    )
+    argparser.add_argument(
+        '--targetsfile', type=str, help='Optionally define a filename containing a list of newline-separated target IDs. Comment targets out with "#".'
+    )
     argparser.add_argument('--timings', action="store_true")
     args = argparser.parse_args()
-    return args
+
+    if args.targetsfile != None:
+        with open(args.targetsfile, 'r') as targetsfile:
+            process_only_these_targets = [line.strip() for line in targetsfile.readlines() if line[0] != '#']
+    elif args.targets != None:
+        process_only_these_targets = args.targets
+    else:
+        process_only_these_targets = None
+
+    return args, process_only_these_targets
 
 
 def print_col_headers(args):
