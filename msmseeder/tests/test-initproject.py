@@ -2,10 +2,11 @@ import os
 import msmseeder.initproject
 import msmseeder.tests
 import msmseeder.core
+from msmseeder.utils import enter_temp_dir
 
 
 def test_initproject():
-    with msmseeder.tests.utils.enter_temp_directory():
+    with enter_temp_dir():
         msmseeder.initproject.initproject('.')
         assert os.path.exists(msmseeder.core.default_project_dirnames.targets)
         assert os.path.exists(msmseeder.core.default_project_dirnames.templates)
@@ -77,7 +78,7 @@ def test_extract_targets_from_targetexplorer_json():
 def test_attempt_symlink_structure_files():
     pdbid = '4CFE'
     structure_paths = [os.path.abspath(os.path.join('tests', 'resources'))]
-    with msmseeder.tests.utils.enter_temp_directory():
+    with enter_temp_dir():
         os.mkdir('pdb')
         project_pdb_filepath = os.path.join('pdb', pdbid + '.pdb.gz')
         structure_type = 'pdb'

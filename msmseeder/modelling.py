@@ -4,7 +4,6 @@ import re
 import datetime
 import subprocess
 import logging
-import tempfile
 import shutil
 import gzip
 from collections import namedtuple
@@ -19,6 +18,7 @@ import msmseeder
 import modeller
 import modeller.automodel
 from msmseeder.core import get_targets_and_templates
+import subprocess
 
 comm = mpi4py.MPI.COMM_WORLD
 rank = comm.rank
@@ -53,6 +53,60 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
         if rank == 0:
             metadata = gen_build_models_metadata(target, target_setup_data)
             msmseeder.core.write_metadata(metadata, msmseeder_stage='build_models', target_id=target.id)
+
+
+def build_model(target, template, target_setup_data, loglevel=None):
+    """Uses Modeller to build a homology model for a given target and
+    template.
+
+    Will not run Modeller if the output files already exist.
+
+    Parameters
+    ----------
+    target : BioPython SeqRecord
+    template : BioPython SeqRecord
+        Must be a corresponding .pdb template file with the same ID in the
+        templates/structures directory.
+    """
+    msmseeder.utils.loglevel_setter(logger, loglevel)
+
+    template_structure_dir = os.path.abspath(msmseeder.core.default_project_dirnames.templates_structures)
+    model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
+    msmseeder.utils.create_dir(model_dir)
+    model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))
+    modeling_log_filepath = os.path.abspath(os.path.join(model_dir, 'modeling-log.yaml'))
+
+    check_model_pdbfilepath_ends_in_pdbgz(model_pdbfilepath)
+    model_pdbfilepath_uncompressed = model_pdbfilepath[:-3]
+
+    if check_all_model_files_present(model_dir):
+        logger.debug("Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id))
+        return
+
+    logger.info(
+        '-------------------------------------------------------------------------\n'
+        'Modelling "%s" => "%s"\n'
+        '-------------------------------------------------------------------------'
+        % (target.id, template.id)
+    )
+
+    aln = align_target_template(target, template)
+    aln_filepath = os.path.abspath(os.path.join(model_dir, 'alignment.pir'))
+    write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
+    log_file = init_build_model_logfile(modeling_log_filepath)
+
+    with msmseeder.utils.enter_temp_dir():
+        try:
+            start = datetime.datetime.utcnow()
+            shutil.copy(aln_filepath, 'alignment.pir')
+            run_modeller(target, template, model_dir, model_pdbfilepath, model_pdbfilepath_uncompressed, template_structure_dir)
+            if os.path.getsize(model_pdbfilepath) < 1:
+                raise Exception('Output PDB file is empty.')
+
+            end_successful_build_model_logfile(log_file, start)
+
+        except Exception as e:
+            end_exception_build_model_logfile(e, log_file)
 
 
 def get_modeller_version():
@@ -95,15 +149,13 @@ def build_models_setup_target(target, comm=None, rank=0):
     models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
     if rank == 0:
         target_starttime = datetime.datetime.utcnow()
-        logger = logging.getLogger('info')
         logger.info(
-            '========================================================================='
-            'Working on target "%s"'
+            '=========================================================================\n'
+            'Working on target "%s"\n'
             '========================================================================='
             % target.id
         )
-        if not os.path.exists(models_target_dir):
-            os.mkdir(models_target_dir)
+        msmseeder.utils.create_dir(models_target_dir)
 
     if comm is not None:
         comm.Barrier()
@@ -142,61 +194,35 @@ def gen_build_models_metadata(target, target_setup_data):
     return metadata
 
 
-def build_model(target, template, target_setup_data, loglevel=None):
-    """Uses Modeller to build a homology model for a given target and
-    template.
-
-    Will not run Modeller if the output files already exist.
-
-    Parameters
-    ----------
-    target : BioPython SeqRecord
-    template : BioPython SeqRecord
-        Must be a corresponding .pdb template file with the same ID in the
-        templates/structures directory.
-    """
-    msmseeder.utils.loglevel_setter(logger, loglevel)
-
-    template_structure_dir = os.path.abspath(msmseeder.core.default_project_dirnames.templates_structures)
-    model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
-    if not os.path.exists(model_dir):
-        os.mkdir(model_dir)
-    aln_filepath = os.path.abspath(os.path.join(model_dir, 'alignment.pir'))
-    seqid_filepath = os.path.abspath(os.path.join(model_dir, 'sequence-identity.txt'))
-    model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))
-    restraint_filepath = os.path.abspath(os.path.join(model_dir, 'restraints.rsr.gz'))
-    modeling_log_filepath = os.path.abspath(os.path.join(model_dir, 'modeling-log.yaml'))
-
-    current_dir = os.getcwd()
-
+def check_model_pdbfilepath_ends_in_pdbgz(model_pdbfilepath):
     if model_pdbfilepath[-7:] != '.pdb.gz':
-        raise Exception('model_pdbfilepath (%s) should end in .pdb.gz' % model_pdbfilepath)
-    model_pdbfilepath_uncompressed = model_pdbfilepath[:-3]
+        raise Exception('model_pdbfilepath (%s) must end in .pdb.gz' % model_pdbfilepath)
 
-    # Skip model-building if files already exist.
+
+def check_all_model_files_present(model_dir):
+    seqid_filepath = os.path.abspath(os.path.join(model_dir, 'sequence-identity.txt'))
+    restraint_filepath = os.path.abspath(os.path.join(model_dir, 'restraints.rsr.gz'))
+    model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))
+    aln_filepath = os.path.abspath(os.path.join(model_dir, 'alignment.pir'))
     files_to_check = [model_pdbfilepath, seqid_filepath, aln_filepath, restraint_filepath]
-    files_are_present = [os.path.exists(filename) for filename in files_to_check]
-    if all(files_are_present):
-        logger.debug("Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id))
-        return
+    files_present = [os.path.exists(filename) for filename in files_to_check]
+    return all(files_present)
 
-    logger.info(
-        '-------------------------------------------------------------------------'
-        'Modelling "%s" => "%s"'
-        '-------------------------------------------------------------------------'
-        % (target.id, template.id)
-    )
 
-    # Conduct alignment
+def align_target_template(target, template, gap_open=-10, gap_extend=-0.5):
+    """
+    :param target: BioPython SeqRecord
+    :param template: BioPython SeqRecord
+    :param gap_open: float or int
+    :param gap_extend: float or int
+    :return: alignment
+    """
     matrix = Bio.SubsMat.MatrixInfo.gonnet
-    gap_open = -10
-    gap_extend = -0.5
     aln = Bio.pairwise2.align.globalds(str(target.seq), str(template.seq), matrix, gap_open, gap_extend)
+    return aln
 
-    # Create temp dir for modelling, and chdir
-    temp_dir = tempfile.mkdtemp()
 
-    # Open log file
+def init_build_model_logfile(modeling_log_filepath):
     log_data = {
         'mpi_rank': rank,
         'complete': False,
@@ -204,79 +230,76 @@ def build_model(target, template, target_setup_data, loglevel=None):
     log_filepath = modeling_log_filepath
     log_file = msmseeder.core.LogFile(log_filepath)
     log_file.log(new_log_data=log_data)
+    return log_file
 
-    try:
-        start = datetime.datetime.utcnow()
-        os.chdir(temp_dir)
 
-        # Write Modeller-format PIR alignment file
-        tmp_aln_filename = 'aligned.pir'
-        contents = "Target-template alignment by clustal omega\n"
-        contents += ">P1;%s\n" % target.id
-        contents += "sequence:%s:FIRST:@:LAST :@:::-1.00:-1.00\n" % target.id
-        contents += aln[0][0] + '*\n'
-        contents += ">P1;%s\n" % template.id
-        contents += "structureX:%s:FIRST:@:LAST : :undefined:undefined:-1.00:-1.00\n" % template.id
-        contents += aln[0][1] + '*\n'
-        outfile = open('aligned.pir', 'w')
+def write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath='alignment.pir'):
+    contents = "Target-template alignment by clustal omega\n"
+    contents += ">P1;%s\n" % target.id
+    contents += "sequence:%s:FIRST:@:LAST :@:::-1.00:-1.00\n" % target.id
+    contents += aln[0][0] + '*\n'
+    contents += ">P1;%s\n" % template.id
+    contents += "structureX:%s:FIRST:@:LAST : :undefined:undefined:-1.00:-1.00\n" % template.id
+    contents += aln[0][1] + '*\n'
+    with open(pir_aln_filepath, 'w') as outfile:
         outfile.write(contents)
-        outfile.close()
 
-        # Run Modeller
-        modeller.log.none()
-        env = modeller.environ()
-        env.io.atom_files_directory = [template_structure_dir]
 
-        a = modeller.automodel.allhmodel(
-            env,
-            alnfile=tmp_aln_filename,
-            knowns=template.id,
-            sequence=target.id
-        )
-        a.make()                            # do homology modeling
+def save_modeller_output_files(target, model_dir, a, env, model_pdbfilepath, model_pdbfilepath_uncompressed):
+    # save PDB file
+    # Note that the uncompressed pdb file needs to be kept until after the clustering step has completed
+    tmp_model_pdbfilepath = a.outputs[0]['name']
+    target_model = modeller.model(env, file=tmp_model_pdbfilepath)
+    target_model.write(file=model_pdbfilepath_uncompressed)
+    with open(model_pdbfilepath_uncompressed) as model_pdbfile:
+        with gzip.open(model_pdbfilepath, 'w') as model_pdbfilegz:
+            model_pdbfilegz.write(model_pdbfile.read())
 
-        tmp_model_pdbfilename = a.outputs[0]['name']
-        target_model = modeller.model(env, file=tmp_model_pdbfilename)
+    # Write sequence identity.
+    seqid_filepath = os.path.abspath(os.path.join(model_dir, 'sequence-identity.txt'))
+    with open(seqid_filepath, 'w') as seqid_file:
+        seqid_file.write('%.1f\n' % target_model.seq_id)
 
-        target_model.write(file=model_pdbfilepath_uncompressed)
-        with open(model_pdbfilepath_uncompressed) as model_pdbfile:
-            with gzip.open(model_pdbfilepath, 'w') as model_pdbfilegz:
-                model_pdbfilegz.write(model_pdbfile.read())
+    # Copy restraints.
+    restraint_filepath = os.path.abspath(os.path.join(model_dir, 'restraints.rsr.gz'))
+    with open('%s.rsr' % target.id, 'r') as rsrfile:
+        with gzip.open(restraint_filepath, 'wb') as rsrgzfile:
+            rsrgzfile.write(rsrfile.read())
 
-        # Note that the uncompressed pdb file needs to be kept until after the clustering step has completed
 
-        # Write sequence identity.
-        with open(seqid_filepath, 'w') as seqid_file:
-            seqid_file.write('%.1f\n' % target_model.seq_id)
+def run_modeller(target, template, model_dir, model_pdbfilepath, model_pdbfilepath_uncompressed,
+                 template_structure_dir, aln_filepath='alignment.pir'):
+    modeller.log.none()
+    env = modeller.environ()
+    env.io.atom_files_directory = [template_structure_dir]
+    a = modeller.automodel.allhmodel(
+        env,
+        alnfile=aln_filepath,
+        knowns=template.id,
+        sequence=target.id
+    )
+    a.make()  # do homology modeling
 
-        # Copy restraints.
-        with open('%s.rsr' % target.id, 'r') as rsrfile:
-            with gzip.open(restraint_filepath, 'wb') as rsrgzfile:
-                rsrgzfile.write(rsrfile.read())
+    save_modeller_output_files(target, model_dir, a, env, model_pdbfilepath, model_pdbfilepath_uncompressed)
 
-        if os.path.getsize(model_pdbfilepath) < 1:
-            raise Exception, 'Output PDB file is empty.'
 
-        end = datetime.datetime.utcnow()
-        timing = msmseeder.core.strf_timedelta(end - start)
-        log_data = {
-            'complete': True,
-            'timing': timing,
-        }
-        log_file.log(new_log_data=log_data)
+def end_successful_build_model_logfile(log_file, start):
+    end = datetime.datetime.utcnow()
+    timing = msmseeder.core.strf_timedelta(end - start)
+    log_data = {
+        'complete': True,
+        'timing': timing,
+    }
+    log_file.log(new_log_data=log_data)
 
-    except Exception as e:
-        trbk = traceback.format_exc()
-        log_data = {
-            'exception': e,
-            'traceback': msmseeder.core.literal_str(trbk),
-        }
-        log_file.log(new_log_data=log_data)
 
-    finally:
-        shutil.move(tmp_aln_filename, aln_filepath)
-        os.chdir(current_dir)
-        shutil.rmtree(temp_dir)
+def end_exception_build_model_logfile(e, log_file):
+    trbk = traceback.format_exc()
+    log_data = {
+        'exception': e,
+        'traceback': msmseeder.core.literal_str(trbk),
+    }
+    log_file.log(new_log_data=log_data)
 
 
 def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):

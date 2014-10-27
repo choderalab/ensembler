@@ -5,12 +5,13 @@ import msmseeder.tests
 import msmseeder.modelling
 from mock import Mock
 import datetime
+from msmseeder.utils import enter_temp_dir
 
 
 def test_build_model():
     template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
 
-    with msmseeder.tests.utils.enter_temp_directory():
+    with enter_temp_dir():
         target = Mock()
         template = Mock()
         target_setup_data = Mock()

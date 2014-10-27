@@ -25,6 +25,8 @@ def main():
 
     if args.verbose:
         loglevel = 'debug'
+    else:
+        loglevel = 'info'
 
     # ========
     # Build models

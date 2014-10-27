@@ -1,6 +1,11 @@
+import contextlib
 import os
 import logging
 import functools
+import shutil
+import tempfile
+
+logger = logging.getLogger('info')
 
 
 def notify_when_done(fn):
@@ -12,11 +17,9 @@ def notify_when_done(fn):
             rank = comm.rank
             if rank == 0:
                 fn(*args, **kwargs)
-                logger = logging.getLogger('info')
                 logger.info('Done.')
         except ImportError:
             fn(*args, **kwargs)
-            logger = logging.getLogger('info')
             logger.info('Done.')
 
     return print_done
@@ -28,10 +31,10 @@ def create_dir(dirpath):
     """
     try:
         os.makedirs(dirpath)
-        print 'Created directory "%s"' % dirpath
+        logger.info('Created directory "%s"' % dirpath)
     except OSError as e:
         if e.errno == 17:
-            print 'Directory "%s" already exists - will not overwrite' % dirpath
+            logger.debug('Directory "%s" already exists - will not overwrite' % dirpath)
         else:
             raise
 
@@ -47,3 +50,14 @@ def loglevel_setter(logger, loglevel):
     if loglevel is not None:
         loglevel_obj = getattr(logging, loglevel.upper())
         logger.setLevel(loglevel_obj)
+
+
+@contextlib.contextmanager
+def enter_temp_dir():
+    """Create a temporary directory, enter, yield, exit, rmdir; used as context manager."""
+    temp_dir = tempfile.mkdtemp()
+    cwd = os.getcwd()
+    os.chdir(temp_dir)
+    yield temp_dir
+    os.chdir(cwd)
+    shutil.rmtree(temp_dir)
