@@ -13,7 +13,7 @@ import urllib2
 #==============================================================================
 
 def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, desired_chainID):
-    '''
+    """
     Parameters
     ----------
     output_file: string or gzip.file_like
@@ -23,7 +23,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
     ----------
     int
         The number of lines extracted.
-    '''
+    """
     import gzip
     if type(pdb_input_file) in [str, unicode]:
         with gzip.open(pdb_input_file, 'r') as pdb_file:

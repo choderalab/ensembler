@@ -34,7 +34,7 @@ msmseeder_stages = [
 
 ProjectDirNames = namedtuple(
     'ProjectDirNames',
-    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures']
+    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures_observed', 'templates_structures_complete']
 )
 
 default_project_dirnames = ProjectDirNames(
@@ -45,7 +45,8 @@ default_project_dirnames = ProjectDirNames(
     packaged_models='packaged_models',
     structures_pdb=os.path.join('structures', 'pdb'),
     structures_sifts=os.path.join('structures', 'sifts'),
-    templates_structures=os.path.join('templates', 'structures'),
+    templates_structures_observed=os.path.join('templates', 'structures-observed'),
+    templates_structures_complete=os.path.join('templates', 'structures-complete'),
 )
 
 logger = logging.getLogger('info')

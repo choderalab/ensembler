@@ -302,6 +302,26 @@ def end_exception_build_model_logfile(e, log_file):
     log_file.log(new_log_data=log_data)
 
 
+def run_loopmodel(input_template_pdb_filepath, loop_filepath, loopmodel_executable_filepath='loopmodel.macosgccrelease', nmodels_to_build=1):
+    # TODO
+    minirosetta_database_path = os.environ.get('MINIROSETTA_DATABASE')
+    subprocess.check_output(
+        [
+            loopmodel_executable_filepath,
+            '-database', minirosetta_database_path,
+            '-in::file::s', input_template_pdb_filepath,
+            '-loops:loop_file', loop_filepath,
+            '-loops:remodel', 'perturb_kic',
+            '-loops:remodel', 'refine_kic',
+            '-ex1',
+            '-ex2',
+            'nstruct', '%d' % nmodels_to_build,
+            '-loops:max_kic_build_attempts', '100',
+            '-in:file:fullatom',
+        ]
+    )
+
+
 def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
     '''Compile sorted list of templates by sequence identity.
     Runs serially.

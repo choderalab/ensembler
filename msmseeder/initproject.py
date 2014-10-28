@@ -77,7 +77,8 @@ def create_project_dirs(project_toplevel_dir):
     msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.packaged_models)
     msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures_pdb)
     msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures_sifts)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures_observed)
+    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures_complete)
 
 
 def gen_init_metadata(project_toplevel_dir):
@@ -289,6 +290,7 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
+    create_dummy_complete_templates(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
 
     additional_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
@@ -393,22 +395,22 @@ def extract_template_pdb_chain_residues(selected_pdbchains):
     return selected_templates
 
 
-def extract_pdb_template_seq(pdbchain):
-    """Extract data from PDB chain"""
-
-    templateid = pdbchain['templateid']
-    chainid = pdbchain['chainid']
-    pdbid = pdbchain['pdbid']
-    domain_span = pdbchain['domain_span']
-
-    # parse SIFTS XML document
-    sifts_filepath = os.path.join('structures', 'sifts', pdbid + '.xml.gz')
+def parse_sifts_xml(sifts_filepath):
     with gzip.open(sifts_filepath, 'rb') as sifts_file:
         parser = etree.XMLParser(huge_tree=True)
         siftsxml = etree.parse(sifts_file, parser).getroot()
 
-    # firstly, add "PDB modified" tags to certain phosphorylated residue types, which sometimes do not have such tags in the SIFTS file
-    # known cases: 4BCP, 4BCG, 4I5C, 4IVB, 4IAC
+    return siftsxml
+
+
+def add_pdb_modified_xml_tags_to_residues(siftsxml):
+    """
+    Adds "PDB modified" tags to certain phosphorylated residue types, which sometimes do not have such tags in the SIFTS file.
+    known cases: 4BCP, 4BCG, 4I5C, 4IVB, 4IAC
+    The passed XML object is modified in-place.
+    :param siftsxml:
+    :return:
+    """
     modified_residues = []
     modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="TPO"]')
     modified_residues += siftsxml.findall('entity/segment/listResidue/residue[@dbResName="PTR"]')
@@ -422,27 +424,53 @@ def extract_pdb_template_seq(pdbchain):
         residue_detail_modified.text = 'PDB\n          modified'
         mr.append(residue_detail_modified)
 
-    # now extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
+
+def extract_pdb_template_seq(pdbchain):
+    """Extract data from PDB chain"""
+    templateid = pdbchain['templateid']
+    chainid = pdbchain['chainid']
+    pdbid = pdbchain['pdbid']
+    domain_span = pdbchain['domain_span'] # UniProt coords
+
+    sifts_filepath = os.path.join('structures', 'sifts', pdbid + '.xml.gz')
+    siftsxml = parse_sifts_xml(sifts_filepath)
+
+    add_pdb_modified_xml_tags_to_residues(siftsxml)
+
+    # domain_span_sifts_coords = [
+    #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, domain_span[0])).get('dbResNum')),
+    #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, domain_span[1])).get('dbResNum')),
+    # ]
+
     selected_residues = siftsxml.xpath(
+        'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"]'
+        '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
+    )
+
+    # now extract PDB residues with the correct PDB chain ID, are observed, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
+    selected_observed_residues = siftsxml.xpath(
         'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])]'
         '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])]'
         '[not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, domain_span[0], domain_span[1])
     )
-    # calculate the ratio of observed residues - if less than a certain amount, discard pdbchain
-    all_pdb_domain_residues = siftsxml.xpath(
-        'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
-    )
-    if len(selected_residues) == 0 or len(all_pdb_domain_residues) == 0:
+
+    # all_pdb_domain_residues = siftsxml.xpath(
+    #     'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
+    # )
+
+    if len(selected_observed_residues) == 0 or len(selected_residues) == 0:
         return
 
-    ratio_observed = float(len(selected_residues)) / float(len(all_pdb_domain_residues))
+    # calculate the ratio of observed residues - if less than a certain amount, discard pdbchain
+    ratio_observed = float(len(selected_observed_residues)) / float(len(selected_residues))
     if ratio_observed < msmseeder.core.template_acceptable_ratio_observed_residues:
         return
 
     # make a single-letter aa code sequence
     template_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
-    # store as strings to match resnums in PDB file directly. Important because PDB resnums may be e.g. '56A' in 3HLL
     template_pdbresnums = [residue.get('dbResNum') for residue in selected_residues]
+    template_seq_observed = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_observed_residues])
+    template_pdbresnums_observed = [residue.get('dbResNum') for residue in selected_observed_residues]
 
     # store data
     template_data = {
@@ -450,7 +478,9 @@ def extract_pdb_template_seq(pdbchain):
     'chainid': chainid,
     'templateid': templateid,
     'template_seq': template_seq,
-    'template_pdbresnums': template_pdbresnums
+    'template_pdbresnums': template_pdbresnums,
+    'template_seq_observed': template_seq_observed,
+    'template_pdbresnums_observed': template_pdbresnums_observed,
     }
 
     return template_data
@@ -458,7 +488,9 @@ def extract_pdb_template_seq(pdbchain):
 
 def write_template_seqs_to_fasta_file(selected_templates):
     selected_template_seq_tuples = [(template['templateid'], template['template_seq']) for template in selected_templates]
-    write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates.fa'))
+    selected_template_seq_observed_tuples = [(template['templateid'], template['template_seq_observed']) for template in selected_templates]
+    write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates-complete.fa'))
+    write_seqs_to_fasta_file(selected_template_seq_observed_tuples, fasta_ofilepath=os.path.join('templates', 'templates-observed.fa'))
 
 
 def extract_template_structures_from_pdb_files(selected_templates):
@@ -467,18 +499,26 @@ def extract_template_structures_from_pdb_files(selected_templates):
         pdbid = template['pdbid']
         chainid = template['chainid']
         templateid = template['templateid']
-        template_pdbresnums = template['template_pdbresnums']
+        template_pdbresnums_observed = template['template_pdbresnums_observed']
+
         pdb_filename = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
-        template_filename = os.path.join('templates', 'structures', templateid + '.pdb')
+
+        template_observed_filename = os.path.join('templates', 'structures-observed', templateid + '.pdb')
         nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(
-            template_filename, pdb_filename, template_pdbresnums, chainid
+            template_observed_filename, pdb_filename, template_pdbresnums_observed, chainid
         )
-        if nresidues_extracted != len(template_pdbresnums):
+        if nresidues_extracted != len(template_pdbresnums_observed):
             raise Exception(
-                'Number of residues extracted from PDB file (%d) does not match desired number of residues (%d).' % (
-                    nresidues_extracted, template_pdbresnums
+                'Number of residues (%d) extracted from PDB file (%s) for template (%s) does not match desired number of residues (%d).' % (
+                    nresidues_extracted, pdbid, templateid, len(template_pdbresnums_observed)
                 )
             )
+
+
+def create_dummy_complete_templates(selected_templates):
+    # TODO
+    for template in selected_templates:
+            template_pdbresnums = template['template_pdbresnums']
 
 
 def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
