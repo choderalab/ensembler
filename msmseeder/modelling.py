@@ -70,7 +70,7 @@ def build_model(target, template, target_setup_data, loglevel=None):
     """
     msmseeder.utils.loglevel_setter(logger, loglevel)
 
-    template_structure_dir = os.path.abspath(msmseeder.core.default_project_dirnames.templates_structures)
+    template_structure_dir = os.path.abspath(msmseeder.core.default_project_dirnames.templates_structures_observed)
     model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
     msmseeder.utils.create_dir(model_dir)
     model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))

@@ -11,8 +11,15 @@ import msmseeder.PDB
 import msmseeder.version
 from msmseeder.core import construct_fasta_str
 from msmseeder.utils import file_exists_and_not_empty
+from collections import namedtuple
 
 logger = logging.getLogger('info')
+
+TemplateData = namedtuple(
+    'TemplateData',
+    ['pdbid', 'chainid', 'templateid', 'observed_seq',
+     'observed_pdbresnums', 'complete_seq', 'complete_pdbresnums']
+)
 
 
 @msmseeder.utils.notify_when_done
@@ -264,8 +271,10 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
         extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
     )
     regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
-    logger.info('Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'
-          % (uniprot_domain_regex, regex_matched_domains_unique_names))
+    logger.info(
+        'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'
+        % (uniprot_domain_regex, regex_matched_domains_unique_names)
+    )
 
 
 @msmseeder.utils.notify_when_done
@@ -290,7 +299,7 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
-    create_dummy_complete_templates(selected_templates)
+    #create_dummy_complete_templates(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
 
     additional_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
@@ -442,6 +451,8 @@ def extract_pdb_template_seq(pdbchain):
     #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, domain_span[1])).get('dbResNum')),
     # ]
 
+    # TODO once working, check whether this fills in all loops
+    # An alternative approach would be to just take the UniProt sequence specified by the domain span
     selected_residues = siftsxml.xpath(
         'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"]'
         '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
@@ -467,28 +478,28 @@ def extract_pdb_template_seq(pdbchain):
         return
 
     # make a single-letter aa code sequence
-    template_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
-    template_pdbresnums = [residue.get('dbResNum') for residue in selected_residues]
+    complete_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
+    complete_pdbresnums = [residue.get('dbResNum') for residue in selected_residues]
     template_seq_observed = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_observed_residues])
     template_pdbresnums_observed = [residue.get('dbResNum') for residue in selected_observed_residues]
 
     # store data
-    template_data = {
-    'pdbid': pdbid,
-    'chainid': chainid,
-    'templateid': templateid,
-    'template_seq': template_seq,
-    'template_pdbresnums': template_pdbresnums,
-    'template_seq_observed': template_seq_observed,
-    'template_pdbresnums_observed': template_pdbresnums_observed,
-    }
+    template_data = TemplateData(
+        pdbid=pdbid,
+        chainid=chainid,
+        templateid=templateid,
+        observed_seq=template_seq_observed,
+        observed_pdbresnums=template_pdbresnums_observed,
+        complete_seq=complete_seq,
+        complete_pdbresnums=complete_pdbresnums,
+    )
 
     return template_data
 
 
 def write_template_seqs_to_fasta_file(selected_templates):
-    selected_template_seq_tuples = [(template['templateid'], template['template_seq']) for template in selected_templates]
-    selected_template_seq_observed_tuples = [(template['templateid'], template['template_seq_observed']) for template in selected_templates]
+    selected_template_seq_tuples = [(template.templateid, template.complete_seq) for template in selected_templates]
+    selected_template_seq_observed_tuples = [(template.templateid, template.observed_seq) for template in selected_templates]
     write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates-complete.fa'))
     write_seqs_to_fasta_file(selected_template_seq_observed_tuples, fasta_ofilepath=os.path.join('templates', 'templates-observed.fa'))
 
@@ -496,29 +507,86 @@ def write_template_seqs_to_fasta_file(selected_templates):
 def extract_template_structures_from_pdb_files(selected_templates):
     logger.info('Writing template structures...')
     for template in selected_templates:
-        pdbid = template['pdbid']
-        chainid = template['chainid']
-        templateid = template['templateid']
-        template_pdbresnums_observed = template['template_pdbresnums_observed']
+        pdb_filename = os.path.join('structures', 'pdb', template.pdbid + '.pdb.gz')
 
-        pdb_filename = os.path.join('structures', 'pdb', pdbid + '.pdb.gz')
-
-        template_observed_filename = os.path.join('templates', 'structures-observed', templateid + '.pdb')
+        template_observed_filename = os.path.join('templates', 'structures-observed', template.templateid + '.pdb')
         nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(
-            template_observed_filename, pdb_filename, template_pdbresnums_observed, chainid
+            template_observed_filename, pdb_filename, template.template_pdbresnums_observed, template.chainid
         )
-        if nresidues_extracted != len(template_pdbresnums_observed):
+        if nresidues_extracted != len(template.template_pdbresnums_observed):
             raise Exception(
                 'Number of residues (%d) extracted from PDB file (%s) for template (%s) does not match desired number of residues (%d).' % (
-                    nresidues_extracted, pdbid, templateid, len(template_pdbresnums_observed)
+                    nresidues_extracted, template.pdbid, template.templateid, len(template.observed_pdbresnums)
                 )
             )
 
 
-def create_dummy_complete_templates(selected_templates):
-    # TODO
-    for template in selected_templates:
-            template_pdbresnums = template['template_pdbresnums']
+# def create_dummy_complete_templates(selected_templates):
+#     # TODO
+#     for template in selected_templates:
+#         template_pdbresnums = template['template_pdbresnums']
+#         template_seq_complete = template['template_seq']
+
+
+# def pdbfix_template(template):
+#     # TODO
+#     import pdbfixer
+#     import simtk.openmm.app as app
+#
+#     missing_residues = determine_template_missing_residues(template.observed_seq, template.complete_seq)
+#
+#     pdbfixer.findMissingAtoms()
+#     pdbfixer.addMissingAtoms()
+#     app.PDBFile.writeFile(pdbfixer.topology, pdbfixer.positions, file=template_fixed_filepath)
+
+
+# def determine_template_missing_residues(template):
+#     # complete_seq_residue_indices = range(len(template.observed_seq))
+#
+#     # missing_residues = {}
+#     # for i in range(len(template.complete_seq)):
+#     #     if template.complete_pdbresnums[i] not in template.observed_pdbresnums[i]:
+#     #         missing_residues[(0, i)] = []
+#
+#     # (0,17): [
+#     #         'GLY',
+#     #         'SER',
+#     #         'PHE',
+#     #         'GLY',
+#     #      ]
+#
+#     # seq_observed = template.observed_seq
+#     seq_complete = template.complete_seq
+#     seq_observed_w_gaps = gen_seq_observed_w_gaps(template)
+#     seq_observed_offset = index of first non-null element in seq_observed_w_gaps
+#
+#     missing_residues = {}
+#     index = 0
+#     for i in range(len(seq_complete)):
+#         if i < seq_observed_offset or i >= len(seq_observed_w_gaps)+seq_observed_offset or seq_observed_w_gaps[i-seq_observed_offset] is None:
+#             key = (0, index)
+#             if key not in missing_residues:
+#                 missing_residues[key] = []
+#             residue_code = seq_complete[i]
+#             residue_name = Bio.SeqUtils.seq3(residue_code).upper()
+#             missing_residues[key].append(residue_name)
+#         else:
+#             index += 1
+
+
+def gen_seq_observed_w_gaps(template):
+    # TODO skip this - should be able to set the "complete" sequence with the PDBFixer object and then just use the findMissingResidues() function.
+    first_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[0])
+    last_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[-1])
+    nobserved_residues_w_gaps = last_observed_residue_index - first_observed_residue_index + 1
+    print first_observed_residue_index, last_observed_residue_index, nobserved_residues_w_gaps, len(template.complete_seq)
+
+    seq_observed_w_gaps = [None] * nobserved_residues_w_gaps
+    for i in range(len(template.complete_seq)):
+        if i >= first_observed_residue_index and i <= last_observed_residue_index:
+            index = i - first_observed_residue_index
+            seq_observed_w_gaps[index] = template.complete_seq[index]
+    return seq_observed_w_gaps
 
 
 def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
