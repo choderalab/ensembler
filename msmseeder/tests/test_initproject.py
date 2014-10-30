@@ -22,8 +22,6 @@ def test_initproject():
 
 def test_gen_init_metadata():
     metadata = msmseeder.initproject.gen_init_metadata('.')
-    init_metadata = metadata.get('init')
-    assert init_metadata is not None
     metadata_keys = [
         'datestamp',
         'init_path',
@@ -33,7 +31,7 @@ def test_gen_init_metadata():
         'msmseeder_commit'
     ]
     for key in metadata_keys:
-        assert init_metadata.get(key) is not None
+        assert metadata.get(key) is not None
 
 
 def test_extract_targets_from_targetexplorer_json():
@@ -87,29 +85,29 @@ def test_attempt_symlink_structure_files():
         assert os.path.exists(project_pdb_filepath)
 
 
-def test_gen_seq_observed_w_gaps():
-    template = Mock()
-    template.complete_seq = 'FREAGSSGHAYVMAS'
-    template.observed_seq = 'REAGHAYVM'
-    template.complete_pdbresnums = range(1, len(template.complete_seq)+1)
-    template.observed_pdbresnums = [2, 3, 4, 8, 9, 10, 11, 12, 13]
-
-    seq_observed_w_gaps = msmseeder.initproject.gen_seq_observed_w_gaps(template)
-    print seq_observed_w_gaps
-    assert seq_observed_w_gaps == [
-        None,
-        'R',
-        'E',
-        'A',
-        None,
-        None,
-        None,
-        'G',
-        'H',
-        'A',
-        'Y',
-        'V',
-        'M',
-        None,
-        None,
-    ]
+# def test_gen_seq_observed_w_gaps():
+#     template = Mock()
+#     template.complete_seq = 'FREAGSSGHAYVMAS'
+#     template.observed_seq = 'REAGHAYVM'
+#     template.complete_pdbresnums = range(1, len(template.complete_seq)+1)
+#     template.observed_pdbresnums = [2, 3, 4, 8, 9, 10, 11, 12, 13]
+#
+#     seq_observed_w_gaps = msmseeder.initproject.gen_seq_observed_w_gaps(template)
+#     print seq_observed_w_gaps
+#     assert seq_observed_w_gaps == [
+#         None,
+#         'R',
+#         'E',
+#         'A',
+#         None,
+#         None,
+#         None,
+#         'G',
+#         'H',
+#         'A',
+#         'Y',
+#         'V',
+#         'M',
+#         None,
+#         None,
+#     ]

@@ -22,10 +22,7 @@ def initproject(project_toplevel_dir):
     :param project_toplevel_dir: str
     """
     create_project_dirs(project_toplevel_dir)
-    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
-    init_metadata = gen_init_metadata(project_toplevel_dir)
-    project_metadata.add_data(init_metadata)
-    project_metadata.write()
+    write_init_metadata(project_toplevel_dir)
 
 
 @msmseeder.utils.notify_when_done
@@ -48,9 +45,7 @@ def gather_targets_from_targetexplorer(dbapi_uri, search_string=''):
     targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
     write_seqs_to_fasta_file(targets)
 
-    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
-    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_targetexplorer_metadata)
-    msmseeder.core.write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
+    write_gather_targets_metadata(dbapi_uri, search_string, len(targets))
 
 
 @msmseeder.utils.notify_when_done
@@ -82,17 +77,22 @@ def create_project_dirs(project_toplevel_dir):
     msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures)
 
 
+def write_init_metadata(project_toplevel_dir):
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+    init_metadata = gen_init_metadata(project_toplevel_dir)
+    project_metadata.add_data(init_metadata)
+    project_metadata.write()
+
+
 def gen_init_metadata(project_toplevel_dir):
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata_dict = {
-        'init': {
-            'datestamp': datestamp,
-            'init_path': os.path.abspath(project_toplevel_dir),
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision
-        }
+        'datestamp': datestamp,
+        'init_path': os.path.abspath(project_toplevel_dir),
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision
     }
     return metadata_dict
 
@@ -216,22 +216,29 @@ def get_targetexplorer_db_metadata(dbapi_uri):
     return json.loads(db_metadata_jsonstr)
 
 
+def write_gather_targets_metadata(dbapi_uri, search_string, ntargets):
+    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    gather_targets_metadata = gen_gather_targets_metadata(ntargets, additional_metadata=gather_from_targetexplorer_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
+    project_metadata.add_data(gather_targets_metadata)
+    project_metadata.write()
+
+
+
 def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
     if additional_metadata is None:
         additional_metadata = {}
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
-        'gather_targets': {
-            'datestamp': datestamp,
-            'method': 'TargetExplorerDB',
-            'ntargets': str(ntarget_domains),
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision,
-        }
+        'datestamp': datestamp,
+        'method': 'TargetExplorerDB',
+        'ntargets': str(ntarget_domains),
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision,
     }
-    metadata['gather_targets'].update(additional_metadata)
+    metadata.update(additional_metadata)
     return metadata
 
 
