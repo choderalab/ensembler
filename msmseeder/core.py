@@ -1,6 +1,7 @@
 import os
 import logging
 import sys
+import re
 from collections import namedtuple
 
 # ========
@@ -18,7 +19,7 @@ manual_overrides_filename = 'manual-overrides.yaml'
 template_acceptable_ratio_observed_residues = 0.7
 
 # listed in order
-msmseeder_stages = [
+project_stages = [
     'init',
     'gather_targets',
     'gather_templates',
@@ -53,6 +54,8 @@ default_loglevel = 'info'
 loglevel_obj = getattr(logging, default_loglevel.upper())
 logger.setLevel(loglevel_obj)
 logger.addHandler(logging.StreamHandler(stream=sys.stdout))
+
+metadata_filename_regex = re.compile('(meta)([0-9]+)\.yaml')
 
 # ========
 # YAML
@@ -176,23 +179,127 @@ class TemplateManualOverrides:
             self.skip_pdbs = []
 
 
+def metadata_dir_mapper(msmseeder_stage, target_id=None):
+    metadata_dir_dict = {
+        'init': '.',
+        'gather_targets': 'targets',
+        'gather_templates': 'templates',
+    }
+    if msmseeder_stage in metadata_dir_dict:
+        return metadata_dir_dict[msmseeder_stage]
+    elif msmseeder_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+        return os.path.join('models', target_id)
+
+
 class ProjectMetadata:
+    """
+    Examples
+    --------
+    >>> init_project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+    >>> test_data = {'test_field': 'test_value'}
+    >>> init_project_metadata.add_data(test_data)
+    >>> init_project_metadata.write()
+    >>> gather_targets_project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
+    >>> gather_targets_project_metadata.add_data(test_data)
+    >>> gather_targets_project_metadata.write()
+    """
+    def __init__(self, project_stage='init'):
+        self.data = {}
+        self.project_stage = project_stage
+        if project_stage != project_stages[0]:
+            self.add_all_prev_metadata(project_stage)
+
+    def add_all_prev_metadata(self, project_stage):
+        current_project_stage_index = project_stages.index(project_stage)
+        for prev_project_stage in project_stages[: current_project_stage_index]:
+            self.add_prev_metadata(prev_project_stage)
+
+    def add_prev_metadata(self, project_stage):
+        latest_metadata_filepath = self.determine_latest_metadata_file(project_stage)
+        with open(latest_metadata_filepath) as latest_metadata_file:
+            prev_metadata = yaml.load(latest_metadata_file)
+        self.add_data(prev_metadata[project_stage], project_stage=project_stage)
+
+    def determine_latest_metadata_file(self, project_stage):
+        metadata_dir = metadata_dir_mapper(project_stage)
+        latest_metadata_file_index = self.determine_latest_metadata_file_index(project_stage)
+        latest_metadata_filepath = self.gen_metadata_filepath_from_dir_and_index(metadata_dir, latest_metadata_file_index)
+        return latest_metadata_filepath
+
+    def determine_latest_metadata_file_index(self, project_stage):
+        """
+        Returns -1 if no metadata files found
+        :param project_stage: str
+        :return: int
+        """
+        metadata_dir = metadata_dir_mapper(project_stage)
+        dir_contents = os.listdir(metadata_dir)
+        metadata_file_indices = []
+        for filename in dir_contents:
+            match = re.match(metadata_filename_regex, filename)
+            if match:
+                metadata_file_indices.append(int(match.groups()[1]))
+        if len(metadata_file_indices) > 0:
+            return max(metadata_file_indices)
+        else:
+            return -1
+
+    def gen_metadata_filepath_from_dir_and_index(self, dirpath, index):
+        metadata_filepath = os.path.join(dirpath, 'meta%d.yaml' % index)
+        return metadata_filepath
+
+    def add_data(self, data, project_stage=None):
+        """
+        Add metadata to the ProjectMetadata object.
+        If project_stage is not passed as an argument, it is set to ProjectMetadata.project_stage (which is itself set during object initialization).
+
+        Parameters
+        ----------
+        data: dict
+        project_stage: str
+
+        Examples
+        --------
+        >>> project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+        >>> metadata = {'datestamp': msmseeder.core.get_utcnow_formatted()}
+        >>> project_metadata.add_data(metadata)
+        """
+        if project_stage is None:
+            project_stage = self.project_stage
+        self.data.update({
+            project_stage: data
+        })
+
+    def write(self):
+        metadata_dir = metadata_dir_mapper(self.project_stage)
+        latest_metadata_file_index = self.determine_latest_metadata_file_index(self.project_stage)
+        metadata_filepath = self.gen_metadata_filepath_from_dir_and_index(metadata_dir, latest_metadata_file_index+1)
+        with open(metadata_filepath, 'w') as ofile:
+            for stage in project_stages:
+                if stage in self.data.keys():
+                    subdict = {stage: self.data[stage]}
+                    yaml.dump(subdict, ofile, default_flow_style=False)
+
+
+class DeprecatedProjectMetadata:
+    # TODO deprecate
     def __init__(self, data):
         self.data = data
 
     def write(self, ofilepath):
         with open(ofilepath, 'w') as ofile:
-            for stage in msmseeder_stages:
+            for stage in project_stages:
                 if stage in self.data.keys():
                     subdict = {stage: self.data[stage]}
                     yaml.dump(subdict, ofile, default_flow_style=False)
 
 
 def write_metadata(new_metadata_dict, msmseeder_stage, target_id=None):
+    # TODO deprecate
     if msmseeder_stage == 'init':
         metadata_dict = {}
     else:
-        prev_msmseeder_stage = msmseeder_stages[msmseeder_stages.index(msmseeder_stage) - 1]
+        prev_msmseeder_stage = project_stages[project_stages.index(msmseeder_stage) - 1]
         prev_metadata_filepath = metadata_file_mapper(prev_msmseeder_stage, target_id=target_id)
         with open(prev_metadata_filepath) as prev_metadata_file:
             metadata_dict = yaml.load(prev_metadata_file)
@@ -203,6 +310,7 @@ def write_metadata(new_metadata_dict, msmseeder_stage, target_id=None):
 
 
 def metadata_file_mapper(msmseeder_stage, target_id=None):
+    # TODO deprecate
     metadata_file_dict = {
         'init': 'meta.yaml',
         'gather_targets': os.path.join('targets', 'meta.yaml'),

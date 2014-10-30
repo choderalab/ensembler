@@ -3,6 +3,7 @@ import msmseeder.initproject
 import msmseeder.tests
 import msmseeder.core
 from msmseeder.utils import enter_temp_dir
+from mock import Mock
 
 
 def test_initproject():
@@ -16,7 +17,7 @@ def test_initproject():
         assert os.path.exists(msmseeder.core.default_project_dirnames.structures_pdb)
         assert os.path.exists(msmseeder.core.default_project_dirnames.structures_sifts)
         assert os.path.exists(msmseeder.core.default_project_dirnames.templates_structures)
-        assert os.path.exists('meta.yaml')
+        assert os.path.exists('meta0.yaml')
 
 
 def test_gen_init_metadata():
@@ -84,3 +85,31 @@ def test_attempt_symlink_structure_files():
         structure_type = 'pdb'
         msmseeder.initproject.attempt_symlink_structure_files(pdbid, '.', structure_paths, structure_type)
         assert os.path.exists(project_pdb_filepath)
+
+
+def test_gen_seq_observed_w_gaps():
+    template = Mock()
+    template.complete_seq = 'FREAGSSGHAYVMAS'
+    template.observed_seq = 'REAGHAYVM'
+    template.complete_pdbresnums = range(1, len(template.complete_seq)+1)
+    template.observed_pdbresnums = [2, 3, 4, 8, 9, 10, 11, 12, 13]
+
+    seq_observed_w_gaps = msmseeder.initproject.gen_seq_observed_w_gaps(template)
+    print seq_observed_w_gaps
+    assert seq_observed_w_gaps == [
+        None,
+        'R',
+        'E',
+        'A',
+        None,
+        None,
+        None,
+        'G',
+        'H',
+        'A',
+        'Y',
+        'V',
+        'M',
+        None,
+        None,
+    ]

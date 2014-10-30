@@ -22,8 +22,10 @@ def initproject(project_toplevel_dir):
     :param project_toplevel_dir: str
     """
     create_project_dirs(project_toplevel_dir)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
     init_metadata = gen_init_metadata(project_toplevel_dir)
-    msmseeder.core.write_metadata(init_metadata, msmseeder_stage='init')
+    project_metadata.add_data(init_metadata)
+    project_metadata.write()
 
 
 @msmseeder.utils.notify_when_done
