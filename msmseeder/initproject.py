@@ -45,7 +45,7 @@ def gather_targets_from_targetexplorer(dbapi_uri, search_string=''):
     targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
     write_seqs_to_fasta_file(targets)
 
-    write_gather_targets_metadata(dbapi_uri, search_string, len(targets))
+    write_gather_targets_from_targetexplorer_metadata(dbapi_uri, search_string, len(targets))
 
 
 @msmseeder.utils.notify_when_done
@@ -59,10 +59,7 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
         log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
     targets = extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
     write_seqs_to_fasta_file(targets)
-
-    gather_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
-    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_uniprot_metadata)
-    msmseeder.core.write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
+    write_gather_targets_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(targets))
 
 
 def create_project_dirs(project_toplevel_dir):
@@ -191,6 +188,7 @@ def write_seqs_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 't
 def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
     db_metadata = get_targetexplorer_db_metadata(dbapi_uri)
     metadata = {
+        'method': 'TargetExplorer',
         'gather_from_targetexplorer': {
             'db_uniprot_query_string': str(db_metadata.get('uniprot_query_string')),
             'db_uniprot_domain_regex': str(db_metadata.get('uniprot_domain_regex')),
@@ -203,6 +201,7 @@ def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
 
 def gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex):
     metadata = {
+        'method': 'UniProt',
         'gather_from_uniprot': {
             'uniprot_query_string': uniprot_query_string,
             'uniprot_domain_regex': uniprot_domain_regex,
@@ -216,13 +215,20 @@ def get_targetexplorer_db_metadata(dbapi_uri):
     return json.loads(db_metadata_jsonstr)
 
 
-def write_gather_targets_metadata(dbapi_uri, search_string, ntargets):
+def write_gather_targets_from_targetexplorer_metadata(dbapi_uri, search_string, ntargets):
     gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
     gather_targets_metadata = gen_gather_targets_metadata(ntargets, additional_metadata=gather_from_targetexplorer_metadata)
     project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
     project_metadata.add_data(gather_targets_metadata)
     project_metadata.write()
 
+
+def write_gather_targets_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntargets):
+    gather_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
+    gather_targets_metadata = gen_gather_targets_metadata(ntargets, additional_metadata=gather_from_uniprot_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
+    project_metadata.add_data(gather_targets_metadata)
+    project_metadata.write()
 
 
 def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
@@ -231,7 +237,6 @@ def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
         'datestamp': datestamp,
-        'method': 'TargetExplorerDB',
         'ntargets': str(ntarget_domains),
         'python_version': sys.version.split('|')[0].strip(),
         'python_full_version': msmseeder.core.literal_str(sys.version),
@@ -277,7 +282,7 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
 
 
 @msmseeder.utils.notify_when_done
-def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structure_dirs=None):
+def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None):
     """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
@@ -299,11 +304,27 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
+    write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs)
 
-    additional_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
-    additional_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(len(selected_templates), additional_metadata)
-    msmseeder.core.write_metadata(gather_templates_metadata, msmseeder_stage='gather_templates')
+
+@msmseeder.utils.notify_when_done
+def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
+    """# Searches UniProt for a set of template proteins with a user-defined
+    query string, then saves IDs, sequences and structures."""
+    manual_overrides = msmseeder.core.ManualOverrides()
+    uniprotxml = get_uniprot_xml(uniprot_query_string)
+    log_unique_domain_names(uniprot_query_string, uniprotxml)
+    if uniprot_domain_regex is not None:
+        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
+
+    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
+    for pdbchain in selected_pdbchains:
+        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
+
+    selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
+    write_template_seqs_to_fasta_file(selected_templates)
+    extract_template_structures_from_pdb_files(selected_templates)
+    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
 
 
 def get_targetexplorer_templates_json(dbapi_uri, search_string):
@@ -366,7 +387,7 @@ def download_structure_file(pdbid, project_structure_filepath, structure_type='p
 
 
 def download_pdb_file(pdbid, project_pdb_filepath):
-    logger.info('Downloading PDB file for:', pdbid)
+    logger.info('Downloading PDB file for: %s' % pdbid)
     pdbgz_page = msmseeder.PDB.retrieve_pdb(pdbid, compressed='yes')
     with open(project_pdb_filepath, 'w') as pdbgz_file:
         pdbgz_file.write(pdbgz_page)
@@ -490,47 +511,38 @@ def extract_template_structures_from_pdb_files(selected_templates):
             )
 
 
+def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs):
+    gather_templates_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    gather_templates_from_targetexplorer_metadata['structure_dirs'] = structure_dirs
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_targetexplorer_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_templates')
+    project_metadata.add_data(gather_templates_metadata)
+    project_metadata.write()
+
+
+def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs):
+    gather_templates_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
+    gather_templates_from_uniprot_metadata['structure_dirs'] = structure_dirs
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_uniprot_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_templates')
+    project_metadata.add_data(gather_templates_metadata)
+    project_metadata.write()
+
+
 def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
     if additional_metadata is None:
         additional_metadata = {}
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
-        'gather_templates': {
-            'datestamp': datestamp,
-            'method': 'TargetExplorerDB',
-            'ntemplates': str(nselected_templates),
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision
-        }
+        'datestamp': datestamp,
+        'ntemplates': str(nselected_templates),
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision
     }
-    metadata['gather_templates'].update(additional_metadata)
+    metadata.update(additional_metadata)
     return metadata
-
-
-@msmseeder.utils.notify_when_done
-def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
-    """# Searches UniProt for a set of template proteins with a user-defined
-    query string, then saves IDs, sequences and structures."""
-    manual_overrides = msmseeder.core.ManualOverrides()
-    uniprotxml = get_uniprot_xml(uniprot_query_string)
-    log_unique_domain_names(uniprot_query_string, uniprotxml)
-    if uniprot_domain_regex is not None:
-        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
-
-    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
-    for pdbchain in selected_pdbchains:
-        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
-
-    selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
-    write_template_seqs_to_fasta_file(selected_templates)
-    extract_template_structures_from_pdb_files(selected_templates)
-
-    additional_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
-    additional_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(len(selected_templates), additional_metadata)
-    msmseeder.core.write_metadata(gather_templates_metadata, msmseeder_stage='gather_templates')
 
 
 def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides):

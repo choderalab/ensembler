@@ -119,6 +119,7 @@ setup(
             'MSMSeederGatherTargets = msmseeder.scripts.MSMSeederGatherTargets:main',
             'MSMSeederGatherTemplates = msmseeder.scripts.MSMSeederGatherTemplates:main',
             'MSMSeederBuildModels = msmseeder.scripts.MSMSeederBuildModels:main',
+            'MSMSeederSortAndCluster = msmseeder.scripts.MSMSeederSortAndCluster:main',
             'MSMSeederRefineImplicitMD = msmseeder.scripts.MSMSeederRefineImplicitMD:main',
             'MSMSeederSolvate = msmseeder.scripts.MSMSeederSolvate:main',
             'MSMSeederRefineExplicitMD = msmseeder.scripts.MSMSeederRefineExplicitMD:main',

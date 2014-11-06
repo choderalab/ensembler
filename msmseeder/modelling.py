@@ -2,27 +2,24 @@ import sys
 import os
 import re
 import datetime
-import subprocess
 import logging
 import shutil
 import gzip
+import glob
 from collections import namedtuple
 import traceback
+import msmseeder
 import msmseeder.version
 import Bio
 import Bio.SeqIO
 import Bio.pairwise2
 import Bio.SubsMat.MatrixInfo
-import mpi4py.MPI
-import msmseeder
 import modeller
 import modeller.automodel
 from msmseeder.core import get_targets_and_templates
 import subprocess
-
-comm = mpi4py.MPI.COMM_WORLD
-rank = comm.rank
-size = comm.size
+import numpy as np
+from msmseeder.core import mpistate
 
 logger = logging.getLogger('info')
 
@@ -44,15 +41,12 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     ntemplates = len(templates)
     for target in targets:
         if process_only_these_targets and target.id not in process_only_these_targets: continue
-        target_setup_data = build_models_setup_target(target, comm, rank)
-        for template_index in range(rank, ntemplates, size):
+        target_setup_data = build_models_setup_target(target)
+        for template_index in range(mpistate.rank, ntemplates, mpistate.size):
             template = templates[template_index]
             if process_only_these_templates and template.id not in process_only_these_templates: continue
             build_model(target, template, target_setup_data, loglevel=loglevel)
-        comm.Barrier()
-        if rank == 0:
-            metadata = gen_build_models_metadata(target, target_setup_data)
-            msmseeder.core.write_metadata(metadata, msmseeder_stage='build_models', target_id=target.id)
+        write_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates)
 
 
 def build_model(target, template, target_setup_data, loglevel=None):
@@ -145,9 +139,10 @@ def get_modeller_version_from_readme(modeller_module):
                     return version
 
 
-def build_models_setup_target(target, comm=None, rank=0):
-    models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
-    if rank == 0:
+def build_models_setup_target(target):
+    target_setup_data = None
+    if mpistate.rank == 0:
+        models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
         target_starttime = datetime.datetime.utcnow()
         logger.info(
             '=========================================================================\n'
@@ -156,17 +151,15 @@ def build_models_setup_target(target, comm=None, rank=0):
             % target.id
         )
         msmseeder.utils.create_dir(models_target_dir)
-
-    if comm is not None:
-        comm.Barrier()
-    target_setup_data = TargetSetupData(
-        target_starttime=target_starttime,
-        models_target_dir=models_target_dir
-    )
+        target_setup_data = TargetSetupData(
+            target_starttime=target_starttime,
+            models_target_dir=models_target_dir
+        )
+    target_setup_data = mpistate.comm.bcast(target_setup_data, root=0)
     return target_setup_data
 
 
-def gen_build_models_metadata(target, target_setup_data):
+def gen_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates):
     """
     Generate build_models metadata for a given target.
     :param target: BioPython SeqRecord
@@ -178,18 +171,18 @@ def gen_build_models_metadata(target, target_setup_data):
     target_timedelta = datetime.datetime.utcnow() - target_setup_data.target_starttime
     modeller_version = get_modeller_version()
     metadata = {
-        'build_models': {
-            'target_id': target.id,
-            'datestamp': datestamp,
-            'timing': msmseeder.core.strf_timedelta(target_timedelta),
-            'nsuccessful_models': nsuccessful_models,
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision,
-            'modeller_version': modeller_version if modeller_version is not None else '',
-            'biopython_version': Bio.__version__
-        }
+        'target_id': target.id,
+        'datestamp': datestamp,
+        'timing': msmseeder.core.strf_timedelta(target_timedelta),
+        'nsuccessful_models': nsuccessful_models,
+        'process_only_these_targets': process_only_these_targets,
+        'process_only_these_templates': process_only_these_templates,
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision,
+        'modeller_version': modeller_version if modeller_version is not None else '',
+        'biopython_version': Bio.__version__
     }
     return metadata
 
@@ -224,7 +217,7 @@ def align_target_template(target, template, gap_open=-10, gap_extend=-0.5):
 
 def init_build_model_logfile(modeling_log_filepath):
     log_data = {
-        'mpi_rank': rank,
+        'mpi_rank': mpistate.rank,
         'complete': False,
     }
     log_filepath = modeling_log_filepath
@@ -302,253 +295,212 @@ def end_exception_build_model_logfile(e, log_file):
     log_file.log(new_log_data=log_data)
 
 
-def sort_by_sequence_identity(process_only_these_targets=None, verbose=False):
+@msmseeder.utils.mpirank0only_and_end_with_barrier
+def write_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates):
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='build_models', target_id=target.id)
+    metadata = gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
+                                         process_only_these_templates)
+    project_metadata.add_data(metadata)
+    project_metadata.write()
+
+
+@msmseeder.utils.mpirank0only_and_end_with_barrier
+@msmseeder.utils.notify_when_done
+def sort_by_sequence_identity(process_only_these_targets=None, loglevel=None):
     '''Compile sorted list of templates by sequence identity.
     Runs serially.
     '''
-    import os
-    import numpy
-    import Bio.SeqIO
-    import mpi4py.MPI
-    comm = mpi4py.MPI.COMM_WORLD 
-    rank = comm.rank
+    # TODO refactor
+    msmseeder.utils.loglevel_setter(logger, loglevel)
+    targets, templates = get_targets_and_templates()
+    for target in targets:
 
-    if rank == 0:
-        targets_dir = os.path.abspath("targets")
-        templates_dir = os.path.abspath("templates")
-        models_dir = os.path.abspath("models")
+        # Process only specified targets if directed.
+        if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
-        targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-        targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
-        templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-        templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+        models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
+        if not os.path.exists(models_target_dir): continue
+
+        logger.info(
+            "-------------------------------------------------------------------------\n"
+            "Compiling template sequence identities for target %s\n"
+            "-------------------------------------------------------------------------"
+            % (target.id)
+        )
 
         # ========
-        # Compile sorted list by sequence identity
+        # Build a list of valid models
         # ========
 
-        for target in targets:
-            
-            # Process only specified targets if directed.
-            if process_only_these_targets and (target.id not in process_only_these_targets): continue
+        logger.debug("Building list of valid models...")
+        valid_templates = list()
+        for template in templates:
+            model_filename = os.path.join(models_target_dir, template.id, 'model.pdb.gz')
+            if os.path.exists(model_filename):
+                valid_templates.append(template)
 
-            models_target_dir = os.path.join(models_dir, target.id)
-            if not os.path.exists(models_target_dir): continue
+        nvalid = len(valid_templates)
+        logger.debug("%d valid models found" % nvalid)
 
-            print "-------------------------------------------------------------------------"
-            print "Compiling template sequence identities for target %s" % (target.id)
-            print "-------------------------------------------------------------------------"
+        # ========
+        # Sort by sequence identity
+        # ========
 
-            # ========
-            # Build a list of valid models
-            # ========
+        logger.debug("Sorting models in order of decreasing sequence identity...")
+        seqids = np.zeros([nvalid], np.float32)
+        for (template_index, template) in enumerate(valid_templates):
+            model_seqid_filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
+            with open(model_seqid_filename, 'r') as model_seqid_file:
+                firstline = model_seqid_file.readline().strip()
+            seqid = float(firstline)
+            seqids[template_index] = seqid
+        sorted_seqids = np.argsort(-seqids)
 
-            if verbose: print "Building list of valid models..."
-            valid_templates = list()
-            for template in templates:
-                model_filename = os.path.join(models_target_dir, template.id, 'model.pdb.gz')
-                if os.path.exists(model_filename):
-                    valid_templates.append(template)
+        # ========
+        # Write templates sorted by sequence identity
+        # ========
 
-            nvalid = len(valid_templates)
-            if verbose: print "%d valid models found" % nvalid
+        seq_ofilename = os.path.join(models_target_dir, 'sequence-identities.txt')
+        with open(seq_ofilename, 'w') as seq_ofile:
+            for index in sorted_seqids:
+                template = valid_templates[index]
+                identity = seqids[index]
+                seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
 
-            # ========
-            # Sort by sequence identity
-            # ========
+        # ========
+        # Metadata
+        # ========
 
-            if verbose: print "Sorting models in order of decreasing sequence identity..."
-            seqids = numpy.zeros([nvalid], numpy.float32)
-            for (template_index, template) in enumerate(valid_templates):
-                model_seqid_filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
-                with open(model_seqid_filename, 'r') as model_seqid_file:
-                    firstline = model_seqid_file.readline().strip()
-                seqid = float(firstline)
-                seqids[template_index] = seqid
-            sorted_seqids = numpy.argsort(-seqids)
+        project_metadata = msmseeder.core.ProjectMetadata(project_stage='sort_by_sequence_identity', target_id=target.id)
 
-            # ========
-            # Write templates sorted by sequence identity
-            # ========
+        datestamp = msmseeder.core.get_utcnow_formatted()
 
-            seq_ofilename = os.path.join(models_target_dir, 'sequence-identities.txt')
-            with open(seq_ofilename, 'w') as seq_ofile:
-                for index in sorted_seqids:
-                    template = valid_templates[index]
-                    identity = seqids[index]
-                    seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
+        metadata = {
+            'target_id': target.id,
+            'datestamp': datestamp,
+            'python_version': sys.version.split('|')[0].strip(),
+            'python_full_version': msmseeder.core.literal_str(sys.version),
+            'msmseeder_version': msmseeder.version.short_version,
+            'msmseeder_commit': msmseeder.version.git_revision,
+            'biopython_version': Bio.__version__
+        }
 
-            # ========
-            # Metadata
-            # ========
+        project_metadata.add_data(metadata)
+        project_metadata.write()
 
-            import sys
-            import yaml
-            import msmseeder
-            import msmseeder.version
-            datestamp = msmseeder.core.get_utcnow_formatted()
 
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file)
-
-            metadata['sort_by_sequence_identity'] = {
-                'target_id': target.id,
-                'datestamp': datestamp,
-                'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': msmseeder.core.literal_str(sys.version),
-                'msmseeder_version': msmseeder.version.short_version,
-                'msmseeder_commit': msmseeder.version.git_revision,
-                'biopython_version': Bio.__version__
-            }
-
-            metadata = msmseeder.core.ProjectMetadata(metadata)
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            metadata.write(meta_filepath)
-
-    comm.Barrier()
-    if rank == 0:
-        print 'Done.'
-
+@msmseeder.utils.mpirank0only_and_end_with_barrier
+@msmseeder.utils.notify_when_done
 def cluster_models(process_only_these_targets=None, verbose=False):
     '''Cluster models based on RMSD, and filter out non-unique models as
     determined by a given cutoff.
 
     Runs serially.
     '''
-    import os
-    import gzip
-    import glob
-    import Bio.SeqIO
+    # TODO refactor
     import mdtraj
-    import mpi4py.MPI
-    comm = mpi4py.MPI.COMM_WORLD 
-    rank = comm.rank
+    targets, templates = get_targets_and_templates()
+    cutoff = 0.06 # Cutoff for RMSD clustering (nm)
 
-    if rank == 0:
-        targets_dir = os.path.abspath("targets")
-        templates_dir = os.path.abspath("templates")
-        models_dir = os.path.abspath("models")
+    for target in targets:
+        if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
-        targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-        targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
-        templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-        templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+        models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
+        if not os.path.exists(models_target_dir): continue
 
-        cutoff = 0.06 # Cutoff for RMSD clustering (nm)
+        # =============================
+        # Construct a mdtraj trajectory containing all models
+        # =============================
 
-        for target in targets:
-            if process_only_these_targets and (target.id not in process_only_these_targets): continue
+        logger.debug('Building a list of valid models...')
 
-            models_target_dir = os.path.join(models_dir, target.id)
-            if not os.path.exists(models_target_dir): continue
-
-            # =============================
-            # Construct a mdtraj trajectory containing all models
-            # =============================
-
-            print 'Building a list of valid models...'
-
-            model_pdbfilenames = []
-            valid_templateIDs = []
-            for t, template in enumerate(templates):
-                model_dir = os.path.join(models_target_dir, template.id)
-                model_pdbfilename = os.path.join(model_dir, 'model.pdb')
-                if not os.path.exists(model_pdbfilename):
-                    model_pdbfilename_compressed = os.path.join(model_dir, 'model.pdb.gz')
-                    if not os.path.exists(model_pdbfilename_compressed):
-                        continue
-                    else:
-                        with gzip.open(model_pdbfilename_compressed) as model_pdbfile_compressed:
-                            with open(model_pdbfilename, 'w') as model_pdbfile:
-                                model_pdbfile.write(model_pdbfile_compressed.read())
-                model_pdbfilenames.append(model_pdbfilename)
-                valid_templateIDs.append(template.id)
-
-            print 'Constructing a trajectory containing all valid models...'
-
-            traj = mdtraj.load(model_pdbfilenames)
-
-            # =============================
-            # Clustering
-            # =============================
-
-            print 'Conducting RMSD-based clustering...'
-
-            # Remove any existing unique_by_clustering files
-            for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
-                os.unlink(f)
-
-            # Each template will be added to the list uniques if it is further than
-            # 0.2 Angstroms (RMSD) from the nearest template.
-            uniques=[]
-            min_rmsd = []
-            for (t, templateID) in enumerate(valid_templateIDs):
-                model_dir = os.path.join(models_target_dir, templateID)
-
-                # Add the first template to the list of uniques
-                if t==0:
-                    uniques.append(templateID)
-                    with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
-                    continue
-
-                # Cluster using CA atoms
-                CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
-                rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
-                min_rmsd.append( min(rmsds) )
-
-                if min_rmsd[-1] < cutoff:
+        model_pdbfilenames = []
+        valid_templateIDs = []
+        for t, template in enumerate(templates):
+            model_dir = os.path.join(models_target_dir, template.id)
+            model_pdbfilename = os.path.join(model_dir, 'model.pdb')
+            if not os.path.exists(model_pdbfilename):
+                model_pdbfilename_compressed = os.path.join(model_dir, 'model.pdb.gz')
+                if not os.path.exists(model_pdbfilename_compressed):
                     continue
                 else:
-                    uniques.append( templateID )
-                    # Create a blank file to say this template was found to be unique
-                    # by clustering
-                    with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+                    with gzip.open(model_pdbfilename_compressed) as model_pdbfile_compressed:
+                        with open(model_pdbfilename, 'w') as model_pdbfile:
+                            model_pdbfile.write(model_pdbfile_compressed.read())
+            model_pdbfilenames.append(model_pdbfilename)
+            valid_templateIDs.append(template.id)
 
-            with open( os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
-                for u in uniques:
-                    uniques_file.write(u+'\n')
-                print '%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff)
+        logger.info('Constructing a trajectory containing all valid models...')
 
-            for template in templates:
-                model_dir = os.path.join(models_target_dir, template.id)
-                model_pdbfilename = os.path.join(model_dir, 'model.pdb')
-                if os.path.exists(model_pdbfilename):
-                    os.remove(model_pdbfilename)
+        traj = mdtraj.load(model_pdbfilenames)
 
-            # ========
-            # Metadata
-            # ========
+        # =============================
+        # Clustering
+        # =============================
 
-            import sys
-            import yaml
-            import msmseeder
-            import msmseeder.version
-            import mdtraj.version
-            datestamp = msmseeder.core.get_utcnow_formatted()
+        logger.info('Conducting RMSD-based clustering...')
 
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file)
+        # Remove any existing unique_by_clustering files
+        for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
+            os.unlink(f)
 
-            metadata['cluster_models'] = {
-                'target_id': target.id,
-                'datestamp': datestamp,
-                'nunique_models': len(uniques),
-                'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': msmseeder.core.literal_str(sys.version),
-                'msmseeder_version': msmseeder.version.short_version,
-                'msmseeder_commit': msmseeder.version.git_revision,
-                'biopython_version': Bio.__version__,
-                'mdtraj_version': mdtraj.version.short_version,
-                'mdtraj_commit': mdtraj.version.git_revision
-            }
+        # Each template will be added to the list uniques if it is further than
+        # 0.2 Angstroms (RMSD) from the nearest template.
+        uniques=[]
+        min_rmsd = []
+        for (t, templateID) in enumerate(valid_templateIDs):
+            model_dir = os.path.join(models_target_dir, templateID)
 
-            metadata = msmseeder.core.ProjectMetadata(metadata)
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            metadata.write(meta_filepath)
+            # Add the first template to the list of uniques
+            if t==0:
+                uniques.append(templateID)
+                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+                continue
 
-    comm.Barrier()
-    if rank == 0:
-        print 'Done.'
+            # Cluster using CA atoms
+            CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
+            rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
+            min_rmsd.append( min(rmsds) )
 
+            if min_rmsd[-1] < cutoff:
+                continue
+            else:
+                uniques.append( templateID )
+                # Create a blank file to say this template was found to be unique
+                # by clustering
+                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+
+        with open( os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
+            for u in uniques:
+                uniques_file.write(u+'\n')
+            logger.info('%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff))
+
+        for template in templates:
+            model_dir = os.path.join(models_target_dir, template.id)
+            model_pdbfilename = os.path.join(model_dir, 'model.pdb')
+            if os.path.exists(model_pdbfilename):
+                os.remove(model_pdbfilename)
+
+        # ========
+        # Metadata
+        # ========
+
+        import mdtraj.version
+        project_metadata = msmseeder.core.ProjectMetadata(project_stage='cluster_models', target_id=target.id)
+        datestamp = msmseeder.core.get_utcnow_formatted()
+
+        metadata = {
+            'target_id': target.id,
+            'datestamp': datestamp,
+            'nunique_models': len(uniques),
+            'python_version': sys.version.split('|')[0].strip(),
+            'python_full_version': msmseeder.core.literal_str(sys.version),
+            'msmseeder_version': msmseeder.version.short_version,
+            'msmseeder_commit': msmseeder.version.git_revision,
+            'biopython_version': Bio.__version__,
+            'mdtraj_version': mdtraj.version.short_version,
+            'mdtraj_commit': mdtraj.version.git_revision
+        }
+
+        project_metadata.add_data(metadata)
+        project_metadata.write()

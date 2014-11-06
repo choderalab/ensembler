@@ -10,21 +10,20 @@ import msmseeder
 import msmseeder.modelling
 
 def main():
-    argparser = argparse.ArgumentParser(description='Models a set of target sequences onto a set of template structures using Modeller.', formatter_class=argparse.RawTextHelpFormatter)
-
+    argparser = argparse.ArgumentParser(description='Sorts models by sequence identity, then performs clustering to filter out non-unique models.', formatter_class=argparse.RawTextHelpFormatter)
     argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
-    argparser.add_argument('--templates', nargs='+', help='(Default: all templates) Optionally define a subset of templates to work on by providing one or more template IDs separated by spaces (e.g. "ABL1_HUMAN_D0_1OPL_A")')
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()
 
     msmseeder.core.check_project_toplevel_dir()
 
-    if args.verbose:
-        loglevel = 'debug'
-    else:
-        loglevel = 'info'
+    # if args.verbose:
+    #     loglevel = 'debug'
+    # else:
+    #     loglevel = 'info'
 
-    msmseeder.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, loglevel=loglevel)
+    msmseeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.targets, loglevel=None)
+    msmseeder.modelling.cluster_models(process_only_these_targets=args.targets, verbose=args.verbose)
 
 if __name__ == '__main__':
     main()

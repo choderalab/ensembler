@@ -23,10 +23,10 @@ def test_build_model():
         target_setup_data.models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
         os.mkdir(msmseeder.core.default_project_dirnames.models)
         os.mkdir(msmseeder.core.default_project_dirnames.templates)
-        os.mkdir(msmseeder.core.default_project_dirnames.templates_structures_observed)
+        os.mkdir(msmseeder.core.default_project_dirnames.templates_structures)
         os.mkdir(target_setup_data.models_target_dir)
 
-        shutil.copy(template_filepath, msmseeder.core.default_project_dirnames.templates_structures_observed)
+        shutil.copy(template_filepath, msmseeder.core.default_project_dirnames.templates_structures)
 
         msmseeder.modelling.build_model(
             target,

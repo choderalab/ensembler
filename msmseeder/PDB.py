@@ -2,15 +2,8 @@
 #
 # Daniel L. Parton <daniel.parton@choderalab.org> - 16 Feb 2013
 
-#==============================================================================
-# IMPORTS
-#==============================================================================
-
 import urllib2
 
-#==============================================================================
-# METHODS
-#==============================================================================
 
 def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, desired_chainID):
     '''
@@ -61,16 +54,20 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
             ofile.close()
     return len(resnums_extracted)
 
+
 def retrieve_sifts(pdb_id):
     '''Retrieves a SIFTS .xml file, given a PDB ID. Works by modifying the PDBe download URL.
     Also removes annoying namespace stuff.
     '''
-    import re
     import gzip
     import StringIO
     sifts_download_base_url='ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/'
     url = sifts_download_base_url + pdb_id.lower() + '.xml.gz'
-    response = urllib2.urlopen(url)
+    try:
+        response = urllib2.urlopen(url)
+    except urllib2.URLError:
+        print 'ERROR downloading SIFTS file with PDB ID: %s' % pdb_id
+        raise
 
     sifts_page = response.read(100000000) # Max 100MB
     # Decompress string
@@ -93,6 +90,7 @@ def retrieve_sifts(pdb_id):
                 continue
             sifts_page_processed += line + '\n'
     return sifts_page_processed
+
 
 def retrieve_pdb(pdb_id,compressed='no'):
     '''Retrieves a PDB file, given a PDB ID. Works by modifying the PDB download URL.
