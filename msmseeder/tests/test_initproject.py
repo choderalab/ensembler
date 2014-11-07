@@ -1,4 +1,5 @@
 import os
+import shutil
 import msmseeder.initproject
 import msmseeder.tests
 import msmseeder.core
@@ -16,14 +17,13 @@ def test_initproject():
         assert os.path.exists(msmseeder.core.default_project_dirnames.packaged_models)
         assert os.path.exists(msmseeder.core.default_project_dirnames.structures_pdb)
         assert os.path.exists(msmseeder.core.default_project_dirnames.structures_sifts)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.templates_structures)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.templates_structures_observed)
+        assert os.path.exists(msmseeder.core.default_project_dirnames.templates_structures_complete)
         assert os.path.exists('meta0.yaml')
 
 
 def test_gen_init_metadata():
     metadata = msmseeder.initproject.gen_init_metadata('.')
-    init_metadata = metadata.get('init')
-    assert init_metadata is not None
     metadata_keys = [
         'datestamp',
         'init_path',
@@ -33,7 +33,7 @@ def test_gen_init_metadata():
         'msmseeder_commit'
     ]
     for key in metadata_keys:
-        assert init_metadata.get(key) is not None
+        assert metadata.get(key) is not None
 
 
 def test_extract_targets_from_targetexplorer_json():
@@ -87,29 +87,46 @@ def test_attempt_symlink_structure_files():
         assert os.path.exists(project_pdb_filepath)
 
 
-def test_gen_seq_observed_w_gaps():
-    template = Mock()
-    template.complete_seq = 'FREAGSSGHAYVMAS'
-    template.observed_seq = 'REAGHAYVM'
-    template.complete_pdbresnums = range(1, len(template.complete_seq)+1)
-    template.observed_pdbresnums = [2, 3, 4, 8, 9, 10, 11, 12, 13]
+def test_pdbfix_template():
+    template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
+    with enter_temp_dir():
+        os.makedirs(msmseeder.core.default_project_dirnames.templates_structures_observed)
+        os.makedirs(msmseeder.core.default_project_dirnames.templates_structures_complete)
+        shutil.copy(template_filepath, os.path.join(msmseeder.core.default_project_dirnames.templates_structures_observed, 'mock_template.pdb'))
+        template = Mock()
+        template.chainid = 'A'
+        template.templateid = 'mock_template'
+        template.observed_seq = 'YQNLSPVGSGGSVCAAFD'
+        template.complete_seq = 'YQNLSPVGSGAYGSVCAAFD'
+        msmseeder.initproject.pdbfix_template(template)
 
-    seq_observed_w_gaps = msmseeder.initproject.gen_seq_observed_w_gaps(template)
-    print seq_observed_w_gaps
-    assert seq_observed_w_gaps == [
-        None,
-        'R',
-        'E',
-        'A',
-        None,
-        None,
-        None,
-        'G',
-        'H',
-        'A',
-        'Y',
-        'V',
-        'M',
-        None,
-        None,
-    ]
+        pdbfixed_template_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, 'mock_template.pdb')
+        assert os.path.exists(pdbfixed_template_filepath)
+
+
+# def test_gen_seq_observed_w_gaps():
+#     template = Mock()
+#     template.complete_seq = 'FREAGSSGHAYVMAS'
+#     template.observed_seq = 'REAGHAYVM'
+#     template.complete_pdbresnums = range(1, len(template.complete_seq)+1)
+#     template.observed_pdbresnums = [2, 3, 4, 8, 9, 10, 11, 12, 13]
+#
+#     seq_observed_w_gaps = msmseeder.initproject.gen_seq_observed_w_gaps(template)
+#     print seq_observed_w_gaps
+#     assert seq_observed_w_gaps == [
+#         None,
+#         'R',
+#         'E',
+#         'A',
+#         None,
+#         None,
+#         None,
+#         'G',
+#         'H',
+#         'A',
+#         'Y',
+#         'V',
+#         'M',
+#         None,
+#         None,
+#     ]

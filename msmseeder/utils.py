@@ -4,25 +4,43 @@ import logging
 import functools
 import shutil
 import tempfile
+from msmseeder.core import mpistate
 
 logger = logging.getLogger('info')
+
+
+def nonefn():
+    return None
+
+
+def mpirank0only(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        if mpistate.rank == 0:
+            fn(*args, **kwargs)
+    return wrapper
+
+
+def mpirank0only_and_end_with_barrier(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        if mpistate.rank == 0:
+            fn(*args, **kwargs)
+        mpistate.comm.Barrier()
+    return wrapper
 
 
 def notify_when_done(fn):
     @functools.wraps(fn)
     def print_done(*args, **kwargs):
-        try:
-            import mpi4py.MPI
-            comm = mpi4py.MPI.COMM_WORLD
-            rank = comm.rank
-            if rank == 0:
-                fn(*args, **kwargs)
-                logger.info('Done.')
-        except ImportError:
-            fn(*args, **kwargs)
-            logger.info('Done.')
-
+        fn(*args, **kwargs)
+        log_done()
     return print_done
+
+
+@mpirank0only
+def log_done():
+    logger.info('Done.')
 
 
 def create_dir(dirpath):

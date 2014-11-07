@@ -18,7 +18,7 @@ def test_build_model():
         target.id = 'mock_target'
         target.seq = 'YILGDTLGVGGKVKVGKH'
         template.id = 'mock_template'
-        template.seq = 'YQNLSPVGSGAYGSVCAAFD'
+        template.seq = 'YQNLSPVGSGGSVCAAFD'
         target_setup_data.target_starttime = datetime.datetime.utcnow()
         target_setup_data.models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
         os.mkdir(msmseeder.core.default_project_dirnames.models)

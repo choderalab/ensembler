@@ -56,7 +56,26 @@ loglevel_obj = getattr(logging, default_loglevel.upper())
 logger.setLevel(loglevel_obj)
 logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
-metadata_filename_regex = re.compile('(meta)([0-9]+)\.yaml')
+# metadata_filename_regex = re.compile('(^|.*)(meta)([0-9]+)\.yaml')
+
+# ========
+# MPI
+# ========
+
+class MPIState:
+    def __init__(self):
+        try:
+            import mpi4py.MPI
+            self.comm = mpi4py.MPI.COMM_WORLD
+            self.rank = self.comm.rank
+            self.size = self.comm.size
+        except Exception as e:
+            logger.debug('Error initializing MPIState:\n%s' % e)
+            self.comm = None
+            self.rank = 0
+            self.size = 1
+
+mpistate = MPIState()
 
 # ========
 # YAML
@@ -180,19 +199,18 @@ class TemplateManualOverrides:
             self.skip_pdbs = []
 
 
-def metadata_dir_mapper(msmseeder_stage, target_id=None):
-    metadata_dir_dict = {
-        'init': '.',
-        'gather_targets': 'targets',
-        'gather_templates': 'templates',
-    }
-    if msmseeder_stage in metadata_dir_dict:
-        return metadata_dir_dict[msmseeder_stage]
-    elif msmseeder_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
-        return os.path.join('models', target_id)
+def gen_metadata_filename(msmseeder_stage, metadata_file_index):
+    for modelling_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+        if msmseeder_stage == modelling_stage:
+            return '%s-meta%d.yaml' % (msmseeder_stage, metadata_file_index)
+    return 'meta%d.yaml' % metadata_file_index
 
 
 class ProjectMetadata:
+    # TODO - have metadata files output as follows
+    # models/SRC_HUMAN_D0/build_models-meta.yaml
+    # models/SRC_HUMAN_D0/sort_by_sequence_identity-meta.yaml
+    # models/SRC_HUMAN_D0/implicit_refinement-meta.yaml
     """
     Examples
     --------
@@ -204,9 +222,10 @@ class ProjectMetadata:
     >>> gather_targets_project_metadata.add_data(test_data)
     >>> gather_targets_project_metadata.write()
     """
-    def __init__(self, project_stage='init'):
+    def __init__(self, project_stage='init', target_id=None):
         self.data = {}
         self.project_stage = project_stage
+        self.target_id = target_id
         if project_stage != project_stages[0]:
             self.add_all_prev_metadata(project_stage)
 
@@ -216,16 +235,34 @@ class ProjectMetadata:
             self.add_prev_metadata(prev_project_stage)
 
     def add_prev_metadata(self, project_stage):
-        latest_metadata_filepath = self.determine_latest_metadata_file(project_stage)
+        latest_metadata_filepath = self.determine_latest_metadata_filepath(project_stage)
         with open(latest_metadata_filepath) as latest_metadata_file:
             prev_metadata = yaml.load(latest_metadata_file)
         self.add_data(prev_metadata[project_stage], project_stage=project_stage)
 
-    def determine_latest_metadata_file(self, project_stage):
-        metadata_dir = metadata_dir_mapper(project_stage)
+    def determine_latest_metadata_filepath(self, project_stage):
+        metadata_dir = self.metadata_dir_mapper(project_stage, self.target_id)
+        metadata_file_basename = self.metadata_file_basename_mapper(project_stage)
         latest_metadata_file_index = self.determine_latest_metadata_file_index(project_stage)
-        latest_metadata_filepath = self.gen_metadata_filepath_from_dir_and_index(metadata_dir, latest_metadata_file_index)
+        latest_metadata_filepath = os.path.join(metadata_dir, '%s%d.yaml' % (metadata_file_basename, latest_metadata_file_index))
         return latest_metadata_filepath
+
+    def metadata_dir_mapper(self, project_stage, target_id=None):
+        metadata_dir_dict = {
+            'init': '.',
+            'gather_targets': 'targets',
+            'gather_templates': 'templates',
+        }
+        if project_stage in metadata_dir_dict:
+            return metadata_dir_dict[project_stage]
+        elif project_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+            return os.path.join('models', target_id)
+
+    def metadata_file_basename_mapper(self, project_stage):
+        if project_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+            return '%s-meta' % project_stage
+        else:
+            return 'meta'
 
     def determine_latest_metadata_file_index(self, project_stage):
         """
@@ -233,21 +270,68 @@ class ProjectMetadata:
         :param project_stage: str
         :return: int
         """
-        metadata_dir = metadata_dir_mapper(project_stage)
+        metadata_dir = self.metadata_dir_mapper(project_stage, target_id=self.target_id)
         dir_contents = os.listdir(metadata_dir)
+        metadata_file_basename = self.metadata_file_basename_mapper(project_stage)
+        metadata_file_regex = re.compile('%s([0-9]+)\.yaml' % metadata_file_basename)
         metadata_file_indices = []
         for filename in dir_contents:
-            match = re.match(metadata_filename_regex, filename)
+            match = re.search(metadata_file_regex, filename)
             if match:
-                metadata_file_indices.append(int(match.groups()[1]))
+                metadata_file_indices.append(int(match.groups()[0]))
         if len(metadata_file_indices) > 0:
             return max(metadata_file_indices)
         else:
             return -1
 
-    def gen_metadata_filepath_from_dir_and_index(self, dirpath, index):
-        metadata_filepath = os.path.join(dirpath, 'meta%d.yaml' % index)
+    def gen_metadata_filepath_from_dir_index_and_file_basename(self, dirpath, file_basename, index):
+        metadata_filepath = os.path.join(dirpath, '%s%d.yaml' % (file_basename, index))
         return metadata_filepath
+
+    # def determine_latest_metadata_file(self, project_stage):
+    #     if self.project_stage in ['init', 'gather_targets', 'gather_templates']:
+    #         metadata_dir = metadata_dir_mapper(project_stage)
+    #     else:
+    #         metadata_dir = metadata_dir_mapper(project_stage, target_id=self.target_id)
+    #     latest_metadata_file_index = self.determine_latest_metadata_file_index(project_stage)
+    #     latest_metadata_filepath = self.gen_metadata_filepath_from_dir_and_index(metadata_dir, latest_metadata_file_index)
+    #     return latest_metadata_filepath
+    #
+    # def determine_latest_metadata_file_index(self, project_stage):
+    #     """
+    #     Returns -1 if no metadata files found
+    #     :param project_stage: str
+    #     :return: int
+    #     """
+    #     if self.project_stage in ['init', 'gather_targets', 'gather_templates']:
+    #         metadata_dir = metadata_dir_mapper(project_stage)
+    #     else:
+    #         metadata_dir = metadata_dir_mapper(project_stage, target_id=self.target_id)
+    #     dir_contents = os.listdir(metadata_dir)
+    #     metadata_file_indices = []
+    #     for filename in dir_contents:
+    #         match = re.match(metadata_filename_regex, filename)
+    #         if match:
+    #             metadata_file_indices.append(int(match.groups()[1]))
+    #     if len(metadata_file_indices) > 0:
+    #         return max(metadata_file_indices)
+    #     else:
+    #         return -1
+    #
+    # def gen_metadata_filepath_from_dir_and_index(self, dirpath, index):
+    #     metadata_filepath = os.path.join(dirpath, 'meta%d.yaml' % index)
+    #     return metadata_filepath
+    #
+    # def metadata_dir_mapper(self, msmseeder_stage, target_id=None):
+    # metadata_dir_dict = {
+    #     'init': '.',
+    #     'gather_targets': 'targets',
+    #     'gather_templates': 'templates',
+    # }
+    # if msmseeder_stage in metadata_dir_dict:
+    #     return metadata_dir_dict[msmseeder_stage]
+    # elif msmseeder_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+    #     return os.path.join('models', target_id)
 
     def add_data(self, data, project_stage=None):
         """
@@ -271,10 +355,21 @@ class ProjectMetadata:
             project_stage: data
         })
 
+    def add_iteration_number_to_metadata(self, iter_number):
+        """
+        Parameters
+        ----------
+        iter_number: int
+        """
+        data = self.data[self.project_stage]
+        data['iteration'] = iter_number
+
     def write(self):
-        metadata_dir = metadata_dir_mapper(self.project_stage)
+        metadata_dir = self.metadata_dir_mapper(self.project_stage, target_id=self.target_id)
+        metadata_file_basename = self.metadata_file_basename_mapper(self.project_stage)
         latest_metadata_file_index = self.determine_latest_metadata_file_index(self.project_stage)
-        metadata_filepath = self.gen_metadata_filepath_from_dir_and_index(metadata_dir, latest_metadata_file_index+1)
+        self.add_iteration_number_to_metadata(latest_metadata_file_index+1)
+        metadata_filepath = self.gen_metadata_filepath_from_dir_index_and_file_basename(metadata_dir, metadata_file_basename, latest_metadata_file_index+1)
         with open(metadata_filepath, 'w') as ofile:
             for stage in project_stages:
                 if stage in self.data.keys():

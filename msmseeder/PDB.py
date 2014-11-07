@@ -2,27 +2,15 @@
 #
 # Daniel L. Parton <daniel.parton@choderalab.org> - 16 Feb 2013
 
-#==============================================================================
-# IMPORTS
-#==============================================================================
-
 import urllib2
 
-#==============================================================================
-# METHODS
-#==============================================================================
 
-def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, desired_chainID):
+def extract_residues_by_resnum(output_file, pdb_input_file, template):
     """
     Parameters
     ----------
     output_file: string or gzip.file_like
     pdb_input_file: string or gzip.file_like
-
-    Returns
-    ----------
-    int
-        The number of lines extracted.
     """
     import gzip
     if type(pdb_input_file) in [str, unicode]:
@@ -34,7 +22,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
     # list of resnum strings e.g. ['9', '29', '30B'] must be converted as follows to match the PDB format:
     # ['   9 ', '  29 ', '  30B']
     import re
-    desired_resnums = [ '%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in desired_resnums ]
+    desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.observed_pdbresnums]
 
     if type(output_file) in [str, unicode]:
         ofile = open(output_file, 'w')
@@ -51,26 +39,35 @@ def extract_residues_by_resnum(output_file, pdb_input_file, desired_resnums, des
                     break
             if line[0:6] in ['ATOM  ', 'HETATM']:
                 resnum = line[22:27]
-                chainID = line[21]
-                if chainID == desired_chainID:
+                chainid = line[21]
+                if chainid == template.chainid:
                     if resnum in desired_resnums:
                         ofile.write(line)
                         resnums_extracted[resnum] = 1
     finally:
         if type(output_file) in [str, unicode]:
             ofile.close()
-    return len(resnums_extracted)
+    if len(resnums_extracted) != len(desired_resnums):
+        raise Exception(
+                'Number of residues (%d) extracted from PDB (%s) for template (%s) does not match desired number of residues (%d).' % (
+                    len(resnums_extracted), template.pdbid, template.templateid, len(desired_resnums)
+                )
+            )
+
 
 def retrieve_sifts(pdb_id):
     '''Retrieves a SIFTS .xml file, given a PDB ID. Works by modifying the PDBe download URL.
     Also removes annoying namespace stuff.
     '''
-    import re
     import gzip
     import StringIO
     sifts_download_base_url='ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/'
     url = sifts_download_base_url + pdb_id.lower() + '.xml.gz'
-    response = urllib2.urlopen(url)
+    try:
+        response = urllib2.urlopen(url)
+    except urllib2.URLError:
+        print 'ERROR downloading SIFTS file with PDB ID: %s' % pdb_id
+        raise
 
     sifts_page = response.read(100000000) # Max 100MB
     # Decompress string
@@ -93,6 +90,7 @@ def retrieve_sifts(pdb_id):
                 continue
             sifts_page_processed += line + '\n'
     return sifts_page_processed
+
 
 def retrieve_pdb(pdb_id,compressed='no'):
     '''Retrieves a PDB file, given a PDB ID. Works by modifying the PDB download URL.

@@ -57,6 +57,7 @@ def main():
     argparser.add_argument('--uniprot_query', type=str, help=helpstring_uniprot_query)
     argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex)
     argparser.add_argument('--structure_paths', help='(Optional) Local directories within which to search for PDB and SIFTS files (space-separated).', nargs='*')
+    argparser.add_argument('--loopmodel', type=bool, default=True)
     args = argparser.parse_args()
 
     msmseeder.core.check_project_toplevel_dir()
@@ -77,7 +78,7 @@ def main():
     # ========
 
     if template_selection_method == 'TargetExplorerDB':
-        msmseeder.initproject.gather_templates_from_targetexplorerdb(args.dbapi_uri, search_string=args.query, structure_dirs=args.structure_paths)
+        msmseeder.initproject.gather_templates_from_targetexplorer(args.dbapi_uri, search_string=args.query, structure_dirs=args.structure_paths, loopmodel=args.loopmodel)
 
     if template_selection_method == 'UniProt':
         msmseeder.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_dirs=args.structure_paths)

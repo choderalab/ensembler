@@ -12,6 +12,7 @@ import msmseeder.version
 from msmseeder.core import construct_fasta_str
 from msmseeder.utils import file_exists_and_not_empty
 from collections import namedtuple
+from msmseeder.core import mpistate
 
 logger = logging.getLogger('info')
 
@@ -29,10 +30,7 @@ def initproject(project_toplevel_dir):
     :param project_toplevel_dir: str
     """
     create_project_dirs(project_toplevel_dir)
-    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
-    init_metadata = gen_init_metadata(project_toplevel_dir)
-    project_metadata.add_data(init_metadata)
-    project_metadata.write()
+    write_init_metadata(project_toplevel_dir)
 
 
 @msmseeder.utils.notify_when_done
@@ -55,9 +53,7 @@ def gather_targets_from_targetexplorer(dbapi_uri, search_string=''):
     targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
     write_seqs_to_fasta_file(targets)
 
-    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
-    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_targetexplorer_metadata)
-    msmseeder.core.write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
+    write_gather_targets_from_targetexplorer_metadata(dbapi_uri, search_string, len(targets))
 
 
 @msmseeder.utils.notify_when_done
@@ -71,10 +67,7 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
         log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
     targets = extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
     write_seqs_to_fasta_file(targets)
-
-    gather_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
-    gather_targets_metadata = gen_gather_targets_metadata(len(targets), additional_metadata=gather_from_uniprot_metadata)
-    msmseeder.core.write_metadata(gather_targets_metadata, msmseeder_stage='gather_targets')
+    write_gather_targets_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(targets))
 
 
 def create_project_dirs(project_toplevel_dir):
@@ -90,17 +83,22 @@ def create_project_dirs(project_toplevel_dir):
     msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures_complete)
 
 
+def write_init_metadata(project_toplevel_dir):
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+    init_metadata = gen_init_metadata(project_toplevel_dir)
+    project_metadata.add_data(init_metadata)
+    project_metadata.write()
+
+
 def gen_init_metadata(project_toplevel_dir):
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata_dict = {
-        'init': {
-            'datestamp': datestamp,
-            'init_path': os.path.abspath(project_toplevel_dir),
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision
-        }
+        'datestamp': datestamp,
+        'init_path': os.path.abspath(project_toplevel_dir),
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision
     }
     return metadata_dict
 
@@ -199,6 +197,7 @@ def write_seqs_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 't
 def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
     db_metadata = get_targetexplorer_db_metadata(dbapi_uri)
     metadata = {
+        'method': 'TargetExplorer',
         'gather_from_targetexplorer': {
             'db_uniprot_query_string': str(db_metadata.get('uniprot_query_string')),
             'db_uniprot_domain_regex': str(db_metadata.get('uniprot_domain_regex')),
@@ -211,6 +210,7 @@ def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
 
 def gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex):
     metadata = {
+        'method': 'UniProt',
         'gather_from_uniprot': {
             'uniprot_query_string': uniprot_query_string,
             'uniprot_domain_regex': uniprot_domain_regex,
@@ -224,22 +224,35 @@ def get_targetexplorer_db_metadata(dbapi_uri):
     return json.loads(db_metadata_jsonstr)
 
 
+def write_gather_targets_from_targetexplorer_metadata(dbapi_uri, search_string, ntargets):
+    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    gather_targets_metadata = gen_gather_targets_metadata(ntargets, additional_metadata=gather_from_targetexplorer_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
+    project_metadata.add_data(gather_targets_metadata)
+    project_metadata.write()
+
+
+def write_gather_targets_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntargets):
+    gather_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
+    gather_targets_metadata = gen_gather_targets_metadata(ntargets, additional_metadata=gather_from_uniprot_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
+    project_metadata.add_data(gather_targets_metadata)
+    project_metadata.write()
+
+
 def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
     if additional_metadata is None:
         additional_metadata = {}
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
-        'gather_targets': {
-            'datestamp': datestamp,
-            'method': 'TargetExplorerDB',
-            'ntargets': str(ntarget_domains),
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision,
-        }
+        'datestamp': datestamp,
+        'ntargets': str(ntarget_domains),
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision,
     }
-    metadata['gather_targets'].update(additional_metadata)
+    metadata.update(additional_metadata)
     return metadata
 
 
@@ -273,14 +286,12 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
         extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
     )
     regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
-    logger.info(
-        'Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'
-        % (uniprot_domain_regex, regex_matched_domains_unique_names)
-    )
+    logger.info('Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'
+          % (uniprot_domain_regex, regex_matched_domains_unique_names))
 
 
 @msmseeder.utils.notify_when_done
-def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structure_dirs=None):
+def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None, loopmodel=True):
     """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
@@ -299,17 +310,37 @@ def gather_templates_from_targetexplorerdb(dbapi_uri, search_string='', structur
     for pdbchain in selected_pdbchains:
         get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
 
+    selected_templates = None
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
-    #create_dummy_complete_templates(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
+    if loopmodel:
+        selected_templates = mpistate.comm.bcast(selected_templates, root=0)
+        loopmodel_templates(selected_templates)
+    write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs)
 
-    additional_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
-    additional_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(len(selected_templates), additional_metadata)
-    msmseeder.core.write_metadata(gather_templates_metadata, msmseeder_stage='gather_templates')
+
+@msmseeder.utils.notify_when_done
+def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
+    """# Searches UniProt for a set of template proteins with a user-defined
+    query string, then saves IDs, sequences and structures."""
+    manual_overrides = msmseeder.core.ManualOverrides()
+    uniprotxml = get_uniprot_xml(uniprot_query_string)
+    log_unique_domain_names(uniprot_query_string, uniprotxml)
+    if uniprot_domain_regex is not None:
+        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
+
+    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
+    for pdbchain in selected_pdbchains:
+        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
+
+    selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
+    write_template_seqs_to_fasta_file(selected_templates)
+    extract_template_structures_from_pdb_files(selected_templates)
+    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
 
 
+@msmseeder.utils.mpirank0only
 def get_targetexplorer_templates_json(dbapi_uri, search_string):
     """
     :param dbapi_uri: str
@@ -323,6 +354,7 @@ def get_targetexplorer_templates_json(dbapi_uri, search_string):
     return targetexplorer_json
 
 
+@msmseeder.utils.mpirank0only
 def extract_template_pdbchains_from_targetexplorer_json(targetexplorer_json, manual_overrides):
     selected_pdbchains = []
     for target in targetexplorer_json['results']:
@@ -370,7 +402,7 @@ def download_structure_file(pdbid, project_structure_filepath, structure_type='p
 
 
 def download_pdb_file(pdbid, project_pdb_filepath):
-    logger.info('Downloading PDB file for:', pdbid)
+    logger.info('Downloading PDB file for: %s' % pdbid)
     pdbgz_page = msmseeder.PDB.retrieve_pdb(pdbid, compressed='yes')
     with open(project_pdb_filepath, 'w') as pdbgz_file:
         pdbgz_file.write(pdbgz_page)
@@ -383,6 +415,7 @@ def download_sifts_file(pdbid, project_sifts_filepath):
         project_sifts_file.write(sifts_page)
 
 
+@msmseeder.utils.mpirank0only
 def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
     if type(structure_dirs) != list:
         structure_dirs = []
@@ -395,6 +428,7 @@ def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
                 download_structure_file(pdbid, project_structure_filepath, structure_type=structure_type)
 
 
+@msmseeder.utils.mpirank0only
 def extract_template_pdb_chain_residues(selected_pdbchains):
     logger.info('Extracting residues from PDB chains...')
     selected_templates = []
@@ -499,6 +533,7 @@ def extract_pdb_template_seq(pdbchain):
     return template_data
 
 
+@msmseeder.utils.mpirank0only
 def write_template_seqs_to_fasta_file(selected_templates):
     selected_template_seq_tuples = [(template.templateid, template.complete_seq) for template in selected_templates]
     selected_template_seq_observed_tuples = [(template.templateid, template.observed_seq) for template in selected_templates]
@@ -506,89 +541,33 @@ def write_template_seqs_to_fasta_file(selected_templates):
     write_seqs_to_fasta_file(selected_template_seq_observed_tuples, fasta_ofilepath=os.path.join('templates', 'templates-observed.fa'))
 
 
+@msmseeder.utils.mpirank0only
 def extract_template_structures_from_pdb_files(selected_templates):
     logger.info('Writing template structures...')
     for template in selected_templates:
-        pdb_filename = os.path.join('structures', 'pdb', template.pdbid + '.pdb.gz')
-
-        template_observed_filename = os.path.join('templates', 'structures-observed', template.templateid + '.pdb')
-        nresidues_extracted = msmseeder.PDB.extract_residues_by_resnum(
-            template_observed_filename, pdb_filename, template.template_pdbresnums_observed, template.chainid
-        )
-        if nresidues_extracted != len(template.template_pdbresnums_observed):
-            raise Exception(
-                'Number of residues (%d) extracted from PDB file (%s) for template (%s) does not match desired number of residues (%d).' % (
-                    nresidues_extracted, template.pdbid, template.templateid, len(template.observed_pdbresnums)
-                )
-            )
+        pdb_filename = os.path.join(msmseeder.core.default_project_dirnames.structures_pdb, template.pdbid + '.pdb.gz')
+        template_observed_filename = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_observed, template.templateid + '.pdb')
+        msmseeder.PDB.extract_residues_by_resnum(template_observed_filename, pdb_filename, template)
 
 
-# def create_dummy_complete_templates(selected_templates):
-#     # TODO
-#     for template in selected_templates:
-#         template_pdbresnums = template['template_pdbresnums']
-#         template_seq_complete = template['template_seq']
+@msmseeder.utils.mpirank0only
+def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs):
+    gather_templates_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    gather_templates_from_targetexplorer_metadata['structure_dirs'] = structure_dirs
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_targetexplorer_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_templates')
+    project_metadata.add_data(gather_templates_metadata)
+    project_metadata.write()
 
 
-# def pdbfix_template(template):
-#     # TODO
-#     import pdbfixer
-#     import simtk.openmm.app as app
-#
-#     missing_residues = determine_template_missing_residues(template.observed_seq, template.complete_seq)
-#
-#     pdbfixer.findMissingAtoms()
-#     pdbfixer.addMissingAtoms()
-#     app.PDBFile.writeFile(pdbfixer.topology, pdbfixer.positions, file=template_fixed_filepath)
-
-
-# def determine_template_missing_residues(template):
-#     # complete_seq_residue_indices = range(len(template.observed_seq))
-#
-#     # missing_residues = {}
-#     # for i in range(len(template.complete_seq)):
-#     #     if template.complete_pdbresnums[i] not in template.observed_pdbresnums[i]:
-#     #         missing_residues[(0, i)] = []
-#
-#     # (0,17): [
-#     #         'GLY',
-#     #         'SER',
-#     #         'PHE',
-#     #         'GLY',
-#     #      ]
-#
-#     # seq_observed = template.observed_seq
-#     seq_complete = template.complete_seq
-#     seq_observed_w_gaps = gen_seq_observed_w_gaps(template)
-#     seq_observed_offset = index of first non-null element in seq_observed_w_gaps
-#
-#     missing_residues = {}
-#     index = 0
-#     for i in range(len(seq_complete)):
-#         if i < seq_observed_offset or i >= len(seq_observed_w_gaps)+seq_observed_offset or seq_observed_w_gaps[i-seq_observed_offset] is None:
-#             key = (0, index)
-#             if key not in missing_residues:
-#                 missing_residues[key] = []
-#             residue_code = seq_complete[i]
-#             residue_name = Bio.SeqUtils.seq3(residue_code).upper()
-#             missing_residues[key].append(residue_name)
-#         else:
-#             index += 1
-
-
-def gen_seq_observed_w_gaps(template):
-    # TODO skip this - should be able to set the "complete" sequence with the PDBFixer object and then just use the findMissingResidues() function.
-    first_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[0])
-    last_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[-1])
-    nobserved_residues_w_gaps = last_observed_residue_index - first_observed_residue_index + 1
-    print first_observed_residue_index, last_observed_residue_index, nobserved_residues_w_gaps, len(template.complete_seq)
-
-    seq_observed_w_gaps = [None] * nobserved_residues_w_gaps
-    for i in range(len(template.complete_seq)):
-        if i >= first_observed_residue_index and i <= last_observed_residue_index:
-            index = i - first_observed_residue_index
-            seq_observed_w_gaps[index] = template.complete_seq[index]
-    return seq_observed_w_gaps
+@msmseeder.utils.mpirank0only
+def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs):
+    gather_templates_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
+    gather_templates_from_uniprot_metadata['structure_dirs'] = structure_dirs
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_uniprot_metadata)
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_templates')
+    project_metadata.add_data(gather_templates_metadata)
+    project_metadata.write()
 
 
 def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
@@ -596,42 +575,15 @@ def gen_gather_templates_metadata(nselected_templates, additional_metadata=None)
         additional_metadata = {}
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
-        'gather_templates': {
-            'datestamp': datestamp,
-            'method': 'TargetExplorerDB',
-            'ntemplates': str(nselected_templates),
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision
-        }
+        'datestamp': datestamp,
+        'ntemplates': str(nselected_templates),
+        'python_version': sys.version.split('|')[0].strip(),
+        'python_full_version': msmseeder.core.literal_str(sys.version),
+        'msmseeder_version': msmseeder.version.short_version,
+        'msmseeder_commit': msmseeder.version.git_revision
     }
-    metadata['gather_templates'].update(additional_metadata)
+    metadata.update(additional_metadata)
     return metadata
-
-
-@msmseeder.utils.notify_when_done
-def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
-    """# Searches UniProt for a set of template proteins with a user-defined
-    query string, then saves IDs, sequences and structures."""
-    manual_overrides = msmseeder.core.ManualOverrides()
-    uniprotxml = get_uniprot_xml(uniprot_query_string)
-    log_unique_domain_names(uniprot_query_string, uniprotxml)
-    if uniprot_domain_regex is not None:
-        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
-
-    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
-    for pdbchain in selected_pdbchains:
-        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
-
-    selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
-    write_template_seqs_to_fasta_file(selected_templates)
-    extract_template_structures_from_pdb_files(selected_templates)
-
-    additional_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
-    additional_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(len(selected_templates), additional_metadata)
-    msmseeder.core.write_metadata(gather_templates_metadata, msmseeder_stage='gather_templates')
 
 
 def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides):
@@ -688,3 +640,107 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
     return selected_pdbchains
 
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
+
+
+def loopmodel_templates(selected_templates):
+    for template_index in range(mpistate.rank, len(selected_templates), mpistate.size):
+        pdbfix_template(selected_templates[template_index])
+
+
+def pdbfix_template(template):
+    import pdbfixer
+    import simtk.openmm.app
+    import Bio.SeqUtils
+    template_filename = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_observed, template.templateid + '.pdb')
+    with open(template_filename, 'r') as template_file:
+        fixer = pdbfixer.PDBFixer(file=template_file)
+    seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(template.chainid)
+    for r in template.complete_seq:
+        resi3 = Bio.SeqUtils.seq3(r).upper()
+        seq_obj.residues.append(resi3)
+    fixer.structure.sequences.append(seq_obj)
+    fixer.findMissingResidues()
+    fixer.findMissingAtoms()
+    fixer.addMissingAtoms()
+    template_pdbfixed_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.pdb')
+    with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
+        simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def create_dummy_complete_templates(selected_templates):
+#     # TODO
+#     for template in selected_templates:
+#         template_pdbresnums = template['template_pdbresnums']
+#         template_seq_complete = template['template_seq']
+
+
+# def pdbfix_template(template):
+#     # TODO
+#     import pdbfixer
+#     import simtk.openmm.app as app
+#
+#     missing_residues = determine_template_missing_residues(template.observed_seq, template.complete_seq)
+#
+#     pdbfixer.findMissingAtoms()
+#     pdbfixer.addMissingAtoms()
+#     app.PDBFile.writeFile(pdbfixer.topology, pdbfixer.positions, file=template_fixed_filepath)
+
+
+# def determine_template_missing_residues(template):
+#     # complete_seq_residue_indices = range(len(template.observed_seq))
+#
+#     # missing_residues = {}
+#     # for i in range(len(template.complete_seq)):
+#     #     if template.complete_pdbresnums[i] not in template.observed_pdbresnums[i]:
+#     #         missing_residues[(0, i)] = []
+#
+#     # (0,17): [
+#     #         'GLY',
+#     #         'SER',
+#     #         'PHE',
+#     #         'GLY',
+#     #      ]
+#
+#     # seq_observed = template.observed_seq
+#     seq_complete = template.complete_seq
+#     seq_observed_w_gaps = gen_seq_observed_w_gaps(template)
+#     seq_observed_offset = index of first non-null element in seq_observed_w_gaps
+#
+#     missing_residues = {}
+#     index = 0
+#     for i in range(len(seq_complete)):
+#         if i < seq_observed_offset or i >= len(seq_observed_w_gaps)+seq_observed_offset or seq_observed_w_gaps[i-seq_observed_offset] is None:
+#             key = (0, index)
+#             if key not in missing_residues:
+#                 missing_residues[key] = []
+#             residue_code = seq_complete[i]
+#             residue_name = Bio.SeqUtils.seq3(residue_code).upper()
+#             missing_residues[key].append(residue_name)
+#         else:
+#             index += 1
+
+
+# def gen_seq_observed_w_gaps(template):
+#     # TODO skip this - should be able to set the "complete" sequence with the PDBFixer object and then just use the findMissingResidues() function.
+#     first_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[0])
+#     last_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[-1])
+#     nobserved_residues_w_gaps = last_observed_residue_index - first_observed_residue_index + 1
+#     print first_observed_residue_index, last_observed_residue_index, nobserved_residues_w_gaps, len(template.complete_seq)
+#
+#     seq_observed_w_gaps = [None] * nobserved_residues_w_gaps
+#     for i in range(len(template.complete_seq)):
+#         if i >= first_observed_residue_index and i <= last_observed_residue_index:
+#             index = i - first_observed_residue_index
+#             seq_observed_w_gaps[index] = template.complete_seq[index]
+#     return seq_observed_w_gaps
