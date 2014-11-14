@@ -2,7 +2,9 @@ import gzip
 import json
 import sys
 import os
+import shutil
 import logging
+import subprocess
 from lxml import etree
 import msmseeder
 import msmseeder.TargetExplorer
@@ -304,19 +306,17 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
     search_string=''
     """
     manual_overrides = msmseeder.core.ManualOverrides()
-
     templates_json = get_targetexplorer_templates_json(dbapi_uri, search_string)
     selected_pdbchains = extract_template_pdbchains_from_targetexplorer_json(templates_json, manual_overrides=manual_overrides)
     for pdbchain in selected_pdbchains:
         get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
 
-    selected_templates = None
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
     if loopmodel:
-        selected_templates = mpistate.comm.bcast(selected_templates, root=0)
-        loopmodel_templates(selected_templates)
+        missing_residues = pdbfix_templates(selected_templates)
+        loopmodel_templates(selected_templates, missing_residues)
     write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs)
 
 
@@ -340,45 +340,49 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
     write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
 
 
-@msmseeder.utils.mpirank0only
 def get_targetexplorer_templates_json(dbapi_uri, search_string):
     """
     :param dbapi_uri: str
     :param search_string: str
     :return: list containing nested lists and dicts
     """
-    targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(
-        dbapi_uri, search_string, return_data='pdb_data'
-    )
-    targetexplorer_json = json.loads(targetexplorer_jsonstr)
+    targetexplorer_json = None
+    if mpistate.rank == 0:
+        targetexplorer_jsonstr = msmseeder.TargetExplorer.query_targetexplorer(
+            dbapi_uri, search_string, return_data='pdb_data'
+        )
+        targetexplorer_json = json.loads(targetexplorer_jsonstr)
+    targetexplorer_json = mpistate.comm.bcast(targetexplorer_json, root=0)
     return targetexplorer_json
 
 
-@msmseeder.utils.mpirank0only
 def extract_template_pdbchains_from_targetexplorer_json(targetexplorer_json, manual_overrides):
-    selected_pdbchains = []
-    for target in targetexplorer_json['results']:
-        entry_name = target['entry_name']
-        for pdb_data in target['pdbs']:
-            pdbid = pdb_data['pdbid']
-            for pdbchain_data in pdb_data['pdbchains']:
-                pdbchain_data['entry_name'] = entry_name
-                pdbchain_data['pdbid'] = pdbid
-                targetid = '%s_D%s' % (entry_name, pdbchain_data['domainid'])
-                templateid = '%s_%s_%s' % (targetid, pdbid, pdbchain_data['chainid'])
-                pdbchain_data['templateid'] = templateid
-                pdbchain_data['domain_span'] = [int(pdbchain_data['seq_begin']), int(pdbchain_data['seq_end'])]
-                # manual overrides
-                domain_len = pdbchain_data['seq_end'] - pdbchain_data['seq_begin'] + 1
-                if manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
-                    continue
-                if manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
-                    continue
-                if pdbid in manual_overrides.template.skip_pdbs:
-                    continue
-                if targetid in manual_overrides.template.domain_spans:
-                    pdbchain_data['domain_span'] = [int(x) for x in manual_overrides.template.domain_spans[targetid].split('-')]
-                selected_pdbchains.append(pdbchain_data)
+    selected_pdbchains = None
+    if mpistate.rank == 0:
+        selected_pdbchains = []
+        for target in targetexplorer_json['results']:
+            entry_name = target['entry_name']
+            for pdb_data in target['pdbs']:
+                pdbid = pdb_data['pdbid']
+                for pdbchain_data in pdb_data['pdbchains']:
+                    pdbchain_data['entry_name'] = entry_name
+                    pdbchain_data['pdbid'] = pdbid
+                    targetid = '%s_D%s' % (entry_name, pdbchain_data['domainid'])
+                    templateid = '%s_%s_%s' % (targetid, pdbid, pdbchain_data['chainid'])
+                    pdbchain_data['templateid'] = templateid
+                    pdbchain_data['domain_span'] = [int(pdbchain_data['seq_begin']), int(pdbchain_data['seq_end'])]
+                    # manual overrides
+                    domain_len = pdbchain_data['seq_end'] - pdbchain_data['seq_begin'] + 1
+                    if manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
+                        continue
+                    if manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
+                        continue
+                    if pdbid in manual_overrides.template.skip_pdbs:
+                        continue
+                    if targetid in manual_overrides.template.domain_spans:
+                        pdbchain_data['domain_span'] = [int(x) for x in manual_overrides.template.domain_spans[targetid].split('-')]
+                    selected_pdbchains.append(pdbchain_data)
+    selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
     return selected_pdbchains
 
 
@@ -428,15 +432,17 @@ def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
                 download_structure_file(pdbid, project_structure_filepath, structure_type=structure_type)
 
 
-@msmseeder.utils.mpirank0only
 def extract_template_pdb_chain_residues(selected_pdbchains):
-    logger.info('Extracting residues from PDB chains...')
-    selected_templates = []
-    for pdbchain in selected_pdbchains:
-        extracted_pdb_template_seq_data = extract_pdb_template_seq(pdbchain)
-        if extracted_pdb_template_seq_data is not None:
-            selected_templates.append(extracted_pdb_template_seq_data)
-    logger.info('%d templates selected.\n' % len(selected_templates))
+    selected_templates = None
+    if mpistate.rank == 0:
+        logger.info('Extracting residues from PDB chains...')
+        selected_templates = []
+        for pdbchain in selected_pdbchains:
+            extracted_pdb_template_seq_data = extract_pdb_template_seq(pdbchain)
+            if extracted_pdb_template_seq_data is not None:
+                selected_templates.append(extracted_pdb_template_seq_data)
+        logger.info('%d templates selected.\n' % len(selected_templates))
+    selected_templates = mpistate.comm.bcast(selected_templates, root=0)
     return selected_templates
 
 
@@ -642,18 +648,19 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
 
 
-def loopmodel_templates(selected_templates):
+def pdbfix_templates(selected_templates):
+    missing_residues = []
     for template_index in range(mpistate.rank, len(selected_templates), mpistate.size):
-        pdbfix_template(selected_templates[template_index])
+        missing_residues.append(pdbfix_template(selected_templates[template_index]))
+    return missing_residues
 
 
 def pdbfix_template(template):
     import pdbfixer
     import simtk.openmm.app
     import Bio.SeqUtils
-    template_filename = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_observed, template.templateid + '.pdb')
-    with open(template_filename, 'r') as template_file:
-        fixer = pdbfixer.PDBFixer(file=template_file)
+    template_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_observed, template.templateid + '.pdb')
+    fixer = pdbfixer.PDBFixer(filename=template_filepath)
     seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(template.chainid)
     for r in template.complete_seq:
         resi3 = Bio.SeqUtils.seq3(r).upper()
@@ -661,10 +668,85 @@ def pdbfix_template(template):
     fixer.structure.sequences.append(seq_obj)
     fixer.findMissingResidues()
     fixer.findMissingAtoms()
-    fixer.addMissingAtoms()
+    (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
+    fixer.topology = newTopology
+    fixer.positions = newPositions
     template_pdbfixed_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.pdb')
     with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
         simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
+    return fixer.missingResidues
+
+
+def loopmodel_templates(selected_templates, missing_residues):
+    for template_index in range(mpistate.rank, len(selected_templates), mpistate.size):
+        template = selected_templates[template_index]
+        if mpistate.size > 1:
+            logger.info('MPI rank %d modeling missing loops for template %s' % (mpistate.rank, template.templateid))
+        else:
+            logger.info('Modeling missing loops for template %s' % template.templateid)
+        loopmodel_template(template, missing_residues[template_index])
+
+
+def loopmodel_template(template, missing_residues):
+    write_loop_file(template, missing_residues)
+    template_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.pdb'))
+    loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop'))
+    output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodeled.pdb'))
+    output_score_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-score.sc'))
+    output_log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-log.txt.gz'))
+    run_loopmodel(template_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, output_log_filepath)
+
+
+def write_loop_file(template, missing_residues):
+    loop_file_text = ''
+    loop_residues_added = 0
+    loop_residues_data = [(key[1], len(residues)) for key, residues in missing_residues.iteritems()]
+    loop_residues_data = sorted(loop_residues_data, key=lambda x: x[0])
+    for loop_residue_data in loop_residues_data:
+        residue_number, nresidues = loop_residue_data
+        loop_begin = residue_number + loop_residues_added   # 1-based, one residue before the loop
+        loop_end = residue_number + nresidues + loop_residues_added + 1   # 1-based, one residue after the loop
+        loop_residues_added += nresidues
+        # loopmodel cannot model missing termini
+        if loop_begin == 0 or loop_end > len(template.complete_seq):
+            continue
+        loop_file_text += 'LOOP%4d%4d - - 1\n' % (loop_begin, loop_end)
+    loop_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop')
+    with open(loop_filepath, 'w') as loop_file:
+        loop_file.write(loop_file_text)
+
+
+def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, log_filepath, loopmodel_executable_filepath='loopmodel.macosgccrelease', nmodels_to_build=1):
+    with msmseeder.utils.enter_temp_dir():
+        shutil.copy(input_template_pdb_filepath, 'template.pdb')
+        shutil.copy(loop_filepath, 'template.loop')
+        minirosetta_database_path = os.environ.get('MINIROSETTA_DATABASE')
+        output_text = ''
+        try:
+            output_text = subprocess.check_output(
+                [
+                    loopmodel_executable_filepath,
+                    '-database', minirosetta_database_path,
+                    '-in::file::s', 'template.pdb',
+                    '-loops:loop_file', 'template.loop',
+                    '-loops:remodel', 'perturb_kic',
+                    '-loops:refine', 'refine_kic',
+                    '-ex1',
+                    '-ex2',
+                    '-nstruct', '%d' % nmodels_to_build,
+                    '-loops:max_kic_build_attempts', '100',
+                    '-in:file:fullatom',
+                ]
+            )
+            shutil.copy('template_0001.pdb', output_pdb_filepath)
+            shutil.copy('score.sc', output_score_filepath)
+        except KeyboardInterrupt:
+            raise
+        except:
+            pass
+        finally:
+            with gzip.open(log_filepath, 'w') as log_file:
+                log_file.write(output_text)
 
 
 
