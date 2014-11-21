@@ -1,0 +1,9 @@
+init:
+  datestamp: 2014-11-21 17:05:47 UTC
+  init_path: /var/folders/83/rybw1fzs4j33jl69kbkgq5rr0000gn/T/tmp5NpCjK
+  iteration: 2
+  msmseeder_commit: ded67df5047723798bf7a1307bc056790fb844f0
+  msmseeder_version: '0.2'
+  python_full_version: "2.7.8 |Anaconda 1.9.2 (x86_64)| (default, Aug 21 2014, 15:21:46)\
+    \ \n[GCC 4.2.1 (Apple Inc. build 5577)]"
+  python_version: 2.7.8

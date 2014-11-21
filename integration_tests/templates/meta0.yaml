@@ -1,0 +1,42 @@
+init:
+  datestamp: 2014-11-06 22:41:40 UTC
+  init_path: /Users/partond/tmp/kinome-MSMSeeder6
+  iteration: 0
+  msmseeder_commit: 48bf15f4873e74484b15cc17bc74a0277232e343
+  msmseeder_version: '0.2'
+  python_full_version: "2.7.8 |Anaconda 1.9.2 (x86_64)| (default, Aug 21 2014, 15:21:46)\
+    \ \n[GCC 4.2.1 (Apple Inc. build 5577)]"
+  python_version: 2.7.8
+gather_targets:
+  datestamp: 2014-11-06 22:41:54 UTC
+  gather_from_targetexplorer:
+    db_uniprot_domain_regex: ^Protein kinase(?!; truncated)(?!; inactive)
+    db_uniprot_query_string: domain:"protein kinase" AND reviewed:yes
+    dbapi_uri: http://localhost:5000/kinomeDBAPI
+    search_string: species="Human"
+  iteration: 0
+  method: TargetExplorer
+  msmseeder_commit: 48bf15f4873e74484b15cc17bc74a0277232e343
+  msmseeder_version: '0.2'
+  ntargets: '498'
+  python_full_version: "2.7.8 |Anaconda 1.9.2 (x86_64)| (default, Aug 21 2014, 15:21:46)\
+    \ \n[GCC 4.2.1 (Apple Inc. build 5577)]"
+  python_version: 2.7.8
+gather_templates:
+  datestamp: 2014-11-13 04:03:27 UTC
+  gather_from_targetexplorer:
+    db_uniprot_domain_regex: ^Protein kinase(?!; truncated)(?!; inactive)
+    db_uniprot_query_string: domain:"protein kinase" AND reviewed:yes
+    dbapi_uri: http://localhost:5000/kinomeDBAPI
+    search_string: species="Human" and family="CK1"
+  iteration: 0
+  method: TargetExplorer
+  msmseeder_commit: a2d0519a509c99cc087158e02c9bb82482ff7309
+  msmseeder_version: '0.2'
+  ntemplates: '67'
+  python_full_version: "2.7.8 |Anaconda 1.9.2 (x86_64)| (default, Aug 21 2014, 15:21:46)\
+    \ \n[GCC 4.2.1 (Apple Inc. build 5577)]"
+  python_version: 2.7.8
+  structure_dirs:
+  - /Users/partond/tmp/kinome-MSMSeeder/structures/pdb
+  - /Users/partond/tmp/kinome-MSMSeeder/structures/sifts

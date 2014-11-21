@@ -5,6 +5,7 @@ import os
 import shutil
 import logging
 import subprocess
+import traceback
 from lxml import etree
 import msmseeder
 import msmseeder.TargetExplorer
@@ -73,16 +74,15 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
 
 
 def create_project_dirs(project_toplevel_dir):
-    os.chdir(project_toplevel_dir)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.targets)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.models)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.packaged_models)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures_pdb)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.structures_sifts)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures_observed)
-    msmseeder.utils.create_dir(msmseeder.core.default_project_dirnames.templates_structures_complete)
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.targets))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.templates))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.structures))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.models))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.packaged_models))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.structures_pdb))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.structures_sifts))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.templates_structures_observed))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.templates_structures_complete))
 
 
 def write_init_metadata(project_toplevel_dir):
@@ -649,10 +649,22 @@ structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
 
 
 def pdbfix_templates(selected_templates):
-    missing_residues = []
-    for template_index in range(mpistate.rank, len(selected_templates), mpistate.size):
-        missing_residues.append(pdbfix_template(selected_templates[template_index]))
-    return missing_residues
+    missing_residues_sublist = []
+    ntemplates = len(selected_templates)
+    for template_index in range(mpistate.rank, ntemplates, mpistate.size):
+        missing_residues_sublist.append(pdbfix_template(selected_templates[template_index]))
+
+    missing_residues_gathered = mpistate.comm.gather(missing_residues_sublist, root=0)
+
+    missing_residues_list = []
+    if mpistate.rank == 0:
+        missing_residues_list = [None] * ntemplates
+        for template_index in range(ntemplates):
+            missing_residues_list[template_index] = missing_residues_gathered[template_index % mpistate.size][template_index // mpistate.size]
+
+    missing_residues_list = mpistate.comm.bcast(missing_residues_list, root=0)
+
+    return missing_residues_list
 
 
 def pdbfix_template(template):
@@ -667,6 +679,7 @@ def pdbfix_template(template):
         seq_obj.residues.append(resi3)
     fixer.structure.sequences.append(seq_obj)
     fixer.findMissingResidues()
+    remove_missing_residues_at_termini(fixer, len_complete_seq=len(template.complete_seq))
     fixer.findMissingAtoms()
     (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
     fixer.topology = newTopology
@@ -677,6 +690,21 @@ def pdbfix_template(template):
     return fixer.missingResidues
 
 
+def remove_missing_residues_at_termini(fixer, len_complete_seq):
+    # remove C-terminal missing residues
+    sorted_missing_residues_keys = sorted(fixer.missingResidues, key=lambda x: x[1])
+    last_missing_residues_key = sorted_missing_residues_keys[-1]
+    last_missing_residues_start_index = last_missing_residues_key[1]
+    last_missing_residues = fixer.missingResidues[last_missing_residues_key]
+    nmissing_residues_up_to_last = sum([len(fixer.missingResidues[key]) for key in sorted_missing_residues_keys[:-1]])
+
+    if last_missing_residues_start_index + nmissing_residues_up_to_last + len(last_missing_residues) == len_complete_seq:
+        fixer.missingResidues.pop(last_missing_residues_key)
+
+    # remove N-terminal missing residues
+    fixer.missingResidues.pop((0, 0), None)
+
+
 def loopmodel_templates(selected_templates, missing_residues):
     for template_index in range(mpistate.rank, len(selected_templates), mpistate.size):
         template = selected_templates[template_index]
@@ -684,7 +712,10 @@ def loopmodel_templates(selected_templates, missing_residues):
             logger.info('MPI rank %d modeling missing loops for template %s' % (mpistate.rank, template.templateid))
         else:
             logger.info('Modeling missing loops for template %s' % template.templateid)
-        loopmodel_template(template, missing_residues[template_index])
+        try:
+            loopmodel_template(template, missing_residues[template_index])
+        except Exception as e:
+            logger.error('LOOPMODEL ERROR for template %r\n%r\n%r' % (template.templateid, e, traceback.format_exc()))
 
 
 def loopmodel_template(template, missing_residues):
@@ -693,8 +724,26 @@ def loopmodel_template(template, missing_residues):
     loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop'))
     output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodeled.pdb'))
     output_score_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-score.sc'))
-    output_log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-log.txt.gz'))
-    run_loopmodel(template_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, output_log_filepath)
+    log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-log.yaml'))
+    logfile = msmseeder.core.LogFile(log_filepath)
+    try:
+        loopmodel_output_text = run_loopmodel(template_filepath, loop_filepath, output_pdb_filepath, output_score_filepath)
+        logfile.log({
+            'templateid': str(template.templateid),
+            'loopmodel_output': msmseeder.core.literal_str(loopmodel_output_text),
+            'mpi_rank': mpistate.rank,
+            'successful': True,
+        })
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        trbk = traceback.format_exc()
+        logfile.log({
+            'templateid': template.templateid,
+            'exception': e,
+            'traceback': msmseeder.core.literal_str(trbk),
+            'successful': False,
+        })
 
 
 def write_loop_file(template, missing_residues):
@@ -707,46 +756,37 @@ def write_loop_file(template, missing_residues):
         loop_begin = residue_number + loop_residues_added   # 1-based, one residue before the loop
         loop_end = residue_number + nresidues + loop_residues_added + 1   # 1-based, one residue after the loop
         loop_residues_added += nresidues
-        # loopmodel cannot model missing termini
-        if loop_begin == 0 or loop_end > len(template.complete_seq):
-            continue
+        # Note that missing residues at termini (which cannot be modeled by Rosetta loopmodel) have already been removed from the PDBFixer.missingResidues dictionary
         loop_file_text += 'LOOP%4d%4d - - 1\n' % (loop_begin, loop_end)
     loop_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop')
     with open(loop_filepath, 'w') as loop_file:
         loop_file.write(loop_file_text)
 
 
-def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, log_filepath, loopmodel_executable_filepath='loopmodel.macosgccrelease', nmodels_to_build=1):
+def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath='loopmodel.macosgccrelease', nmodels_to_build=1):
     with msmseeder.utils.enter_temp_dir():
         shutil.copy(input_template_pdb_filepath, 'template.pdb')
         shutil.copy(loop_filepath, 'template.loop')
         minirosetta_database_path = os.environ.get('MINIROSETTA_DATABASE')
-        output_text = ''
-        try:
-            output_text = subprocess.check_output(
-                [
-                    loopmodel_executable_filepath,
-                    '-database', minirosetta_database_path,
-                    '-in::file::s', 'template.pdb',
-                    '-loops:loop_file', 'template.loop',
-                    '-loops:remodel', 'perturb_kic',
-                    '-loops:refine', 'refine_kic',
-                    '-ex1',
-                    '-ex2',
-                    '-nstruct', '%d' % nmodels_to_build,
-                    '-loops:max_kic_build_attempts', '100',
-                    '-in:file:fullatom',
-                ]
-            )
-            shutil.copy('template_0001.pdb', output_pdb_filepath)
-            shutil.copy('score.sc', output_score_filepath)
-        except KeyboardInterrupt:
-            raise
-        except:
-            pass
-        finally:
-            with gzip.open(log_filepath, 'w') as log_file:
-                log_file.write(output_text)
+        output_text = subprocess.check_output(
+            [
+                loopmodel_executable_filepath,
+                '-database', minirosetta_database_path,
+                '-in::file::s', 'template.pdb',
+                '-loops:loop_file', 'template.loop',
+                '-loops:remodel', 'perturb_kic',
+                '-loops:refine', 'refine_kic',
+                '-ex1',
+                '-ex2',
+                '-nstruct', '%d' % nmodels_to_build,
+                '-loops:max_kic_build_attempts', '100',
+                '-in:file:fullatom',
+            ]
+        )
+        shutil.copy('template_0001.pdb', output_pdb_filepath)
+        shutil.copy('score.sc', output_score_filepath)
+    return output_text
+
 
 
 

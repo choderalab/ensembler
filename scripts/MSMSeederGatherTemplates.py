@@ -57,7 +57,7 @@ def main():
     argparser.add_argument('--uniprot_query', type=str, help=helpstring_uniprot_query)
     argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex)
     argparser.add_argument('--structure_paths', help='(Optional) Local directories within which to search for PDB and SIFTS files (space-separated).', nargs='*')
-    argparser.add_argument('--loopmodel', type=bool, default=True)
+    argparser.add_argument('--loopmodel', type=bool, default=True, help='Model template loops using Rosetta loopmodel (default: True)')
     args = argparser.parse_args()
 
     msmseeder.core.check_project_toplevel_dir()
