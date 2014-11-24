@@ -6,6 +6,7 @@ import shutil
 import logging
 import subprocess
 import traceback
+import tempfile
 from lxml import etree
 import msmseeder
 import msmseeder.TargetExplorer
@@ -86,7 +87,7 @@ def create_project_dirs(project_toplevel_dir):
 
 
 def write_init_metadata(project_toplevel_dir):
-    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init', project_toplevel_dir=project_toplevel_dir)
     init_metadata = gen_init_metadata(project_toplevel_dir)
     project_metadata.add_data(init_metadata)
     project_metadata.write()
@@ -317,11 +318,11 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
     if loopmodel:
         missing_residues = pdbfix_templates(selected_templates)
         loopmodel_templates(selected_templates, missing_residues)
-    write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs)
+    write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs, loopmodel)
 
 
 @msmseeder.utils.notify_when_done
-def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
+def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None, loopmodel=True):
     """# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures."""
     manual_overrides = msmseeder.core.ManualOverrides()
@@ -337,7 +338,10 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
-    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
+    if loopmodel:
+        missing_residues = pdbfix_templates(selected_templates)
+        loopmodel_templates(selected_templates, missing_residues)
+    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs, loopmodel)
 
 
 def get_targetexplorer_templates_json(dbapi_uri, search_string):
@@ -557,32 +561,33 @@ def extract_template_structures_from_pdb_files(selected_templates):
 
 
 @msmseeder.utils.mpirank0only
-def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs):
+def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs, loopmodel):
     gather_templates_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
     gather_templates_from_targetexplorer_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_targetexplorer_metadata)
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, loopmodel=loopmodel, additional_metadata=gather_templates_from_targetexplorer_metadata)
     project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_templates')
     project_metadata.add_data(gather_templates_metadata)
     project_metadata.write()
 
 
 @msmseeder.utils.mpirank0only
-def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs):
+def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs, loopmodel):
     gather_templates_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
     gather_templates_from_uniprot_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_uniprot_metadata)
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, loopmodel=loopmodel, additional_metadata=gather_templates_from_uniprot_metadata)
     project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_templates')
     project_metadata.add_data(gather_templates_metadata)
     project_metadata.write()
 
 
-def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
+def gen_gather_templates_metadata(nselected_templates, loopmodel=False, additional_metadata=None):
     if additional_metadata is None:
         additional_metadata = {}
     datestamp = msmseeder.core.get_utcnow_formatted()
     metadata = {
         'datestamp': datestamp,
         'ntemplates': str(nselected_templates),
+        'loopmodel': loopmodel,
         'python_version': sys.version.split('|')[0].strip(),
         'python_full_version': msmseeder.core.literal_str(sys.version),
         'msmseeder_version': msmseeder.version.short_version,
@@ -712,38 +717,39 @@ def loopmodel_templates(selected_templates, missing_residues):
             logger.info('MPI rank %d modeling missing loops for template %s' % (mpistate.rank, template.templateid))
         else:
             logger.info('Modeling missing loops for template %s' % template.templateid)
-        try:
-            loopmodel_template(template, missing_residues[template_index])
-        except Exception as e:
-            logger.error('LOOPMODEL ERROR for template %r\n%r\n%r' % (template.templateid, e, traceback.format_exc()))
+        loopmodel_template(template, missing_residues[template_index])
 
 
 def loopmodel_template(template, missing_residues):
-    write_loop_file(template, missing_residues)
     template_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.pdb'))
-    loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop'))
     output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodeled.pdb'))
+    loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop'))
     output_score_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-score.sc'))
     log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-log.yaml'))
     logfile = msmseeder.core.LogFile(log_filepath)
     try:
+        write_loop_file(template, missing_residues)
+        if len(missing_residues) == 0:
+            shutil.copy(template_filepath, output_pdb_filepath)
+            return
         loopmodel_output_text = run_loopmodel(template_filepath, loop_filepath, output_pdb_filepath, output_score_filepath)
         logfile.log({
             'templateid': str(template.templateid),
             'loopmodel_output': msmseeder.core.literal_str(loopmodel_output_text),
             'mpi_rank': mpistate.rank,
             'successful': True,
-        })
+            })
     except KeyboardInterrupt:
         raise
     except Exception as e:
         trbk = traceback.format_exc()
         logfile.log({
-            'templateid': template.templateid,
-            'exception': e,
+            'templateid': str(template.templateid),
+            'exception': e,   # if Rosetta loopmodel fails, this field should include text sent to stdout and stderr
             'traceback': msmseeder.core.literal_str(trbk),
             'successful': False,
         })
+        logger.error('MPI rank %d Loopmodel error for template %s - see logfile' % (mpistate.rank, template.templateid))
 
 
 def write_loop_file(template, missing_residues):
@@ -764,16 +770,19 @@ def write_loop_file(template, missing_residues):
 
 
 def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath='loopmodel.macosgccrelease', nmodels_to_build=1):
-    with msmseeder.utils.enter_temp_dir():
-        shutil.copy(input_template_pdb_filepath, 'template.pdb')
-        shutil.copy(loop_filepath, 'template.loop')
+    temp_dir = tempfile.mkdtemp()
+    temp_template_filepath = os.path.join(temp_dir, 'template.pdb')
+    temp_loop_filepath = os.path.join(temp_dir, 'template.loop')
+    try:
         minirosetta_database_path = os.environ.get('MINIROSETTA_DATABASE')
+        shutil.copy(input_template_pdb_filepath, temp_template_filepath)
+        shutil.copy(loop_filepath, temp_loop_filepath)
         output_text = subprocess.check_output(
             [
                 loopmodel_executable_filepath,
                 '-database', minirosetta_database_path,
-                '-in::file::s', 'template.pdb',
-                '-loops:loop_file', 'template.loop',
+                '-in::file::s', temp_template_filepath,
+                '-loops:loop_file', temp_loop_filepath,
                 '-loops:remodel', 'perturb_kic',
                 '-loops:refine', 'refine_kic',
                 '-ex1',
@@ -781,11 +790,17 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
                 '-nstruct', '%d' % nmodels_to_build,
                 '-loops:max_kic_build_attempts', '100',
                 '-in:file:fullatom',
-            ]
+            ],
+            stderr=subprocess.STDOUT
         )
         shutil.copy('template_0001.pdb', output_pdb_filepath)
         shutil.copy('score.sc', output_score_filepath)
-    return output_text
+        shutil.rmtree(temp_dir)
+        return output_text
+    except:
+        # os.chdir(cwd)
+        shutil.rmtree(temp_dir)
+        raise
 
 
 
@@ -800,69 +815,69 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
 
 
 
-# def create_dummy_complete_templates(selected_templates):
-#     # TODO
-#     for template in selected_templates:
-#         template_pdbresnums = template['template_pdbresnums']
-#         template_seq_complete = template['template_seq']
+        # def create_dummy_complete_templates(selected_templates):
+        #     # TODO
+        #     for template in selected_templates:
+        #         template_pdbresnums = template['template_pdbresnums']
+        #         template_seq_complete = template['template_seq']
 
 
-# def pdbfix_template(template):
-#     # TODO
-#     import pdbfixer
-#     import simtk.openmm.app as app
-#
-#     missing_residues = determine_template_missing_residues(template.observed_seq, template.complete_seq)
-#
-#     pdbfixer.findMissingAtoms()
-#     pdbfixer.addMissingAtoms()
-#     app.PDBFile.writeFile(pdbfixer.topology, pdbfixer.positions, file=template_fixed_filepath)
+        # def pdbfix_template(template):
+        #     # TODO
+        #     import pdbfixer
+        #     import simtk.openmm.app as app
+        #
+        #     missing_residues = determine_template_missing_residues(template.observed_seq, template.complete_seq)
+        #
+        #     pdbfixer.findMissingAtoms()
+        #     pdbfixer.addMissingAtoms()
+        #     app.PDBFile.writeFile(pdbfixer.topology, pdbfixer.positions, file=template_fixed_filepath)
 
 
-# def determine_template_missing_residues(template):
-#     # complete_seq_residue_indices = range(len(template.observed_seq))
-#
-#     # missing_residues = {}
-#     # for i in range(len(template.complete_seq)):
-#     #     if template.complete_pdbresnums[i] not in template.observed_pdbresnums[i]:
-#     #         missing_residues[(0, i)] = []
-#
-#     # (0,17): [
-#     #         'GLY',
-#     #         'SER',
-#     #         'PHE',
-#     #         'GLY',
-#     #      ]
-#
-#     # seq_observed = template.observed_seq
-#     seq_complete = template.complete_seq
-#     seq_observed_w_gaps = gen_seq_observed_w_gaps(template)
-#     seq_observed_offset = index of first non-null element in seq_observed_w_gaps
-#
-#     missing_residues = {}
-#     index = 0
-#     for i in range(len(seq_complete)):
-#         if i < seq_observed_offset or i >= len(seq_observed_w_gaps)+seq_observed_offset or seq_observed_w_gaps[i-seq_observed_offset] is None:
-#             key = (0, index)
-#             if key not in missing_residues:
-#                 missing_residues[key] = []
-#             residue_code = seq_complete[i]
-#             residue_name = Bio.SeqUtils.seq3(residue_code).upper()
-#             missing_residues[key].append(residue_name)
-#         else:
-#             index += 1
+        # def determine_template_missing_residues(template):
+        #     # complete_seq_residue_indices = range(len(template.observed_seq))
+        #
+        #     # missing_residues = {}
+        #     # for i in range(len(template.complete_seq)):
+        #     #     if template.complete_pdbresnums[i] not in template.observed_pdbresnums[i]:
+        #     #         missing_residues[(0, i)] = []
+        #
+        #     # (0,17): [
+        #     #         'GLY',
+        #     #         'SER',
+        #     #         'PHE',
+        #     #         'GLY',
+        #     #      ]
+        #
+        #     # seq_observed = template.observed_seq
+        #     seq_complete = template.complete_seq
+        #     seq_observed_w_gaps = gen_seq_observed_w_gaps(template)
+        #     seq_observed_offset = index of first non-null element in seq_observed_w_gaps
+        #
+        #     missing_residues = {}
+        #     index = 0
+        #     for i in range(len(seq_complete)):
+        #         if i < seq_observed_offset or i >= len(seq_observed_w_gaps)+seq_observed_offset or seq_observed_w_gaps[i-seq_observed_offset] is None:
+        #             key = (0, index)
+        #             if key not in missing_residues:
+        #                 missing_residues[key] = []
+        #             residue_code = seq_complete[i]
+        #             residue_name = Bio.SeqUtils.seq3(residue_code).upper()
+        #             missing_residues[key].append(residue_name)
+        #         else:
+        #             index += 1
 
 
-# def gen_seq_observed_w_gaps(template):
-#     # TODO skip this - should be able to set the "complete" sequence with the PDBFixer object and then just use the findMissingResidues() function.
-#     first_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[0])
-#     last_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[-1])
-#     nobserved_residues_w_gaps = last_observed_residue_index - first_observed_residue_index + 1
-#     print first_observed_residue_index, last_observed_residue_index, nobserved_residues_w_gaps, len(template.complete_seq)
-#
-#     seq_observed_w_gaps = [None] * nobserved_residues_w_gaps
-#     for i in range(len(template.complete_seq)):
-#         if i >= first_observed_residue_index and i <= last_observed_residue_index:
-#             index = i - first_observed_residue_index
-#             seq_observed_w_gaps[index] = template.complete_seq[index]
-#     return seq_observed_w_gaps
+        # def gen_seq_observed_w_gaps(template):
+        #     # TODO skip this - should be able to set the "complete" sequence with the PDBFixer object and then just use the findMissingResidues() function.
+        #     first_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[0])
+        #     last_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[-1])
+        #     nobserved_residues_w_gaps = last_observed_residue_index - first_observed_residue_index + 1
+        #     print first_observed_residue_index, last_observed_residue_index, nobserved_residues_w_gaps, len(template.complete_seq)
+        #
+        #     seq_observed_w_gaps = [None] * nobserved_residues_w_gaps
+        #     for i in range(len(template.complete_seq)):
+        #         if i >= first_observed_residue_index and i <= last_observed_residue_index:
+        #             index = i - first_observed_residue_index
+        #             seq_observed_w_gaps[index] = template.complete_seq[index]
+        #     return seq_observed_w_gaps

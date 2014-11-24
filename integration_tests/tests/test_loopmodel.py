@@ -2,6 +2,7 @@ import os
 from mock import Mock
 import msmseeder.initproject
 import msmseeder.integration_test_utils
+import msmseeder.tests.utils
 
 
 def test_loopmodel_KC1D_HUMAN_D0_4KB8_D():
@@ -30,3 +31,18 @@ def test_loopmodel_KC1D_HUMAN_D0_4HNF_A():
         msmseeder.initproject.loopmodel_template(template, missing_residues)
 
         assert os.path.exists(os.path.join('templates', 'structures-complete', 'KC1D_HUMAN_D0_4HNF_A-loopmodeled.pdb'))
+
+
+@msmseeder.tests.utils.expected_failure
+def test_loopmodel_KC1D_HUMAN_D0_3UZP_A():
+    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_observed'):
+        template = Mock()
+        template.templateid = 'KC1D_HUMAN_D0_3UZP_A'
+        template.chainid = 'A'
+        template.observed_seq = 'LRVGNRYRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFRNLFHRQGFSYDYVFDWNMLK'
+        template.complete_seq = 'MELRVGNRYRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFRNLFHRQGFSYDYVFDWNMLK'
+
+        missing_residues = msmseeder.initproject.pdbfix_template(template)
+        msmseeder.initproject.loopmodel_template(template, missing_residues)
+
+        assert os.path.exists(os.path.join('templates', 'structures-complete', 'KC1D_HUMAN_D0_3UZP_A-loopmodeled.pdb'))

@@ -81,7 +81,7 @@ def main():
         msmseeder.initproject.gather_templates_from_targetexplorer(args.dbapi_uri, search_string=args.query, structure_dirs=args.structure_paths, loopmodel=args.loopmodel)
 
     if template_selection_method == 'UniProt':
-        msmseeder.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_dirs=args.structure_paths)
+        msmseeder.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_dirs=args.structure_paths, loopmodel=args.loopmodel)
 
 if __name__ == '__main__':
     main()
