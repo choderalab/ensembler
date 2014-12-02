@@ -131,14 +131,11 @@ def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overri
 
 
 def get_uniprot_xml(uniprot_query_string):
-    uniprotxml = None
-    if mpistate.rank == 0:
-        logger.info('Querying UniProt web server...')
-        uniprotxmlstring = msmseeder.UniProt.retrieve_uniprot(uniprot_query_string)
-        parser = etree.XMLParser(huge_tree=True)
-        uniprotxml = etree.fromstring(uniprotxmlstring, parser)
-        logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
-    uniprotxml = mpistate.comm.bcast(uniprotxml, root=0)
+    logger.info('Querying UniProt web server...')
+    uniprotxmlstring = msmseeder.UniProt.retrieve_uniprot(uniprot_query_string)
+    parser = etree.XMLParser(huge_tree=True)
+    uniprotxml = etree.fromstring(uniprotxmlstring, parser)
+    logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
     return uniprotxml
 
 
@@ -335,14 +332,18 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
     """# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures."""
     manual_overrides = msmseeder.core.ManualOverrides()
-    uniprotxml = get_uniprot_xml(uniprot_query_string)
-    log_unique_domain_names(uniprot_query_string, uniprotxml)
-    if uniprot_domain_regex is not None:
-        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
+    selected_pdbchains = None
+    if mpistate.rank == 0:
+        uniprotxml = get_uniprot_xml(uniprot_query_string)
+        log_unique_domain_names(uniprot_query_string, uniprotxml)
+        if uniprot_domain_regex is not None:
+            log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
 
-    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
-    for pdbchain in selected_pdbchains:
-        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
+        selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
+        for pdbchain in selected_pdbchains:
+            get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
+
+    selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
@@ -607,59 +608,56 @@ def gen_gather_templates_metadata(nselected_templates, loopmodel=False, addition
 
 
 def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides):
-    selected_pdbchains = None
-    if mpistate.rank == 0:
-        selected_pdbchains = []
-        all_uniprot_entries = uniprotxml.findall('entry')
-        for entry in all_uniprot_entries:
-            entry_name = entry.find('name').text
-            if uniprot_domain_regex is not None:
-                selected_domains = entry.xpath(
-                    'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
-                    extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
-                )
-            else:
-                selected_domains = entry.findall('feature[@type="domain"]')
+    selected_pdbchains = []
+    all_uniprot_entries = uniprotxml.findall('entry')
+    for entry in all_uniprot_entries:
+        entry_name = entry.find('name').text
+        if uniprot_domain_regex is not None:
+            selected_domains = entry.xpath(
+                'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
+                extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
+            )
+        else:
+            selected_domains = entry.findall('feature[@type="domain"]')
 
-            domain_iter = 0
-            for domain in selected_domains:
-                domain_id = '%s_D%d' % (entry_name, domain_iter)
-                domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
-                if domain_id in manual_overrides.template.domain_spans:
-                    domain_span = [int(x) for x in manual_overrides.template.domain_spans[domain_id].split('-')]
-                domain_len = domain_span[1] - domain_span[0] + 1
-                if manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
+        domain_iter = 0
+        for domain in selected_domains:
+            domain_id = '%s_D%d' % (entry_name, domain_iter)
+            domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
+            if domain_id in manual_overrides.template.domain_spans:
+                domain_span = [int(x) for x in manual_overrides.template.domain_spans[domain_id].split('-')]
+            domain_len = domain_span[1] - domain_span[0] + 1
+            if manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
+                continue
+            if manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
+                continue
+
+            domain_iter += 1
+            pdbs = domain.getparent().xpath(
+                'dbReference[@type="PDB"]/property[@type="method"][@value="X-ray" or @value="NMR"]/..')
+
+            for pdb in pdbs:
+                pdbid = pdb.get('id')
+                if pdbid in manual_overrides.template.skip_pdbs:
                     continue
-                if manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
-                    continue
+                pdb_chain_span_nodes = pdb.findall('property[@type="chains"]')
 
-                domain_iter += 1
-                pdbs = domain.getparent().xpath(
-                    'dbReference[@type="PDB"]/property[@type="method"][@value="X-ray" or @value="NMR"]/..')
+                for PDB_chain_span_node in pdb_chain_span_nodes:
+                    chain_span_string = PDB_chain_span_node.get('value')
+                    chain_spans = msmseeder.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
 
-                for pdb in pdbs:
-                    pdbid = pdb.get('id')
-                    if pdbid in manual_overrides.template.skip_pdbs:
-                        continue
-                    pdb_chain_span_nodes = pdb.findall('property[@type="chains"]')
-
-                    for PDB_chain_span_node in pdb_chain_span_nodes:
-                        chain_span_string = PDB_chain_span_node.get('value')
-                        chain_spans = msmseeder.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
-
-                        for chainid in chain_spans.keys():
-                            span = chain_spans[chainid]
-                            if (span[0] < domain_span[0] + 30) & (span[1] > domain_span[1] - 30):
-                                templateid = '%s_%s_%s' % (domain_id, pdbid, chainid)
-                                data = {
-                                    'templateid': templateid,
-                                    'pdbid': pdbid,
-                                    'chainid': chainid,
-                                    'domain_span': domain_span
-                                }
-                                selected_pdbchains.append(data)
-        logger.info('%d PDB chains selected.' % len(selected_pdbchains))
-    selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
+                    for chainid in chain_spans.keys():
+                        span = chain_spans[chainid]
+                        if (span[0] < domain_span[0] + 30) & (span[1] > domain_span[1] - 30):
+                            templateid = '%s_%s_%s' % (domain_id, pdbid, chainid)
+                            data = {
+                                'templateid': templateid,
+                                'pdbid': pdbid,
+                                'chainid': chainid,
+                                'domain_span': domain_span
+                            }
+                            selected_pdbchains.append(data)
+    logger.info('%d PDB chains selected.' % len(selected_pdbchains))
     return selected_pdbchains
 
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
