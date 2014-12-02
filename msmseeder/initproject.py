@@ -427,7 +427,7 @@ def download_pdb_file(pdbid, project_pdb_filepath):
 
 
 def download_sifts_file(pdbid, project_sifts_filepath):
-    logger.info('Downloading sifts file for:', pdbid)
+    logger.info('Downloading sifts file for: %s', pdbid)
     sifts_page = msmseeder.PDB.retrieve_sifts(pdbid)
     with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file:
         project_sifts_file.write(sifts_page)
