@@ -21,7 +21,7 @@ def test_loopmodel_KC1D_HUMAN_D0_4KB8_D():
         missing_residues = msmseeder.initproject.pdbfix_template(template)
         msmseeder.initproject.loopmodel_template(template, missing_residues)
 
-        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_4KB8_D-loopmodeled.pdb'))
+        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_4KB8_D.pdb'))
 
 
 def test_loopmodel_KC1D_HUMAN_D0_4HNF_A():
@@ -35,7 +35,7 @@ def test_loopmodel_KC1D_HUMAN_D0_4HNF_A():
         missing_residues = msmseeder.initproject.pdbfix_template(template)
         msmseeder.initproject.loopmodel_template(template, missing_residues)
 
-        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_4HNF_A-loopmodeled.pdb'))
+        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_4HNF_A.pdb'))
 
 
 @msmseeder.tests.utils.expected_failure
@@ -50,7 +50,7 @@ def test_loopmodel_KC1D_HUMAN_D0_3UZP_A():
         missing_residues = msmseeder.initproject.pdbfix_template(template)
         msmseeder.initproject.loopmodel_template(template, missing_residues)
 
-        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_3UZP_A-loopmodeled.pdb'))
+        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_3UZP_A.pdb'))
 
 
 def test_loopmodel_ZAP70_HUMAN_D0_1U59_A():
@@ -64,4 +64,4 @@ def test_loopmodel_ZAP70_HUMAN_D0_1U59_A():
         missing_residues = msmseeder.initproject.pdbfix_template(template)
         msmseeder.initproject.loopmodel_template(template, missing_residues)
 
-        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'ZAP70_HUMAN_D0_1U59_A-loopmodeled.pdb'))
+        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'ZAP70_HUMAN_D0_1U59_A.pdb'))

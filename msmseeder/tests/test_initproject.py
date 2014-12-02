@@ -85,20 +85,3 @@ def test_attempt_symlink_structure_files():
         structure_type = 'pdb'
         msmseeder.initproject.attempt_symlink_structure_files(pdbid, '.', structure_paths, structure_type)
         assert os.path.exists(project_pdb_filepath)
-
-
-# def test_pdbfix_template():
-#     template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
-#     with enter_temp_dir():
-#         os.makedirs(msmseeder.core.default_project_dirnames.templates_structures_resolved)
-#         os.makedirs(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops)
-#         shutil.copy(template_filepath, os.path.join(msmseeder.core.default_project_dirnames.templates_structures_resolved, 'mock_template.pdb'))
-#         template = Mock()
-#         template.chainid = 'A'
-#         template.templateid = 'mock_template'
-#         template.resolved_seq = 'YQNLSPVGSGGSVCAAFD'
-#         template.full_seq = 'YQNLSPVGSGAYGSVCAAFD'
-#         msmseeder.initproject.pdbfix_template(template)
-#
-#         pdbfixed_template_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, 'mock_template.pdb')
-#         assert os.path.exists(pdbfixed_template_filepath)

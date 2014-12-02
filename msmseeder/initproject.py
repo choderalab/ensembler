@@ -701,7 +701,7 @@ def pdbfix_template(template):
         (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
         fixer.topology = newTopology
         fixer.positions = newPositions
-        template_pdbfixed_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb')
+        template_pdbfixed_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixed.pdb')
         with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
             simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
         return fixer.missingResidues
@@ -748,8 +748,8 @@ def loopmodel_templates(selected_templates, missing_residues):
 
 
 def loopmodel_template(template, missing_residues):
-    template_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb'))
-    output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodeled.pdb'))
+    template_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixed.pdb'))
+    output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb'))
     loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.loop'))
     output_score_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-score.sc'))
     log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml'))
