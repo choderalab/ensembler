@@ -263,7 +263,7 @@ def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
     metadata.update(additional_metadata)
     return metadata
 
-@msmseeder.utils.mpirank0only
+@msmseeder.utils.mpirank0only_and_end_with_barrier
 def log_unique_domain_names(uniprot_query_string, uniprotxml):
     if 'domain:' in uniprot_query_string:
         # First extract the domain selection
@@ -288,7 +288,7 @@ def log_unique_domain_names(uniprot_query_string, uniprotxml):
               % (uniprot_query_string, uniprot_unique_domain_names))
 
 
-@msmseeder.utils.mpirank0only
+@msmseeder.utils.mpirank0only_and_end_with_barrier
 def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
     regex_matched_domains = uniprotxml.xpath(
         'entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
@@ -433,7 +433,7 @@ def download_sifts_file(pdbid, project_sifts_filepath):
         project_sifts_file.write(sifts_page)
 
 
-@msmseeder.utils.mpirank0only
+@msmseeder.utils.mpirank0only_and_end_with_barrier
 def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
     if type(structure_dirs) != list:
         structure_dirs = []
@@ -553,7 +553,7 @@ def extract_pdb_template_seq(pdbchain):
     return template_data
 
 
-@msmseeder.utils.mpirank0only
+@msmseeder.utils.mpirank0only_and_end_with_barrier
 def write_template_seqs_to_fasta_file(selected_templates):
     selected_template_seq_tuples = [(template.templateid, template.full_seq) for template in selected_templates]
     selected_template_seq_observed_tuples = [(template.templateid, template.resolved_seq) for template in selected_templates]
@@ -561,7 +561,7 @@ def write_template_seqs_to_fasta_file(selected_templates):
     write_seqs_to_fasta_file(selected_template_seq_observed_tuples, fasta_ofilepath=os.path.join('templates', 'templates-resolved.fa'))
 
 
-@msmseeder.utils.mpirank0only
+@msmseeder.utils.mpirank0only_and_end_with_barrier
 def extract_template_structures_from_pdb_files(selected_templates):
     logger.info('Writing template structures...')
     for template in selected_templates:
@@ -570,7 +570,7 @@ def extract_template_structures_from_pdb_files(selected_templates):
         msmseeder.PDB.extract_residues_by_resnum(template_observed_filename, pdb_filename, template)
 
 
-@msmseeder.utils.mpirank0only
+@msmseeder.utils.mpirank0only_and_end_with_barrier
 def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs, loopmodel):
     gather_templates_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
     gather_templates_from_targetexplorer_metadata['structure_dirs'] = structure_dirs
@@ -580,7 +580,7 @@ def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri
     project_metadata.write()
 
 
-@msmseeder.utils.mpirank0only
+@msmseeder.utils.mpirank0only_and_end_with_barrier
 def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs, loopmodel):
     gather_templates_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
     gather_templates_from_uniprot_metadata['structure_dirs'] = structure_dirs
