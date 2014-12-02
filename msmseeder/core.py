@@ -460,3 +460,14 @@ def get_targets_and_templates():
     targets = get_targets()
     templates = get_templates()
     return targets, templates
+
+
+def find_loopmodel_executable():
+    for path in os.environ['PATH'].split(os.pathsep):
+        if not os.path.exists(path):
+            continue
+        path = path.strip('"')
+        for filename in os.listdir(path):
+            if filename[0: 10] == 'loopmodel.':
+                return os.path.join(path, filename)
+    raise Exception('Loopmodel executable not found in PATH')

@@ -1,8 +1,13 @@
 import os
 from mock import Mock
+import msmseeder
 import msmseeder.initproject
 import msmseeder.integration_test_utils
 import msmseeder.tests.utils
+
+
+def test_find_loopmodel_executable():
+    msmseeder.core.find_loopmodel_executable()
 
 
 def test_loopmodel_KC1D_HUMAN_D0_4KB8_D():

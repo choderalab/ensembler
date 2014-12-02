@@ -295,7 +295,7 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
     )
     regex_matched_domains_unique_names = set([domain.get('description') for domain in regex_matched_domains])
     logger.info('Unique domain names selected after searching with the case-sensitive regex string \'%s\':\n%s\n'
-          % (uniprot_domain_regex, regex_matched_domains_unique_names))
+        % (uniprot_domain_regex, regex_matched_domains_unique_names))
 
 
 @msmseeder.utils.notify_when_done
@@ -792,7 +792,7 @@ def write_loop_file(template, missing_residues):
         loop_file.write(loop_file_text)
 
 
-def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath='loopmodel.macosgccrelease', nmodels_to_build=1):
+def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath=msmseeder.core.find_loopmodel_executable(), nmodels_to_build=1):
     temp_dir = tempfile.mkdtemp()
     temp_template_filepath = os.path.join(temp_dir, 'template.pdb')
     temp_loop_filepath = os.path.join(temp_dir, 'template.loop')
