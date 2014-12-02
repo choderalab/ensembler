@@ -9,7 +9,7 @@ def test_extract_residues_by_resnum_from_4CFE():
     pdb_input_filepath = os.path.join('tests', 'resources', '4CFE.pdb.gz')
     template = Mock()
     template.chainid= 'A'
-    template.observed_pdbresnums = [str(x) for x in range(16, 269)]
+    template.resolved_pdbresnums = [str(x) for x in range(16, 269)]
     ofile = StringIO.StringIO()
     msmseeder.PDB.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile.close()
@@ -20,9 +20,9 @@ def test_extract_residues_by_resnum_from_3HLL():
     pdb_input_filepath = os.path.join('tests', 'resources', '3HLL.pdb.gz')
     template = Mock()
     template.chainid = 'A'
-    template.observed_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
-    template.observed_pdbresnums[template.observed_pdbresnums.index('56')] = '56A'
-    template.observed_pdbresnums[template.observed_pdbresnums.index('93')] = '93B'
+    template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
+    template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
+    template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
     ofile = StringIO.StringIO()
     msmseeder.PDB.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile.close()
@@ -32,9 +32,9 @@ def test_extract_residues_by_resnum_output():
     pdb_input_filepath = os.path.join('tests', 'resources', '3HLL.pdb.gz')
     template = Mock()
     template.chainid = 'A'
-    template.observed_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
-    template.observed_pdbresnums[template.observed_pdbresnums.index('56')] = '56A'
-    template.observed_pdbresnums[template.observed_pdbresnums.index('93')] = '93B'
+    template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
+    template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
+    template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
     ofile = StringIO.StringIO()
     msmseeder.PDB.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile_text = ofile.getvalue()

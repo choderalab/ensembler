@@ -35,7 +35,7 @@ project_stages = [
 
 ProjectDirNames = namedtuple(
     'ProjectDirNames',
-    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures_observed', 'templates_structures_complete']
+    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures_resolved', 'templates_structures_modeled_loops']
 )
 
 default_project_dirnames = ProjectDirNames(
@@ -46,8 +46,8 @@ default_project_dirnames = ProjectDirNames(
     packaged_models='packaged_models',
     structures_pdb=os.path.join('structures', 'pdb'),
     structures_sifts=os.path.join('structures', 'sifts'),
-    templates_structures_observed=os.path.join('templates', 'structures-observed'),
-    templates_structures_complete=os.path.join('templates', 'structures-complete'),
+    templates_structures_resolved=os.path.join('templates', 'structures-resolved'),
+    templates_structures_modeled_loops=os.path.join('templates', 'structures-modeled-loops'),
 )
 
 logger = logging.getLogger('info')

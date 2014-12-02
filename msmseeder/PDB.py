@@ -22,7 +22,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
     # list of resnum strings e.g. ['9', '29', '30B'] must be converted as follows to match the PDB format:
     # ['   9 ', '  29 ', '  30B']
     import re
-    desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.observed_pdbresnums]
+    desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.resolved_pdbresnums]
 
     if type(output_file) in [str, unicode]:
         ofile = open(output_file, 'w')

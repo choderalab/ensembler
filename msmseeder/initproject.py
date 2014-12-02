@@ -20,11 +20,16 @@ from msmseeder.core import mpistate
 
 logger = logging.getLogger('info')
 
-TemplateData = namedtuple(
-    'TemplateData',
-    ['pdbid', 'chainid', 'templateid', 'observed_seq',
-     'observed_pdbresnums', 'complete_seq', 'complete_pdbresnums']
-)
+
+class TemplateData:
+    def __init__(self, pdbid=None, chainid=None, templateid=None, resolved_seq=None, resolved_pdbresnums=None, full_seq=None, full_pdbresnums=None):
+        self.pdbid = pdbid
+        self.chainid = chainid
+        self.templateid = templateid
+        self.resolved_seq = resolved_seq
+        self.resolved_pdbresnums = resolved_pdbresnums
+        self.full_seq = full_seq
+        self.full_pdbresnums = full_pdbresnums
 
 
 @msmseeder.utils.notify_when_done
@@ -82,8 +87,8 @@ def create_project_dirs(project_toplevel_dir):
     msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.packaged_models))
     msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.structures_pdb))
     msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.structures_sifts))
-    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.templates_structures_observed))
-    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.templates_structures_complete))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.templates_structures_resolved))
+    msmseeder.utils.create_dir(os.path.join(project_toplevel_dir, msmseeder.core.default_project_dirnames.templates_structures_modeled_loops))
 
 
 def write_init_metadata(project_toplevel_dir):
@@ -524,8 +529,8 @@ def extract_pdb_template_seq(pdbchain):
         return
 
     # make a single-letter aa code sequence
-    complete_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
-    complete_pdbresnums = [residue.get('dbResNum') for residue in selected_residues]
+    full_seq = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_residues])
+    full_pdbresnums = [residue.get('dbResNum') for residue in selected_residues]
     template_seq_observed = ''.join([residue.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName') for residue in selected_observed_residues])
     template_pdbresnums_observed = [residue.get('dbResNum') for residue in selected_observed_residues]
 
@@ -534,10 +539,10 @@ def extract_pdb_template_seq(pdbchain):
         pdbid=pdbid,
         chainid=chainid,
         templateid=templateid,
-        observed_seq=template_seq_observed,
-        observed_pdbresnums=template_pdbresnums_observed,
-        complete_seq=complete_seq,
-        complete_pdbresnums=complete_pdbresnums,
+        resolved_seq=template_seq_observed,
+        resolved_pdbresnums=template_pdbresnums_observed,
+        full_seq=full_seq,
+        full_pdbresnums=full_pdbresnums,
     )
 
     return template_data
@@ -545,10 +550,10 @@ def extract_pdb_template_seq(pdbchain):
 
 @msmseeder.utils.mpirank0only
 def write_template_seqs_to_fasta_file(selected_templates):
-    selected_template_seq_tuples = [(template.templateid, template.complete_seq) for template in selected_templates]
-    selected_template_seq_observed_tuples = [(template.templateid, template.observed_seq) for template in selected_templates]
-    write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates-complete.fa'))
-    write_seqs_to_fasta_file(selected_template_seq_observed_tuples, fasta_ofilepath=os.path.join('templates', 'templates-observed.fa'))
+    selected_template_seq_tuples = [(template.templateid, template.full_seq) for template in selected_templates]
+    selected_template_seq_observed_tuples = [(template.templateid, template.resolved_seq) for template in selected_templates]
+    write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates-full-seq.fa'))
+    write_seqs_to_fasta_file(selected_template_seq_observed_tuples, fasta_ofilepath=os.path.join('templates', 'templates-resolved.fa'))
 
 
 @msmseeder.utils.mpirank0only
@@ -556,7 +561,7 @@ def extract_template_structures_from_pdb_files(selected_templates):
     logger.info('Writing template structures...')
     for template in selected_templates:
         pdb_filename = os.path.join(msmseeder.core.default_project_dirnames.structures_pdb, template.pdbid + '.pdb.gz')
-        template_observed_filename = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_observed, template.templateid + '.pdb')
+        template_observed_filename = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
         msmseeder.PDB.extract_residues_by_resnum(template_observed_filename, pdb_filename, template)
 
 
@@ -657,6 +662,7 @@ def pdbfix_templates(selected_templates):
     missing_residues_sublist = []
     ntemplates = len(selected_templates)
     for template_index in range(mpistate.rank, ntemplates, mpistate.size):
+        print template_index
         missing_residues_sublist.append(pdbfix_template(selected_templates[template_index]))
 
     missing_residues_gathered = mpistate.comm.gather(missing_residues_sublist, root=0)
@@ -673,37 +679,53 @@ def pdbfix_templates(selected_templates):
 
 
 def pdbfix_template(template):
-    import pdbfixer
-    import simtk.openmm.app
-    import Bio.SeqUtils
-    template_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_observed, template.templateid + '.pdb')
-    fixer = pdbfixer.PDBFixer(filename=template_filepath)
-    seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(template.chainid)
-    for r in template.complete_seq:
-        resi3 = Bio.SeqUtils.seq3(r).upper()
-        seq_obj.residues.append(resi3)
-    fixer.structure.sequences.append(seq_obj)
-    fixer.findMissingResidues()
-    remove_missing_residues_at_termini(fixer, len_complete_seq=len(template.complete_seq))
-    fixer.findMissingAtoms()
-    (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
-    fixer.topology = newTopology
-    fixer.positions = newPositions
-    template_pdbfixed_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.pdb')
-    with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
-        simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
-    return fixer.missingResidues
+    try:
+        import pdbfixer
+        import simtk.openmm.app
+        import Bio.SeqUtils
+        template_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
+        fixer = pdbfixer.PDBFixer(filename=template_filepath)
+        seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(template.chainid)
+        for r in template.full_seq:
+            resi3 = Bio.SeqUtils.seq3(r).upper()
+            seq_obj.residues.append(resi3)
+        fixer.structure.sequences.append(seq_obj)
+        fixer.findMissingResidues()
+        remove_missing_residues_at_termini(fixer, len_full_seq=len(template.full_seq))
+        fixer.findMissingAtoms()
+        (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
+        fixer.topology = newTopology
+        fixer.positions = newPositions
+        template_pdbfixed_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb')
+        with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
+            simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
+        return fixer.missingResidues
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        trbk = traceback.format_exc()
+        log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixer-log.yaml'))
+        logfile = msmseeder.core.LogFile(log_filepath)
+        logfile.log({
+            'templateid': str(template.templateid),
+            'exception': e,   # if Rosetta loopmodel fails, this field should include text sent to stdout and stderr
+            'traceback': msmseeder.core.literal_str(trbk),
+            'mpi_rank': mpistate.rank,
+        })
+        logger.error('MPI rank %d pdbfixer error for template %s - see logfile' % (mpistate.rank, template.templateid))
 
 
-def remove_missing_residues_at_termini(fixer, len_complete_seq):
+def remove_missing_residues_at_termini(fixer, len_full_seq):
     # remove C-terminal missing residues
+    if len(fixer.missingResidues) == 0:
+        return None
     sorted_missing_residues_keys = sorted(fixer.missingResidues, key=lambda x: x[1])
     last_missing_residues_key = sorted_missing_residues_keys[-1]
     last_missing_residues_start_index = last_missing_residues_key[1]
     last_missing_residues = fixer.missingResidues[last_missing_residues_key]
     nmissing_residues_up_to_last = sum([len(fixer.missingResidues[key]) for key in sorted_missing_residues_keys[:-1]])
 
-    if last_missing_residues_start_index + nmissing_residues_up_to_last + len(last_missing_residues) == len_complete_seq:
+    if last_missing_residues_start_index + nmissing_residues_up_to_last + len(last_missing_residues) == len_full_seq:
         fixer.missingResidues.pop(last_missing_residues_key)
 
     # remove N-terminal missing residues
@@ -721,11 +743,11 @@ def loopmodel_templates(selected_templates, missing_residues):
 
 
 def loopmodel_template(template, missing_residues):
-    template_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.pdb'))
-    output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodeled.pdb'))
-    loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop'))
-    output_score_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-score.sc'))
-    log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '-loopmodel-log.yaml'))
+    template_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb'))
+    output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodeled.pdb'))
+    loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.loop'))
+    output_score_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-score.sc'))
+    log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml'))
     logfile = msmseeder.core.LogFile(log_filepath)
     try:
         write_loop_file(template, missing_residues)
@@ -747,6 +769,7 @@ def loopmodel_template(template, missing_residues):
             'templateid': str(template.templateid),
             'exception': e,   # if Rosetta loopmodel fails, this field should include text sent to stdout and stderr
             'traceback': msmseeder.core.literal_str(trbk),
+            'mpi_rank': mpistate.rank,
             'successful': False,
         })
         logger.error('MPI rank %d Loopmodel error for template %s - see logfile' % (mpistate.rank, template.templateid))
@@ -764,7 +787,7 @@ def write_loop_file(template, missing_residues):
         loop_residues_added += nresidues
         # Note that missing residues at termini (which cannot be modeled by Rosetta loopmodel) have already been removed from the PDBFixer.missingResidues dictionary
         loop_file_text += 'LOOP%4d%4d - - 1\n' % (loop_begin, loop_end)
-    loop_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_complete, template.templateid + '.loop')
+    loop_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.loop')
     with open(loop_filepath, 'w') as loop_file:
         loop_file.write(loop_file_text)
 
@@ -827,7 +850,7 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
         #     import pdbfixer
         #     import simtk.openmm.app as app
         #
-        #     missing_residues = determine_template_missing_residues(template.observed_seq, template.complete_seq)
+        #     missing_residues = determine_template_missing_residues(template.resolved_seq, template.full_seq)
         #
         #     pdbfixer.findMissingAtoms()
         #     pdbfixer.addMissingAtoms()
@@ -835,11 +858,11 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
 
 
         # def determine_template_missing_residues(template):
-        #     # complete_seq_residue_indices = range(len(template.observed_seq))
+        #     # full_seq_residue_indices = range(len(template.resolved_seq))
         #
         #     # missing_residues = {}
-        #     # for i in range(len(template.complete_seq)):
-        #     #     if template.complete_pdbresnums[i] not in template.observed_pdbresnums[i]:
+        #     # for i in range(len(template.full_seq)):
+        #     #     if template.full_pdbresnums[i] not in template.resolved_pdbresnums[i]:
         #     #         missing_residues[(0, i)] = []
         #
         #     # (0,17): [
@@ -849,8 +872,8 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
         #     #         'GLY',
         #     #      ]
         #
-        #     # seq_observed = template.observed_seq
-        #     seq_complete = template.complete_seq
+        #     # seq_observed = template.resolved_seq
+        #     seq_complete = template.full_seq
         #     seq_observed_w_gaps = gen_seq_observed_w_gaps(template)
         #     seq_observed_offset = index of first non-null element in seq_observed_w_gaps
         #
@@ -870,14 +893,14 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
 
         # def gen_seq_observed_w_gaps(template):
         #     # TODO skip this - should be able to set the "complete" sequence with the PDBFixer object and then just use the findMissingResidues() function.
-        #     first_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[0])
-        #     last_observed_residue_index = template.complete_pdbresnums.index(template.observed_pdbresnums[-1])
+        #     first_observed_residue_index = template.full_pdbresnums.index(template.resolved_pdbresnums[0])
+        #     last_observed_residue_index = template.full_pdbresnums.index(template.resolved_pdbresnums[-1])
         #     nobserved_residues_w_gaps = last_observed_residue_index - first_observed_residue_index + 1
-        #     print first_observed_residue_index, last_observed_residue_index, nobserved_residues_w_gaps, len(template.complete_seq)
+        #     print first_observed_residue_index, last_observed_residue_index, nobserved_residues_w_gaps, len(template.full_seq)
         #
         #     seq_observed_w_gaps = [None] * nobserved_residues_w_gaps
-        #     for i in range(len(template.complete_seq)):
+        #     for i in range(len(template.full_seq)):
         #         if i >= first_observed_residue_index and i <= last_observed_residue_index:
         #             index = i - first_observed_residue_index
-        #             seq_observed_w_gaps[index] = template.complete_seq[index]
+        #             seq_observed_w_gaps[index] = template.full_seq[index]
         #     return seq_observed_w_gaps

@@ -79,3 +79,16 @@ def enter_temp_dir():
     yield temp_dir
     os.chdir(cwd)
     shutil.rmtree(temp_dir)
+
+
+def debug_method(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except Exception as e:
+            print e
+            import traceback
+            print traceback.format_exc()
+            import ipdb; ipdb.set_trace()
+    return wrapper

@@ -17,9 +17,9 @@ def integration_test_context(project_data='init'):
         shutil.copy('meta0.yaml', temp_dir)
         distutils.dir_util.copy_tree(os.path.join('targets'), os.path.join(temp_dir, 'targets'))
         shutil.copy(os.path.join('templates', 'meta0.yaml'), os.path.join(temp_dir, 'templates'))
-        shutil.copy(os.path.join('templates', 'templates-observed.fa'), os.path.join(temp_dir, 'templates'))
-        shutil.copy(os.path.join('templates', 'templates-complete.fa'), os.path.join(temp_dir, 'templates'))
-        distutils.dir_util.copy_tree(os.path.join('templates', 'structures-observed'), os.path.join(temp_dir, 'templates', 'structures-observed'))
+        shutil.copy(os.path.join('templates', 'templates-resolved.fa'), os.path.join(temp_dir, 'templates'))
+        shutil.copy(os.path.join('templates', 'templates-full-seq.fa'), os.path.join(temp_dir, 'templates'))
+        distutils.dir_util.copy_tree(os.path.join('templates', 'structures-resolved'), os.path.join(temp_dir, 'templates', 'structures-resolved'))
 
     os.chdir(temp_dir)
     yield temp_dir
