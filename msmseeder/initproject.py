@@ -263,7 +263,7 @@ def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
     metadata.update(additional_metadata)
     return metadata
 
-@msmseeder.utils.mpirank0only_and_end_with_barrier
+
 def log_unique_domain_names(uniprot_query_string, uniprotxml):
     if 'domain:' in uniprot_query_string:
         # First extract the domain selection
@@ -278,7 +278,7 @@ def log_unique_domain_names(uniprot_query_string, uniprotxml):
             }
         )
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_query_string_domains])
-        logger.info('Set of unique domain names selected by the domain selector \'%s\'during the initial UniProt search:\n%s\n'
+        logger.info('Set of unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s\n'
               % (query_string_domain_selection, uniprot_unique_domain_names))
 
     else:
@@ -288,8 +288,8 @@ def log_unique_domain_names(uniprot_query_string, uniprotxml):
               % (uniprot_query_string, uniprot_unique_domain_names))
 
 
-@msmseeder.utils.mpirank0only_and_end_with_barrier
 def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
+    logger.debug('log_unique_domain_names_selected_by_regex MPI: %d' % mpistate.rank)  # DEBUG
     regex_matched_domains = uniprotxml.xpath(
         'entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
         extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
@@ -433,7 +433,6 @@ def download_sifts_file(pdbid, project_sifts_filepath):
         project_sifts_file.write(sifts_page)
 
 
-@msmseeder.utils.mpirank0only_and_end_with_barrier
 def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
     if type(structure_dirs) != list:
         structure_dirs = []
@@ -667,7 +666,6 @@ def pdbfix_templates(selected_templates):
     missing_residues_sublist = []
     ntemplates = len(selected_templates)
     for template_index in range(mpistate.rank, ntemplates, mpistate.size):
-        print template_index
         missing_residues_sublist.append(pdbfix_template(selected_templates[template_index]))
 
     missing_residues_gathered = mpistate.comm.gather(missing_residues_sublist, root=0)
@@ -801,6 +799,8 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
     temp_dir = tempfile.mkdtemp()
     temp_template_filepath = os.path.join(temp_dir, 'template.pdb')
     temp_loop_filepath = os.path.join(temp_dir, 'template.loop')
+    temp_output_model_filepath = os.path.join(temp_dir, 'template_0001.pdb')
+    temp_output_score_filepath = os.path.join(temp_dir, 'score.sc')
     try:
         minirosetta_database_path = os.environ.get('MINIROSETTA_DATABASE')
         shutil.copy(input_template_pdb_filepath, temp_template_filepath)
@@ -811,6 +811,7 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
                 '-database', minirosetta_database_path,
                 '-in::file::s', temp_template_filepath,
                 '-loops:loop_file', temp_loop_filepath,
+                '-out:prefix', temp_dir,
                 '-loops:remodel', 'perturb_kic',
                 '-loops:refine', 'refine_kic',
                 '-ex1',
@@ -818,11 +819,12 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
                 '-nstruct', '%d' % nmodels_to_build,
                 '-loops:max_kic_build_attempts', '100',
                 '-in:file:fullatom',
+                '-overwrite',
             ],
             stderr=subprocess.STDOUT
         )
-        shutil.copy('template_0001.pdb', output_pdb_filepath)
-        shutil.copy('score.sc', output_score_filepath)
+        shutil.copy(temp_output_model_filepath, output_pdb_filepath)
+        shutil.copy(temp_output_score_filepath, output_score_filepath)
         shutil.rmtree(temp_dir)
         return output_text
     except:

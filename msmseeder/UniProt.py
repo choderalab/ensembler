@@ -4,6 +4,7 @@ import urllib2
 import tempfile
 import subprocess
 import shutil
+import msmseeder.core
 from lxml import etree
 
 def print_uniprot_xml_comparison(new_xml, old_xml):
@@ -112,16 +113,18 @@ def retrieve_uniprot(search_string, maxreadlength=100000000):
     The function also removes the xmlns attribute from <uniprot> tag, as this
     makes xpath searching annoying
     '''
-    import msmseeder.core
-
     base_url = 'http://www.uniprot.org/uniprot/?query='
     search_string_encoded = msmseeder.core.encode_url_query(search_string.replace('=', ':'))
     query_url = base_url + search_string_encoded + '&format=xml'
     response = urllib2.urlopen(query_url)
     page = response.read(maxreadlength)
-    page = page.replace('xmlns="http://uniprot.org/uniprot" ', '', 1)
-
+    page = remove_uniprot_xmlns(page)
     return page
+
+
+def remove_uniprot_xmlns(uniprot_xml_string):
+    return uniprot_xml_string.replace('xmlns="http://uniprot.org/uniprot" ', '', 1)
+
 
 def get_uniprot_mapping(query_data_type, retrieve_data_type, query_data):
     '''
