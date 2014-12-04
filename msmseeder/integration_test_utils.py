@@ -13,7 +13,7 @@ def integration_test_context(project_data='init'):
     cwd = os.getcwd()
 
     shutil.copy('meta0.yaml', temp_dir)
-    if project_data == 'templates_observed':
+    if project_data == 'templates_resolved':
         shutil.copy('meta0.yaml', temp_dir)
         distutils.dir_util.copy_tree(os.path.join('targets'), os.path.join(temp_dir, 'targets'))
         shutil.copy(os.path.join('templates', 'meta0.yaml'), os.path.join(temp_dir, 'templates'))

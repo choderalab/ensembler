@@ -11,7 +11,7 @@ def test_find_loopmodel_executable():
 
 
 def test_loopmodel_KC1D_HUMAN_D0_4KB8_D():
-    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_observed'):
+    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_resolved'):
         template = Mock()
         template.templateid = 'KC1D_HUMAN_D0_4KB8_D'
         template.chainid = 'D'
@@ -25,7 +25,7 @@ def test_loopmodel_KC1D_HUMAN_D0_4KB8_D():
 
 
 def test_loopmodel_KC1D_HUMAN_D0_4HNF_A():
-    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_observed'):
+    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_resolved'):
         template = Mock()
         template.templateid = 'KC1D_HUMAN_D0_4HNF_A'
         template.chainid = 'A'
@@ -38,9 +38,11 @@ def test_loopmodel_KC1D_HUMAN_D0_4HNF_A():
         assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_4HNF_A.pdb'))
 
 
-@msmseeder.tests.utils.expected_failure
 def test_loopmodel_KC1D_HUMAN_D0_3UZP_A():
-    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_observed'):
+    """
+    No missing residues
+    """
+    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_resolved'):
         template = Mock()
         template.templateid = 'KC1D_HUMAN_D0_3UZP_A'
         template.chainid = 'A'
@@ -54,7 +56,7 @@ def test_loopmodel_KC1D_HUMAN_D0_3UZP_A():
 
 
 def test_loopmodel_ZAP70_HUMAN_D0_1U59_A():
-    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_observed'):
+    with msmseeder.integration_test_utils.integration_test_context(project_data='templates_resolved'):
         template = Mock()
         template.templateid = 'ZAP70_HUMAN_D0_1U59_A'
         template.chainid = 'A'
