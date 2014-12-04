@@ -4,6 +4,7 @@ import msmseeder
 import msmseeder.initproject
 import msmseeder.integration_test_utils
 import msmseeder.tests.utils
+import yaml
 
 
 def test_find_loopmodel_executable():
@@ -52,7 +53,9 @@ def test_loopmodel_KC1D_HUMAN_D0_3UZP_A():
         missing_residues = msmseeder.initproject.pdbfix_template(template)
         msmseeder.initproject.loopmodel_template(template, missing_residues)
 
-        assert os.path.exists(os.path.join('templates', 'structures-modeled-loops', 'KC1D_HUMAN_D0_3UZP_A.pdb'))
+        assert not os.path.exists(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, 'KC1D_HUMAN_D0_3UZP_A.pdb'))
+        log = yaml.load(open(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, 'KC1D_HUMAN_D0_3UZP_A-loopmodel-log.yaml')))
+        assert log['no_missing_residues'] == True
 
 
 def test_loopmodel_ZAP70_HUMAN_D0_1U59_A():

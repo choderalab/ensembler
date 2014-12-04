@@ -764,7 +764,6 @@ def loopmodel_template(template, missing_residues):
     logfile = msmseeder.core.LogFile(log_filepath)
     write_loop_file(template, missing_residues)
     if len(missing_residues) == 0:
-        shutil.copy(template_filepath, output_pdb_filepath)
         loopmodel_output = LoopmodelOutput(successful=True, no_missing_residues=True)
     else:
         loopmodel_output = run_loopmodel(template_filepath, loop_filepath, output_pdb_filepath, output_score_filepath)
@@ -826,10 +825,14 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
                 ],
             stderr=subprocess.STDOUT
         )
-        shutil.copy(temp_output_model_filepath, output_pdb_filepath)
-        shutil.copy(temp_output_score_filepath, output_score_filepath)
-        shutil.rmtree(temp_dir)
-        return LoopmodelOutput(output_text=output_text, successful=True)
+        if os.path.exists(temp_output_model_filepath):
+            shutil.copy(temp_output_model_filepath, output_pdb_filepath)
+            shutil.copy(temp_output_score_filepath, output_score_filepath)
+            shutil.rmtree(temp_dir)
+            return LoopmodelOutput(output_text=output_text, successful=True)
+        else:
+            shutil.rmtree(temp_dir)
+            return LoopmodelOutput(output_text=output_text, successful=False)
     except KeyboardInterrupt:
         shutil.rmtree(temp_dir)
         raise
