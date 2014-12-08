@@ -8,6 +8,8 @@ import subprocess
 import traceback
 import tempfile
 from lxml import etree
+import yaml
+import Bio.SeqUtils
 import msmseeder
 import msmseeder.TargetExplorer
 import msmseeder.UniProt
@@ -15,7 +17,6 @@ import msmseeder.PDB
 import msmseeder.version
 from msmseeder.core import construct_fasta_str
 from msmseeder.utils import file_exists_and_not_empty
-from collections import namedtuple
 from msmseeder.core import mpistate
 
 logger = logging.getLogger('info')
@@ -298,7 +299,6 @@ def log_unique_domain_names(uniprot_query_string, uniprotxml):
 
 
 def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
-    logger.debug('log_unique_domain_names_selected_by_regex MPI: %d' % mpistate.rank)  # DEBUG
     regex_matched_domains = uniprotxml.xpath(
         'entry/feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
         extensions={(None, 'match_regex'): msmseeder.core.xpath_match_regex_case_sensitive}
@@ -309,7 +309,7 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
 
 
 @msmseeder.utils.notify_when_done
-def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None, loopmodel=True):
+def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None, loopmodel=True, overwrite_structures=True):
     """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
@@ -329,15 +329,15 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
-    extract_template_structures_from_pdb_files(selected_templates)
+    extract_template_structures_from_pdb_files(selected_templates, overwrite_structures=overwrite_structures)
     if loopmodel:
-        missing_residues = pdbfix_templates(selected_templates)
-        loopmodel_templates(selected_templates, missing_residues)
+        missing_residues = pdbfix_templates(selected_templates, overwrite_structures=overwrite_structures)
+        loopmodel_templates(selected_templates, missing_residues, overwrite_structures=overwrite_structures)
     write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs, loopmodel)
 
 
 @msmseeder.utils.notify_when_done
-def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None, loopmodel=True):
+def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None, loopmodel=True, overwrite_structures=True):
     """# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures."""
     manual_overrides = msmseeder.core.ManualOverrides()
@@ -356,10 +356,11 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
-    extract_template_structures_from_pdb_files(selected_templates)
+    extract_template_structures_from_pdb_files(selected_templates, overwrite_structures=overwrite_structures)
     if loopmodel:
-        missing_residues = pdbfix_templates(selected_templates)
-        loopmodel_templates(selected_templates, missing_residues)
+        missing_residues = pdbfix_templates(selected_templates, overwrite_structures=overwrite_structures)
+        print 'Starting loopmodeling'
+        loopmodel_templates(selected_templates, missing_residues, overwrite_structures=overwrite_structures)
     write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs, loopmodel)
 
 
@@ -570,12 +571,16 @@ def write_template_seqs_to_fasta_file(selected_templates):
 
 
 @msmseeder.utils.mpirank0only_and_end_with_barrier
-def extract_template_structures_from_pdb_files(selected_templates):
+def extract_template_structures_from_pdb_files(selected_templates, overwrite_structures=True):
     logger.info('Writing template structures...')
     for template in selected_templates:
         pdb_filename = os.path.join(msmseeder.core.default_project_dirnames.structures_pdb, template.pdbid + '.pdb.gz')
-        template_observed_filename = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
-        msmseeder.PDB.extract_residues_by_resnum(template_observed_filename, pdb_filename, template)
+        template_resolved_filename = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
+        if not overwrite_structures:
+            print template_resolved_filename, os.path.exists(template_resolved_filename)
+            if os.path.exists(template_resolved_filename):
+                continue
+        msmseeder.PDB.extract_residues_by_resnum(template_resolved_filename, pdb_filename, template)
 
 
 @msmseeder.utils.mpirank0only_and_end_with_barrier
@@ -671,11 +676,11 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
 
 
-def pdbfix_templates(selected_templates):
+def pdbfix_templates(selected_templates, overwrite_structures=True):
     missing_residues_sublist = []
     ntemplates = len(selected_templates)
     for template_index in range(mpistate.rank, ntemplates, mpistate.size):
-        missing_residues_sublist.append(pdbfix_template(selected_templates[template_index]))
+        missing_residues_sublist.append(pdbfix_template(selected_templates[template_index], overwrite_structures=overwrite_structures))
 
     missing_residues_gathered = mpistate.comm.gather(missing_residues_sublist, root=0)
 
@@ -690,11 +695,14 @@ def pdbfix_templates(selected_templates):
     return missing_residues_list
 
 
-def pdbfix_template(template):
+def pdbfix_template(template, overwrite_structures=True):
     try:
+        log_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml')
+        if not overwrite_structures:
+            if os.path.exists(log_filepath):
+                return
         import pdbfixer
         import simtk.openmm.app
-        import Bio.SeqUtils
         template_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
         fixer = pdbfixer.PDBFixer(filename=template_filepath)
         seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(template.chainid)
@@ -744,23 +752,25 @@ def remove_missing_residues_at_termini(fixer, len_full_seq):
     fixer.missingResidues.pop((0, 0), None)
 
 
-def loopmodel_templates(selected_templates, missing_residues):
+def loopmodel_templates(selected_templates, missing_residues, overwrite_structures=True):
     for template_index in range(mpistate.rank, len(selected_templates), mpistate.size):
         template = selected_templates[template_index]
-        # print 'MPI rank: %d template %s\n%s\n%s' % (mpistate.rank, template.templateid, template.resolved_seq, template.full_seq)  # DEBUG
         if mpistate.size > 1:
             logger.info('MPI rank %d modeling missing loops for template %s' % (mpistate.rank, template.templateid))
         else:
             logger.info('Modeling missing loops for template %s' % template.templateid)
-        loopmodel_template(template, missing_residues[template_index])
+        loopmodel_template(template, missing_residues[template_index], overwrite_structures=overwrite_structures)
 
 
-def loopmodel_template(template, missing_residues):
+def loopmodel_template(template, missing_residues, overwrite_structures=True):
     template_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixed.pdb'))
     output_pdb_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb'))
     loop_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.loop'))
     output_score_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-score.sc'))
     log_filepath = os.path.abspath(os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml'))
+    if not overwrite_structures:
+        if os.path.exists(log_filepath):
+            return
     logfile = msmseeder.core.LogFile(log_filepath)
     write_loop_file(template, missing_residues)
     if len(missing_residues) == 0:
@@ -842,3 +852,16 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
     except Exception as e:
         shutil.rmtree(temp_dir)
         return LoopmodelOutput(output_text=output_text, exception=e, traceback=traceback.format_exc(), successful=False)
+
+
+def check_loopmodel_complete_and_successful(template):
+    output_pdb_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb')
+    log_filepath = os.path.join(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml')
+    if os.path.exists(log_filepath) and os.path.exists(output_pdb_filepath):
+        with open(log_filepath) as log_file:
+            log_data = yaml.load(log_file)
+            if log_data.get('successful') == True:
+                print template.templateid, 'Already pdbfixed'
+                return True
+    else:
+        return False
