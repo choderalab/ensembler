@@ -58,7 +58,7 @@ def main():
     argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex)
     argparser.add_argument('--structure_paths', help='(Optional) Local directories within which to search for PDB and SIFTS files (space-separated).', nargs='*')
     argparser.add_argument('--loopmodel', type=bool, default=True, help='Model template loops using Rosetta loopmodel (default: True)')
-    argparser.add_argument('--no_overwrite_structures', action='store_true', default=False, help='Use this flag to stop structures (both resolved and loopmodel) from being overwritten')
+    argparser.add_argument('--no_overwrite_structures', action='store_true', default=False, help='Use this flag to prevent structures (both resolved and loopmodel) from being overwritten')
     args = argparser.parse_args()
 
     msmseeder.core.check_project_toplevel_dir()
