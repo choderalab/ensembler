@@ -3,13 +3,13 @@ import tempfile
 import shutil
 import distutils.dir_util
 import contextlib
-import msmseeder.initproject
+import ensembler.initproject
 
 
 @contextlib.contextmanager
 def integration_test_context(project_data='init'):
     temp_dir = tempfile.mkdtemp()
-    msmseeder.initproject.initproject(temp_dir)
+    ensembler.initproject.initproject(temp_dir)
     cwd = os.getcwd()
 
     shutil.copy('meta0.yaml', temp_dir)

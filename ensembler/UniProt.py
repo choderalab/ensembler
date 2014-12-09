@@ -4,7 +4,7 @@ import urllib2
 import tempfile
 import subprocess
 import shutil
-import msmseeder.core
+import ensembler.core
 from lxml import etree
 
 def print_uniprot_xml_comparison(new_xml, old_xml):
@@ -114,7 +114,7 @@ def retrieve_uniprot(search_string, maxreadlength=100000000):
     makes xpath searching annoying
     '''
     base_url = 'http://www.uniprot.org/uniprot/?query='
-    search_string_encoded = msmseeder.core.encode_url_query(search_string.replace('=', ':'))
+    search_string_encoded = ensembler.core.encode_url_query(search_string.replace('=', ':'))
     query_url = base_url + search_string_encoded + '&format=xml'
     response = urllib2.urlopen(query_url)
     page = response.read(maxreadlength)

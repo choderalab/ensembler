@@ -6,8 +6,8 @@
 #
 
 import argparse
-import msmseeder
-import msmseeder.modelling
+import ensembler
+import ensembler.modelling
 
 def main():
     argparser = argparse.ArgumentParser(description='Sorts models by sequence identity, then performs clustering to filter out non-unique models.', formatter_class=argparse.RawTextHelpFormatter)
@@ -15,15 +15,15 @@ def main():
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     # if args.verbose:
     #     loglevel = 'debug'
     # else:
     #     loglevel = 'info'
 
-    msmseeder.modelling.sort_by_sequence_identity(process_only_these_targets=args.targets, loglevel=None)
-    msmseeder.modelling.cluster_models(process_only_these_targets=args.targets, verbose=args.verbose)
+    ensembler.modelling.sort_by_sequence_identity(process_only_these_targets=args.targets, loglevel=None)
+    ensembler.modelling.cluster_models(process_only_these_targets=args.targets, verbose=args.verbose)
 
 if __name__ == '__main__':
     main()

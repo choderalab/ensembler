@@ -7,8 +7,8 @@
 
 import argparse
 import os
-import msmseeder
-import msmseeder.initproject
+import ensembler
+import ensembler.initproject
 
 def main():
     # ========
@@ -61,7 +61,7 @@ def main():
     argparser.add_argument('--no_overwrite_structures', action='store_true', default=False, help='Use this flag to prevent structures (both resolved and loopmodel) from being overwritten')
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     # ========
     # Get the template selection method
@@ -79,9 +79,9 @@ def main():
     # ========
 
     if args.gather_from == 'TargetExplorerDB':
-        msmseeder.initproject.gather_templates_from_targetexplorer(args.dbapi_uri, search_string=args.query, structure_dirs=structure_paths, loopmodel=args.loopmodel, overwrite_structures=overwrite_structures)
+        ensembler.initproject.gather_templates_from_targetexplorer(args.dbapi_uri, search_string=args.query, structure_dirs=structure_paths, loopmodel=args.loopmodel, overwrite_structures=overwrite_structures)
     elif args.gather_from == 'UniProt':
-        msmseeder.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_dirs=structure_paths, loopmodel=args.loopmodel, overwrite_structures=overwrite_structures)
+        ensembler.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_dirs=structure_paths, loopmodel=args.loopmodel, overwrite_structures=overwrite_structures)
 
 if __name__ == '__main__':
     main()

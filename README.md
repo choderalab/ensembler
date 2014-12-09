@@ -1,7 +1,7 @@
-MSMSeeder
+Ensembler
 =========
 
-[![Binstar Badge](https://binstar.org/dannyparton/msmseeder/badges/version.svg)](https://binstar.org/dannyparton/msmseeder)
+[![Binstar Badge](https://binstar.org/dannyparton/ensembler/badges/version.svg)](https://binstar.org/dannyparton/ensembler)
 
 Software pipeline used to generate diverse protein structural ensembles, for
 the purpose of seeding multiple parallel molecular dynamics simulations, and
@@ -29,7 +29,7 @@ Manifest
 
 scripts/ - Python wrapper scripts which accept parameters from the command-line or project metadata file
 
-msmseeder/ - main code; can be used as a standalone Python library package
+ensembler/ - main code; can be used as a standalone Python library package
 
 tests/ - to test whether the code is working correctly, run nosetests from this top-level directory
 
@@ -39,12 +39,12 @@ Installation
 Using conda:
 
     conda config --add channels http://conda.binstar.org/dannyparton
-    conda install msmseeder
+    conda install ensembler
 
 From source:
 
-    git clone https://github.com/choderalab/msmseeder.git
-    cd msmseeder
+    git clone https://github.com/choderalab/ensembler.git
+    cd ensembler
     python setup.py install
 
 Dependencies
@@ -63,17 +63,17 @@ Basic Usage
 -----------
 
 The package can be used either by running the command-line scripts listed
-below, or by writing scripts to interact with the MSMSeeder Python library.
+below, or by writing scripts to interact with the Ensembler Python library.
 Each script can be run from the command-line with a '-h' flag, which will print
 information on their usage. They are intended to be run in the following order:
 
-1. MSMSeederInit
-2. MSMSeederGatherTargets
-3. MSMSeederGatherTemplates
-5. MSMSeederRefineImplicitMD
-6. MSMSeederSolvate
-7. MSMSeederRefineExplicitMD
-8. MSMSeederPackageModels
+1. EnsemblerInit
+2. EnsemblerGatherTargets
+3. EnsemblerGatherTemplates
+5. EnsemblerRefineImplicitMD
+6. EnsemblerSolvate
+7. EnsemblerRefineExplicitMD
+8. EnsemblerPackageModels
 
 The scripts have been parallelized with MPI where useful. Furthermore, the MD
 refinement steps use the OpenMM simulation package, which has particularly high
@@ -97,21 +97,21 @@ from UniProt, as well as minimum and maximum acceptable domain lengths.
 Example commands
 ----------------
 
-    MSMSeederInit
-    MSMSeederGatherTargets --gather_from TargetExplorerDB --db_path ~/kinomeDB/database/database.xml
-    MSMSeederGatherTemplates --gather_from UniProt --uniprot_query 'domain:"Protein kinase" AND reviewed:yes' --uniprot_domain_regex '^Protein kinase(?!; truncated)(?!; inactive)' --structure_paths ~/pdbfiles ~/siftsfiles
-    MSMSeederBuildModels --targets ABL1_HUMAN_D0
-    MSMSeederRefineImplicitMD --targets ABL1_HUMAN_D0
-    MSMSeederSolvate --targets ABL1_HUMAN_D0
-    MSMSeederRefineExplicitMD --targets ABL1_HUMAN_D0
-    MSMSeederPackageModels --targets ABL1_HUMAN_D0 --package_for FAH
+    EnsemblerInit
+    EnsemblerGatherTargets --gather_from TargetExplorerDB --db_path ~/kinomeDB/database/database.xml
+    EnsemblerGatherTemplates --gather_from UniProt --uniprot_query 'domain:"Protein kinase" AND reviewed:yes' --uniprot_domain_regex '^Protein kinase(?!; truncated)(?!; inactive)' --structure_paths ~/pdbfiles ~/siftsfiles
+    EnsemblerBuildModels --targets ABL1_HUMAN_D0
+    EnsemblerRefineImplicitMD --targets ABL1_HUMAN_D0
+    EnsemblerSolvate --targets ABL1_HUMAN_D0
+    EnsemblerRefineExplicitMD --targets ABL1_HUMAN_D0
+    EnsemblerPackageModels --targets ABL1_HUMAN_D0 --package_for FAH
 
 Additional notes on scripts
 ----------------
 
 (run each script with '-h' flag for general info)
 
-### MSMSeederGatherTargets and MSMSeederGatherTemplates
+### EnsemblerGatherTargets and EnsemblerGatherTemplates
 
 These scripts are used to provide target data (ids and sequences) and
 template data (ids, sequences and structures). Two different
@@ -136,7 +136,7 @@ of target sequences (targets/targets.fa), a list of template sequences
 (templates/templates.fa), and a set of template structures
 (templates/structures/[id].pdb). The subsequent model-building and refinement
 scripts can thus be run using any set of data specified in this way, allowing
-the MSMSeederGatherTargets and MSMSeederGatherTemplates scripts to be bypassed or modified
+the EnsemblerGatherTargets and EnsemblerGatherTemplates scripts to be bypassed or modified
 if necessary. The main restrictions are that modified residues (e.g.
 phosphotyrosines) cannot be included, and that ids and residues in the
 templates.fa file must match with the template structure files.

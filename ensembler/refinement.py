@@ -8,7 +8,7 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
     import datetime
     import traceback
     import gzip
-    import msmseeder
+    import ensembler
     import Bio.SeqIO
     import simtk.openmm as openmm
     import simtk.unit as unit
@@ -224,14 +224,14 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
                 'complete': False,
             }
             log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
-            log_file = msmseeder.core.LogFile(log_filepath)
+            log_file = ensembler.core.LogFile(log_filepath)
             log_file.log(new_log_data=log_data)
 
             try:
                 start = datetime.datetime.utcnow()
                 simulate_implicitMD(model_dir, variants=variants, gpuid=gpuid, rank=rank, openmm_platform=openmm_platform, verbose=verbose)
                 end = datetime.datetime.utcnow()
-                timing = msmseeder.core.strf_timedelta(end - start)
+                timing = ensembler.core.strf_timedelta(end - start)
                 log_data = {
                     'complete': True,
                     'timing': timing,
@@ -241,7 +241,7 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
                 trbk = traceback.format_exc()
                 log_data = {
                     'exception': e,
-                    'traceback': msmseeder.core.literal_str(trbk),
+                    'traceback': ensembler.core.literal_str(trbk),
                 }
                 log_file.log(new_log_data=log_data)
 
@@ -258,11 +258,11 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
 
             import sys
             import yaml
-            import msmseeder
-            import msmseeder.version
+            import ensembler
+            import ensembler.version
             import subprocess
             import simtk.openmm.version
-            datestamp = msmseeder.core.get_utcnow_formatted()
+            datestamp = ensembler.core.get_utcnow_formatted()
             nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb.gz']).count('\n')
             target_timedelta = datetime.datetime.utcnow() - target_starttime
 
@@ -273,18 +273,18 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
             metadata['refine_implicit_md'] = {
                 'target_id': target.id,
                 'datestamp': datestamp,
-                'timing': msmseeder.core.strf_timedelta(target_timedelta),
+                'timing': ensembler.core.strf_timedelta(target_timedelta),
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': msmseeder.core.literal_str(sys.version),
-                'msmseeder_version': msmseeder.version.short_version,
-                'msmseeder_commit': msmseeder.version.git_revision,
+                'python_full_version': ensembler.core.literal_str(sys.version),
+                'ensembler_version': ensembler.version.short_version,
+                'ensembler_commit': ensembler.version.git_revision,
                 'biopython_version': Bio.__version__,
                 'openmm_version': simtk.openmm.version.short_version,
                 'openmm_commit': simtk.openmm.version.git_revision
             }
 
-            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata = ensembler.core.ProjectMetadata(metadata)
             metadata.write(meta_filepath)
 
     comm.Barrier()
@@ -399,10 +399,10 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
             import sys
             import yaml
-            import msmseeder
-            import msmseeder.version
+            import ensembler
+            import ensembler.version
             import simtk.openmm.version
-            datestamp = msmseeder.core.get_utcnow_formatted()
+            datestamp = ensembler.core.get_utcnow_formatted()
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             with open(meta_filepath) as meta_file:
@@ -412,15 +412,15 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                 'target_id': target.id,
                 'datestamp': datestamp,
                 'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': msmseeder.core.literal_str(sys.version),
-                'msmseeder_version': msmseeder.version.short_version,
-                'msmseeder_commit': msmseeder.version.git_revision,
+                'python_full_version': ensembler.core.literal_str(sys.version),
+                'ensembler_version': ensembler.version.short_version,
+                'ensembler_commit': ensembler.version.git_revision,
                 'biopython_version': Bio.__version__,
                 'openmm_version': simtk.openmm.version.short_version,
                 'openmm_commit': simtk.openmm.version.git_revision
             }
 
-            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata = ensembler.core.ProjectMetadata(metadata)
             metadata.write(meta_filepath)
 
     comm.Barrier()
@@ -503,9 +503,9 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
 
             import sys
             import yaml
-            import msmseeder
-            import msmseeder.version
-            datestamp = msmseeder.core.get_utcnow_formatted()
+            import ensembler
+            import ensembler.version
+            datestamp = ensembler.core.get_utcnow_formatted()
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             with open(meta_filepath) as meta_file:
@@ -515,13 +515,13 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
                 'target_id': target.id,
                 'datestamp': datestamp,
                 'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': msmseeder.core.literal_str(sys.version),
-                'msmseeder_version': msmseeder.version.short_version,
-                'msmseeder_commit': msmseeder.version.git_revision,
+                'python_full_version': ensembler.core.literal_str(sys.version),
+                'ensembler_version': ensembler.version.short_version,
+                'ensembler_commit': ensembler.version.git_revision,
                 'biopython_version': Bio.__version__,
             }
 
-            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata = ensembler.core.ProjectMetadata(metadata)
             metadata.write(meta_filepath)
 
     comm.Barrier()
@@ -893,11 +893,11 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             # ========
             import sys
             import yaml
-            import msmseeder
-            import msmseeder.version
+            import ensembler
+            import ensembler.version
             import subprocess
             import simtk.openmm.version
-            datestamp = msmseeder.core.get_utcnow_formatted()
+            datestamp = ensembler.core.get_utcnow_formatted()
             nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb.gz']).count('\n')
             target_timedelta = datetime.datetime.utcnow() - target_starttime
 
@@ -908,18 +908,18 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             metadata['refine_explicit_md'] = {
                 'target_id': target.id,
                 'datestamp': datestamp,
-                'timing': msmseeder.core.strf_timedelta(target_timedelta),
+                'timing': ensembler.core.strf_timedelta(target_timedelta),
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': msmseeder.core.literal_str(sys.version),
-                'msmseeder_version': msmseeder.version.short_version,
-                'msmseeder_commit': msmseeder.version.git_revision,
+                'python_full_version': ensembler.core.literal_str(sys.version),
+                'ensembler_version': ensembler.version.short_version,
+                'ensembler_commit': ensembler.version.git_revision,
                 'biopython_version': Bio.__version__,
                 'openmm_version': simtk.openmm.version.short_version,
                 'openmm_commit': simtk.openmm.version.git_revision
             }
 
-            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata = ensembler.core.ProjectMetadata(metadata)
             metadata.write(meta_filepath)
 
     comm.Barrier()

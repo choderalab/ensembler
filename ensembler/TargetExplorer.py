@@ -15,13 +15,13 @@ def query_targetexplorer(dbapi_uri, search_string, return_data=[], maxreadlength
     If full_seqs=True, the DB API will also return the full-length canonical
     isoform sequences.
     '''
-    import msmseeder.core
+    import ensembler.core
 
     if type(return_data) == str:
         return_data = [return_data]
 
     base_uri = dbapi_uri + '/search?query='
-    search_string_encoded = msmseeder.core.encode_url_query(search_string)
+    search_string_encoded = ensembler.core.encode_url_query(search_string)
     return_data_string = '&return=' + ','.join(return_data)
     query_uri = base_uri + search_string_encoded + return_data_string
     response = urllib2.urlopen(query_uri)

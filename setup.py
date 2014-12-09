@@ -45,9 +45,9 @@ def git_version():
 # Function for writing version.py (this will be copied to the install directory)
 ##########################
 
-msmseeder_version_filepath = 'msmseeder/version.py'
-def write_version_py(filename=msmseeder_version_filepath):
-    cnt = """# THIS FILE IS GENERATED FROM MSMSEEDER SETUP.PY
+ensembler_version_filepath = 'ensembler/version.py'
+def write_version_py(filename=ensembler_version_filepath):
+    cnt = """# THIS FILE IS GENERATED FROM ENSEMBLER SETUP.PY
 short_version = '%(version)s'
 version = '%(version)s'
 full_version = '%(full_version)s'
@@ -82,12 +82,12 @@ if not release:
 ##########################
 
 def find_packages():
-    """Find all of msmseeder's python packages.
+    """Find all of ensembler's python packages.
     Adapted from IPython's setupbase.py. Copyright IPython
     contributors, licensed under the BSD license.
     """
-    packages = ['msmseeder.scripts']
-    for dir,subdirs,files in os.walk('msmseeder'):
+    packages = ['ensembler.scripts']
+    for dir,subdirs,files in os.walk('ensembler'):
         package = dir.replace(os.path.sep, '.')
         if '__init__.py' not in files:
             # not a package
@@ -101,7 +101,7 @@ def find_packages():
 
 write_version_py()
 setup(
-    name = 'msmseeder',
+    name = 'ensembler',
     version = __version__,
     author = 'Daniel L Parton',
     author_email = 'daniel.parton@choderalab.org',
@@ -109,25 +109,25 @@ setup(
     license='GPLv2',
     long_description = read_readme('README.md'),
     packages = find_packages(),
-    package_dir = {'msmseeder.scripts': 'scripts'},
-    package_data = {'msmseeder.tests': ['resources/*']},
-    # scripts = ['scripts/MSMSeederInit.py', 'scripts/MSMSeederGatherTargets.py', 'scripts/MSMSeederGatherTemplates.py', 'scripts/MSMSeederBuildModels.py', 'scripts/MSMSeederRefineImplicitMD.py', 'scripts/MSMSeederSolvate.py', 'scripts/MSMSeederRefineExplicitMD.py', 'scripts/MSMSeederPackageModels.py'],
+    package_dir = {'ensembler.scripts': 'scripts'},
+    package_data = {'ensembler.tests': ['resources/*']},
+    # scripts = ['scripts/EnsemblerInit.py', 'scripts/EnsemblerGatherTargets.py', 'scripts/EnsemblerGatherTemplates.py', 'scripts/EnsemblerBuildModels.py', 'scripts/EnsemblerRefineImplicitMD.py', 'scripts/EnsemblerSolvate.py', 'scripts/EnsemblerRefineExplicitMD.py', 'scripts/EnsemblerPackageModels.py'],
     # data_files = [('', ['LICENSE']), ('templates', ['project-data.yaml-TEMPLATE', 'manual-specifications.yaml-TEMPLATE'])],
     entry_points = {'console_scripts':
         [
-            'MSMSeederInit = msmseeder.scripts.MSMSeederInit:main',
-            'MSMSeederGatherTargets = msmseeder.scripts.MSMSeederGatherTargets:main',
-            'MSMSeederGatherTemplates = msmseeder.scripts.MSMSeederGatherTemplates:main',
-            'MSMSeederBuildModels = msmseeder.scripts.MSMSeederBuildModels:main',
-            'MSMSeederSortAndCluster = msmseeder.scripts.MSMSeederSortAndCluster:main',
-            'MSMSeederRefineImplicitMD = msmseeder.scripts.MSMSeederRefineImplicitMD:main',
-            'MSMSeederSolvate = msmseeder.scripts.MSMSeederSolvate:main',
-            'MSMSeederRefineExplicitMD = msmseeder.scripts.MSMSeederRefineExplicitMD:main',
-            'MSMSeederPackageModels = msmseeder.scripts.MSMSeederPackageModels:main',
-            'MSMSeederInspect = msmseeder.scripts.MSMSeederInspect:main',
+            'EnsemblerInit = ensembler.scripts.EnsemblerInit:main',
+            'EnsemblerGatherTargets = ensembler.scripts.EnsemblerGatherTargets:main',
+            'EnsemblerGatherTemplates = ensembler.scripts.EnsemblerGatherTemplates:main',
+            'EnsemblerBuildModels = ensembler.scripts.EnsemblerBuildModels:main',
+            'EnsemblerSortAndCluster = ensembler.scripts.EnsemblerSortAndCluster:main',
+            'EnsemblerRefineImplicitMD = ensembler.scripts.EnsemblerRefineImplicitMD:main',
+            'EnsemblerSolvate = ensembler.scripts.EnsemblerSolvate:main',
+            'EnsemblerRefineExplicitMD = ensembler.scripts.EnsemblerRefineExplicitMD:main',
+            'EnsemblerPackageModels = ensembler.scripts.EnsemblerPackageModels:main',
+            'EnsemblerInspect = ensembler.scripts.EnsemblerInspect:main',
         ]
     },
 )
 
 # Delete version.py file from this directory
-os.remove(msmseeder_version_filepath)
+os.remove(ensembler_version_filepath)

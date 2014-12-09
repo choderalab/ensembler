@@ -1,36 +1,36 @@
 import os
-import msmseeder.initproject
-import msmseeder.tests
-import msmseeder.core
-import msmseeder.UniProt
-from msmseeder.utils import enter_temp_dir
+import ensembler.initproject
+import ensembler.tests
+import ensembler.core
+import ensembler.UniProt
+from ensembler.utils import enter_temp_dir
 from lxml import etree
 
 
 def test_initproject():
     with enter_temp_dir():
-        msmseeder.initproject.initproject('.')
-        assert os.path.exists(msmseeder.core.default_project_dirnames.targets)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.templates)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.structures)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.models)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.packaged_models)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.structures_pdb)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.structures_sifts)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.templates_structures_resolved)
-        assert os.path.exists(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops)
+        ensembler.initproject.initproject('.')
+        assert os.path.exists(ensembler.core.default_project_dirnames.targets)
+        assert os.path.exists(ensembler.core.default_project_dirnames.templates)
+        assert os.path.exists(ensembler.core.default_project_dirnames.structures)
+        assert os.path.exists(ensembler.core.default_project_dirnames.models)
+        assert os.path.exists(ensembler.core.default_project_dirnames.packaged_models)
+        assert os.path.exists(ensembler.core.default_project_dirnames.structures_pdb)
+        assert os.path.exists(ensembler.core.default_project_dirnames.structures_sifts)
+        assert os.path.exists(ensembler.core.default_project_dirnames.templates_structures_resolved)
+        assert os.path.exists(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
         assert os.path.exists('meta0.yaml')
 
 
 def test_gen_init_metadata():
-    metadata = msmseeder.initproject.gen_init_metadata('.')
+    metadata = ensembler.initproject.gen_init_metadata('.')
     metadata_keys = [
         'datestamp',
         'init_path',
         'python_version',
         'python_full_version',
-        'msmseeder_version',
-        'msmseeder_commit'
+        'ensembler_version',
+        'ensembler_commit'
     ]
     for key in metadata_keys:
         assert metadata.get(key) is not None
@@ -71,7 +71,7 @@ def test_extract_targets_from_targetexplorer_json():
             },
         ]
     }
-    targets = msmseeder.initproject.extract_targets_from_targetexplorer_json(targets_json)
+    targets = ensembler.initproject.extract_targets_from_targetexplorer_json(targets_json)
     assert targets[0] == ('AFC1_ARATH_D0',
                           'YQILSKMGEGTFGQVLECFDNKNKEVVAIKVIRSINKYREAAMIEIDVLQRLTRHDVGGSRCVQIRNWFDYRNHICIVFEKLGPSLYDFLRKNSYRSFPIDLVRELGRQLLESVAYMHDLRLIHTDLKPENILLVSSEYIKIPDYKFLSRPTKDGSYFKNLPKSSAIKLIDFGSTTFEHQDHNYIVSTRHYRAPEVILGVGWNYPCDLWSIGCILVELCSGEALFQTHENLEHLAMMERVLGPLPPHMVLRADRRSEKYFRRGAKLDWPEGATSRDSLKAVWKLPRLPNLIMQHVDHSAGDLIDLLQGLLRYDPTERFKAREALNHPFF')
     assert targets[1] == ('AFC2_ARATH_D0',
@@ -85,12 +85,12 @@ def test_attempt_symlink_structure_files():
         os.mkdir('pdb')
         project_pdb_filepath = os.path.join('pdb', pdbid + '.pdb.gz')
         structure_type = 'pdb'
-        msmseeder.initproject.attempt_symlink_structure_files(pdbid, '.', structure_paths, structure_type)
+        ensembler.initproject.attempt_symlink_structure_files(pdbid, '.', structure_paths, structure_type)
         assert os.path.exists(project_pdb_filepath)
 
 
 def test_log_unique_domain_names():
     with open(os.path.join('tests', 'resources', 'uniprot-CK1-kinases.xml')) as uniprotxml_file:
-        uniprotxml_string = msmseeder.UniProt.remove_uniprot_xmlns(uniprotxml_file.read())
+        uniprotxml_string = ensembler.UniProt.remove_uniprot_xmlns(uniprotxml_file.read())
         uniprotxml = etree.fromstring(uniprotxml_string)
-    msmseeder.initproject.log_unique_domain_names('domain:"Protein kinase" AND reviewed:yes AND family:"CK1" AND taxonomy:9606', uniprotxml)
+    ensembler.initproject.log_unique_domain_names('domain:"Protein kinase" AND reviewed:yes AND family:"CK1" AND taxonomy:9606', uniprotxml)

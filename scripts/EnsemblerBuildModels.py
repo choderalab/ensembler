@@ -6,8 +6,8 @@
 #
 
 import argparse
-import msmseeder
-import msmseeder.modelling
+import ensembler
+import ensembler.modelling
 
 def main():
     argparser = argparse.ArgumentParser(description='Models a set of target sequences onto a set of template structures using Modeller.', formatter_class=argparse.RawTextHelpFormatter)
@@ -17,14 +17,14 @@ def main():
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     if args.verbose:
         loglevel = 'debug'
     else:
         loglevel = 'info'
 
-    msmseeder.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, loglevel=loglevel)
+    ensembler.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, loglevel=loglevel)
 
 if __name__ == '__main__':
     main()

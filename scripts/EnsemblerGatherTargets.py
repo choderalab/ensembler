@@ -6,8 +6,8 @@
 #
 
 import argparse
-import msmseeder
-import msmseeder.initproject
+import ensembler
+import ensembler.initproject
 
 def main():
     # ========
@@ -57,7 +57,7 @@ def main():
     argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex)
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     # ========
     # Get the target selection method
@@ -70,10 +70,10 @@ def main():
     # ========
 
     if target_selection_method == 'TargetExplorerDB':
-        msmseeder.initproject.gather_targets_from_targetexplorer(args.dbapi_uri, search_string=args.query)
+        ensembler.initproject.gather_targets_from_targetexplorer(args.dbapi_uri, search_string=args.query)
 
     elif target_selection_method == 'UniProt':
-        msmseeder.initproject.gather_targets_from_uniprot(args.uniprot_query, args.uniprot_domain_regex)
+        ensembler.initproject.gather_targets_from_uniprot(args.uniprot_query, args.uniprot_domain_regex)
 
 if __name__ == '__main__':
     main()

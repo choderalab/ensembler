@@ -199,10 +199,10 @@ class TemplateManualOverrides:
             self.skip_pdbs = []
 
 
-def gen_metadata_filename(msmseeder_stage, metadata_file_index):
+def gen_metadata_filename(ensembler_stage, metadata_file_index):
     for modelling_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
-        if msmseeder_stage == modelling_stage:
-            return '%s-meta%d.yaml' % (msmseeder_stage, metadata_file_index)
+        if ensembler_stage == modelling_stage:
+            return '%s-meta%d.yaml' % (ensembler_stage, metadata_file_index)
     return 'meta%d.yaml' % metadata_file_index
 
 
@@ -214,11 +214,11 @@ class ProjectMetadata:
     """
     Examples
     --------
-    >>> init_project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+    >>> init_project_metadata = ensembler.core.ProjectMetadata(project_stage='init')
     >>> test_data = {'test_field': 'test_value'}
     >>> init_project_metadata.add_data(test_data)
     >>> init_project_metadata.write()
-    >>> gather_targets_project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
+    >>> gather_targets_project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_targets')
     >>> gather_targets_project_metadata.add_data(test_data)
     >>> gather_targets_project_metadata.write()
     """
@@ -301,8 +301,8 @@ class ProjectMetadata:
 
         Examples
         --------
-        >>> project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
-        >>> metadata = {'datestamp': msmseeder.core.get_utcnow_formatted()}
+        >>> project_metadata = ensembler.core.ProjectMetadata(project_stage='init')
+        >>> metadata = {'datestamp': ensembler.core.get_utcnow_formatted()}
         >>> project_metadata.add_data(metadata)
         """
         if project_stage is None:
@@ -346,31 +346,31 @@ class DeprecatedProjectMetadata:
                     yaml.dump(subdict, ofile, default_flow_style=False)
 
 
-def write_metadata(new_metadata_dict, msmseeder_stage, target_id=None):
+def write_metadata(new_metadata_dict, ensembler_stage, target_id=None):
     # TODO deprecate
-    if msmseeder_stage == 'init':
+    if ensembler_stage == 'init':
         metadata_dict = {}
     else:
-        prev_msmseeder_stage = project_stages[project_stages.index(msmseeder_stage) - 1]
-        prev_metadata_filepath = metadata_file_mapper(prev_msmseeder_stage, target_id=target_id)
+        prev_ensembler_stage = project_stages[project_stages.index(ensembler_stage) - 1]
+        prev_metadata_filepath = metadata_file_mapper(prev_ensembler_stage, target_id=target_id)
         with open(prev_metadata_filepath) as prev_metadata_file:
             metadata_dict = yaml.load(prev_metadata_file)
 
     metadata_dict.update(new_metadata_dict)
     metadata = ProjectMetadata(metadata_dict)
-    metadata.write(metadata_file_mapper(msmseeder_stage, target_id=target_id))
+    metadata.write(metadata_file_mapper(ensembler_stage, target_id=target_id))
 
 
-def metadata_file_mapper(msmseeder_stage, target_id=None):
+def metadata_file_mapper(ensembler_stage, target_id=None):
     # TODO deprecate
     metadata_file_dict = {
         'init': 'meta.yaml',
         'gather_targets': os.path.join('targets', 'meta.yaml'),
         'gather_templates': os.path.join('templates', 'meta.yaml'),
     }
-    if msmseeder_stage in metadata_file_dict:
-        return metadata_file_dict[msmseeder_stage]
-    elif msmseeder_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+    if ensembler_stage in metadata_file_dict:
+        return metadata_file_dict[ensembler_stage]
+    elif ensembler_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
         return os.path.join('models', target_id, 'meta.yaml')
 
 

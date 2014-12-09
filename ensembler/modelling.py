@@ -8,18 +8,18 @@ import gzip
 import glob
 from collections import namedtuple
 import traceback
-import msmseeder
-import msmseeder.version
+import ensembler
+import ensembler.version
 import Bio
 import Bio.SeqIO
 import Bio.pairwise2
 import Bio.SubsMat.MatrixInfo
 import modeller
 import modeller.automodel
-from msmseeder.core import get_targets_and_templates
+from ensembler.core import get_targets_and_templates
 import subprocess
 import numpy as np
-from msmseeder.core import mpistate
+from ensembler.core import mpistate
 
 logger = logging.getLogger('info')
 
@@ -29,14 +29,14 @@ TargetSetupData = namedtuple(
 )
 
 
-@msmseeder.utils.notify_when_done
+@ensembler.utils.notify_when_done
 def build_models(process_only_these_targets=None, process_only_these_templates=None, loglevel=None):
     """Uses the build_model method to build homology models for a given set of
     targets and templates.
 
     MPI-enabled.
     """
-    msmseeder.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates = get_targets_and_templates()
     ntemplates = len(templates)
     for target in targets:
@@ -62,13 +62,13 @@ def build_model(target, template, target_setup_data, loglevel=None):
         Must be a corresponding .pdb template file with the same ID in the
         templates/structures directory.
     """
-    msmseeder.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.loglevel_setter(logger, loglevel)
 
-    template_structure_dir = os.path.abspath(msmseeder.core.default_project_dirnames.templates_structures_modeled_loops)
+    template_structure_dir = os.path.abspath(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
     if not os.path.exists(os.path.join(template_structure_dir, template.id + '.pdb')):
-        template_structure_dir = os.path.abspath(msmseeder.core.default_project_dirnames.templates_structures_resolved)
+        template_structure_dir = os.path.abspath(ensembler.core.default_project_dirnames.templates_structures_resolved)
     model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
-    msmseeder.utils.create_dir(model_dir)
+    ensembler.utils.create_dir(model_dir)
     model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))
     modeling_log_filepath = os.path.abspath(os.path.join(model_dir, 'modeling-log.yaml'))
 
@@ -91,7 +91,7 @@ def build_model(target, template, target_setup_data, loglevel=None):
     write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
     log_file = init_build_model_logfile(modeling_log_filepath)
 
-    with msmseeder.utils.enter_temp_dir():
+    with ensembler.utils.enter_temp_dir():
         try:
             start = datetime.datetime.utcnow()
             shutil.copy(aln_filepath, 'alignment.pir')
@@ -144,7 +144,7 @@ def get_modeller_version_from_readme(modeller_module):
 def build_models_setup_target(target):
     target_setup_data = None
     if mpistate.rank == 0:
-        models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
+        models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
         target_starttime = datetime.datetime.utcnow()
         logger.info(
             '=========================================================================\n'
@@ -152,7 +152,7 @@ def build_models_setup_target(target):
             '========================================================================='
             % target.id
         )
-        msmseeder.utils.create_dir(models_target_dir)
+        ensembler.utils.create_dir(models_target_dir)
         target_setup_data = TargetSetupData(
             target_starttime=target_starttime,
             models_target_dir=models_target_dir
@@ -168,21 +168,21 @@ def gen_build_models_metadata(target, target_setup_data, process_only_these_targ
     :param target_setup_data:
     :return: metadata: dict
     """
-    datestamp = msmseeder.core.get_utcnow_formatted()
+    datestamp = ensembler.core.get_utcnow_formatted()
     nsuccessful_models = subprocess.check_output(['find', target_setup_data.models_target_dir, '-name', 'model.pdb.gz']).count('\n')
     target_timedelta = datetime.datetime.utcnow() - target_setup_data.target_starttime
     modeller_version = get_modeller_version()
     metadata = {
         'target_id': target.id,
         'datestamp': datestamp,
-        'timing': msmseeder.core.strf_timedelta(target_timedelta),
+        'timing': ensembler.core.strf_timedelta(target_timedelta),
         'nsuccessful_models': nsuccessful_models,
         'process_only_these_targets': process_only_these_targets,
         'process_only_these_templates': process_only_these_templates,
         'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': msmseeder.core.literal_str(sys.version),
-        'msmseeder_version': msmseeder.version.short_version,
-        'msmseeder_commit': msmseeder.version.git_revision,
+        'python_full_version': ensembler.core.literal_str(sys.version),
+        'ensembler_version': ensembler.version.short_version,
+        'ensembler_commit': ensembler.version.git_revision,
         'modeller_version': modeller_version if modeller_version is not None else '',
         'biopython_version': Bio.__version__
     }
@@ -223,7 +223,7 @@ def init_build_model_logfile(modeling_log_filepath):
         'complete': False,
     }
     log_filepath = modeling_log_filepath
-    log_file = msmseeder.core.LogFile(log_filepath)
+    log_file = ensembler.core.LogFile(log_filepath)
     log_file.log(new_log_data=log_data)
     return log_file
 
@@ -280,7 +280,7 @@ def run_modeller(target, template, model_dir, model_pdbfilepath, model_pdbfilepa
 
 def end_successful_build_model_logfile(log_file, start):
     end = datetime.datetime.utcnow()
-    timing = msmseeder.core.strf_timedelta(end - start)
+    timing = ensembler.core.strf_timedelta(end - start)
     log_data = {
         'complete': True,
         'timing': timing,
@@ -292,35 +292,35 @@ def end_exception_build_model_logfile(e, log_file):
     trbk = traceback.format_exc()
     log_data = {
         'exception': e,
-        'traceback': msmseeder.core.literal_str(trbk),
+        'traceback': ensembler.core.literal_str(trbk),
     }
     log_file.log(new_log_data=log_data)
 
 
-@msmseeder.utils.mpirank0only_and_end_with_barrier
+@ensembler.utils.mpirank0only_and_end_with_barrier
 def write_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates):
-    project_metadata = msmseeder.core.ProjectMetadata(project_stage='build_models', target_id=target.id)
+    project_metadata = ensembler.core.ProjectMetadata(project_stage='build_models', target_id=target.id)
     metadata = gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
                                          process_only_these_templates)
     project_metadata.add_data(metadata)
     project_metadata.write()
 
 
-@msmseeder.utils.mpirank0only_and_end_with_barrier
-@msmseeder.utils.notify_when_done
+@ensembler.utils.mpirank0only_and_end_with_barrier
+@ensembler.utils.notify_when_done
 def sort_by_sequence_identity(process_only_these_targets=None, loglevel=None):
     '''Compile sorted list of templates by sequence identity.
     Runs serially.
     '''
     # TODO refactor
-    msmseeder.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates = get_targets_and_templates()
     for target in targets:
 
         # Process only specified targets if directed.
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
-        models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
+        models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
         if not os.path.exists(models_target_dir): continue
 
         logger.info(
@@ -373,17 +373,17 @@ def sort_by_sequence_identity(process_only_these_targets=None, loglevel=None):
         # Metadata
         # ========
 
-        project_metadata = msmseeder.core.ProjectMetadata(project_stage='sort_by_sequence_identity', target_id=target.id)
+        project_metadata = ensembler.core.ProjectMetadata(project_stage='sort_by_sequence_identity', target_id=target.id)
 
-        datestamp = msmseeder.core.get_utcnow_formatted()
+        datestamp = ensembler.core.get_utcnow_formatted()
 
         metadata = {
             'target_id': target.id,
             'datestamp': datestamp,
             'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision,
+            'python_full_version': ensembler.core.literal_str(sys.version),
+            'ensembler_version': ensembler.version.short_version,
+            'ensembler_commit': ensembler.version.git_revision,
             'biopython_version': Bio.__version__
         }
 
@@ -391,8 +391,8 @@ def sort_by_sequence_identity(process_only_these_targets=None, loglevel=None):
         project_metadata.write()
 
 
-@msmseeder.utils.mpirank0only_and_end_with_barrier
-@msmseeder.utils.notify_when_done
+@ensembler.utils.mpirank0only_and_end_with_barrier
+@ensembler.utils.notify_when_done
 def cluster_models(process_only_these_targets=None, verbose=False):
     '''Cluster models based on RMSD, and filter out non-unique models as
     determined by a given cutoff.
@@ -407,7 +407,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
-        models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
+        models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
         if not os.path.exists(models_target_dir): continue
 
         # =============================
@@ -488,17 +488,17 @@ def cluster_models(process_only_these_targets=None, verbose=False):
         # ========
 
         import mdtraj.version
-        project_metadata = msmseeder.core.ProjectMetadata(project_stage='cluster_models', target_id=target.id)
-        datestamp = msmseeder.core.get_utcnow_formatted()
+        project_metadata = ensembler.core.ProjectMetadata(project_stage='cluster_models', target_id=target.id)
+        datestamp = ensembler.core.get_utcnow_formatted()
 
         metadata = {
             'target_id': target.id,
             'datestamp': datestamp,
             'nunique_models': len(uniques),
             'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': msmseeder.core.literal_str(sys.version),
-            'msmseeder_version': msmseeder.version.short_version,
-            'msmseeder_commit': msmseeder.version.git_revision,
+            'python_full_version': ensembler.core.literal_str(sys.version),
+            'ensembler_version': ensembler.version.short_version,
+            'ensembler_commit': ensembler.version.git_revision,
             'biopython_version': Bio.__version__,
             'mdtraj_version': mdtraj.version.short_version,
             'mdtraj_commit': mdtraj.version.git_revision

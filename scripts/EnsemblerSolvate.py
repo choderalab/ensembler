@@ -6,8 +6,8 @@
 #
 
 import argparse
-import msmseeder
-import msmseeder.refinement
+import ensembler
+import ensembler.refinement
 
 def main():
     # ========
@@ -20,19 +20,19 @@ def main():
     argparser.add_argument('--templates', nargs='+', help='(Default: all templates) Optionally define a subset of templates to work on by providing one or more template IDs separated by spaces (e.g. "ABL1_HUMAN_D0_1OPL_A")')
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     # ========
     # Solvate each model individually
     # ========
 
-    msmseeder.refinement.solvate_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates)
+    ensembler.refinement.solvate_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates)
 
     # ========
     # Determine distribution of nwaters in each model, and select the value at the 68th percentile
     # ========
 
-    msmseeder.refinement.determine_nwaters(process_only_these_targets=args.targets, process_only_these_templates=args.templates)
+    ensembler.refinement.determine_nwaters(process_only_these_targets=args.targets, process_only_these_templates=args.templates)
 
 if __name__ == '__main__':
     main()

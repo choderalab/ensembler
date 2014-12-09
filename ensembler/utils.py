@@ -4,7 +4,7 @@ import logging
 import functools
 import shutil
 import tempfile
-from msmseeder.core import mpistate
+from ensembler.core import mpistate
 
 logger = logging.getLogger('info')
 
