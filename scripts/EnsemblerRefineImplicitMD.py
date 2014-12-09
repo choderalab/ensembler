@@ -6,8 +6,8 @@
 #
 
 import argparse
-import msmseeder
-import msmseeder.refinement
+import ensembler
+import ensembler.refinement
 
 def main():
     # ========
@@ -24,7 +24,7 @@ def main():
     argparser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     # ========
     # Process args
@@ -41,7 +41,7 @@ def main():
     # Run simulations
     # ========
 
-    msmseeder.refinement.refine_implicit_md(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=process_only_these_targets, process_only_these_templates=args.templates, verbose=args.verbose)
+    ensembler.refinement.refine_implicit_md(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=process_only_these_targets, process_only_these_templates=args.templates, verbose=args.verbose)
 
 if __name__ == '__main__':
     main()

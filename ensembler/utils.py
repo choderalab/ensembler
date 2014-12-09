@@ -4,7 +4,7 @@ import logging
 import functools
 import shutil
 import tempfile
-from msmseeder.core import mpistate
+from ensembler.core import mpistate
 
 logger = logging.getLogger('info')
 
@@ -28,23 +28,6 @@ def mpirank0only_and_end_with_barrier(fn):
             fn(*args, **kwargs)
         mpistate.comm.Barrier()
     return wrapper
-
-
-# def notify_when_done(fn):
-#     @functools.wraps(fn)
-#     def print_done(*args, **kwargs):
-#         try:
-#             import mpi4py.MPI
-#             comm = mpi4py.MPI.COMM_WORLD
-#             rank = comm.rank
-#             if rank == 0:
-#                 fn(*args, **kwargs)
-#                 logger.info('Done.')
-#         except ImportError:
-#             fn(*args, **kwargs)
-#             logger.info('Done.')
-#
-#     return print_done
 
 
 def notify_when_done(fn):
@@ -96,3 +79,16 @@ def enter_temp_dir():
     yield temp_dir
     os.chdir(cwd)
     shutil.rmtree(temp_dir)
+
+
+def debug_method(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except Exception as e:
+            print e
+            import traceback
+            print traceback.format_exc()
+            import ipdb; ipdb.set_trace()
+    return wrapper

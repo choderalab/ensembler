@@ -1,0 +1,3 @@
+SEQUENCE: 
+SCORE: total_score bref_irms  cen_irms chainbreak  dslf_fa13    fa_atr    fa_dun   fa_elec fa_intra_rep       fa_rep       fa_sol final_chainbreak final_looprelax_score hbond_bb_sc hbond_lr_bb    hbond_sc hbond_sr_bb        irms loop_cenrms  loop_rms      omega   p_aa_pp pro_close      rama       ref total_energy  description 
+SCORE:    2181.758     0.032     0.032       0.034     0.000 -1171.946   464.011   -81.781        3.469     2381.800      650.782            0.034              2181.758     -21.807     -33.621     -17.755     -70.198       0.021        0.000     0.000    44.204   -18.377    62.562    -8.301    -1.285      2181.758 template_0001

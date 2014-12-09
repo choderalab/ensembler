@@ -5,11 +5,11 @@ import numpy as np
 import argparse
 import yaml
 import datetime
-import msmseeder
+import ensembler
 
 # col_names = ['template_id', 'model', 'implicit_refined', 'explicit_refinement']
 
-msmseeder_function_types = ['build_models', 'refine_implicit_md', 'refine_explicit_md']
+ensembler_function_types = ['build_models', 'refine_implicit_md', 'refine_explicit_md']
 
 metadata_filenames = {
     'build_models': 'modeling-log.yaml',
@@ -141,7 +141,7 @@ def get_model_existances(dirpath):
 def get_timings(dirpath):
     results = []
 
-    for function_type in msmseeder_function_types:
+    for function_type in ensembler_function_types:
         metadata_filename = metadata_filenames[function_type]
         metadata_path = os.path.join(dirpath, metadata_filename)
         if os.path.exists(metadata_path):

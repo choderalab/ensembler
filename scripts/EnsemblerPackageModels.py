@@ -6,8 +6,8 @@
 #
 
 import argparse
-import msmseeder
-import msmseeder.packaging
+import ensembler
+import ensembler.packaging
 
 def main():
     # ========
@@ -29,17 +29,17 @@ def main():
     argparser.add_argument('--targets', nargs='+', help='(Default: all targets) Optionally define a subset of targets to work on by providing one or more target IDs separated by spaces (e.g. "ABL1_HUMAN_D0")')
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     # ========
     # Run simulations
     # ========
 
     if args.package_for == 'transfer':
-        msmseeder.packaging.package_for_transfer(process_only_these_targets=args.targets)
+        ensembler.packaging.package_for_transfer(process_only_these_targets=args.targets)
 
     elif args.package_for == 'FAH':
-        msmseeder.packaging.package_for_fah(process_only_these_targets=args.targets, nclones=args.nFAHclones, archive=args.archiveFAHproject)
+        ensembler.packaging.package_for_fah(process_only_these_targets=args.targets, nclones=args.nFAHclones, archive=args.archiveFAHproject)
 
 if __name__ == '__main__':
     main()

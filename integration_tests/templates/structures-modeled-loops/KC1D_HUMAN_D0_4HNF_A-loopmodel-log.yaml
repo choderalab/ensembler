@@ -1,0 +1,1265 @@
+datestamp: 2014-11-18 19:25:15 UTC
+hostname: LSKI1505
+loopmodel_output: "core.init: Rosetta version exported  from http://www.rosettacommons.org\n\
+  core.init: command: loopmodel.macosgccrelease -database /Users/partond/installers/rosetta/rosetta_2014.35.57232_bundle/main/database/\
+  \ -in::file::s template.pdb -loops:loop_file template.loop -loops:remodel perturb_kic\
+  \ -loops:refine refine_kic -ex1 -ex2 -nstruct 1 -loops:max_kic_build_attempts 100\
+  \ -in:file:fullatom\ncore.init: 'RNG device' seed mode, using '/dev/urandom', seed=529325630\
+  \ seed_offset=0 real_seed=529325630\ncore.init.random: RandomGenerator:init: Normal\
+  \ mode, seed=529325630 RG_type=mt19937\nprotocols.loop_build.LoopBuild: ==== Loop\
+  \ protocol: =================================================\nprotocols.loop_build.LoopBuild:\
+  \  remodel        perturb_kic\nprotocols.loop_build.LoopBuild:  intermedrelax  no\n\
+  protocols.loop_build.LoopBuild:  refine         refine_kic\nprotocols.loop_build.LoopBuild:\
+  \  relax          no\nbasic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/env_log.txt\n\
+  basic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/cbeta_den.txt\n\
+  basic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/pair_log.txt\n\
+  basic.io.database: Database file opened: scoring/score_functions/EnvPairPotential/cenpack_log.txt\n\
+  basic.io.database: Database file opened: scoring/score_functions/hbonds/sp2_elec_params/HBPoly1D.csv\n\
+  basic.io.database: Database file opened: scoring/score_functions/hbonds/sp2_elec_params/HBFadeIntervals.csv\n\
+  basic.io.database: Database file opened: scoring/score_functions/hbonds/sp2_elec_params/HBEval.csv\n\
+  basic.io.database: Database file opened: scoring/score_functions/rama/Rama_smooth_dyn.dat_ss_6.4\n\
+  core.scoring.ScoreFunctionFactory: SCOREFUNCTION: talaris2013\ncore.scoring.etable:\
+  \ Starting energy table calculation\ncore.scoring.etable: smooth_etable: changing\
+  \ atr/rep split to bottom of energy well\ncore.scoring.etable: smooth_etable: spline\
+  \ smoothing lj etables (maxdis = 6)\ncore.scoring.etable: smooth_etable: spline\
+  \ smoothing solvation etables (max_dis = 6)\ncore.scoring.etable: Finished calculating\
+  \ energy tables.\nbasic.io.database: Database file opened: scoring/score_functions/P_AA_pp/P_AA\n\
+  basic.io.database: Database file opened: scoring/score_functions/P_AA_pp/P_AA_n\n\
+  basic.io.database: Database file opened: scoring/score_functions/P_AA_pp/P_AA_pp\n\
+  protocols.jd2.PDBJobInputter: Instantiate PDBJobInputter\nprotocols.jd2.PDBJobInputter:\
+  \ PDBJobInputter::fill_jobs\nprotocols.jd2.PDBJobInputter: pushed template.pdb nstruct\
+  \ index 1\nprotocols.evaluation.ChiWellRmsdEvaluatorCreator: Evaluation Creator\
+  \ active ... \nprotocols.jd2.PDBJobInputter: PDBJobInputter::pose_from_job\nprotocols.jd2.PDBJobInputter:\
+  \ filling pose from PDB template.pdb\ncore.chemical.ResidueTypeSet: Finished initializing\
+  \ fa_standard residue type set.  Created 737 residue types\ncore.pack.task: Packer\
+  \ task: initialize from command line() \ncore.pose.util: Cannot open psipred_ss2\
+  \ file tt\nprotocols.loops.loops_main: can not open DSSP file tt\nprotocols.evaluation.ChiWellRmsdEvaluatorCreator:\
+  \ Evaluation Creator active ... \nprotocols.loop_build.LoopBuildMover: Annotated\
+  \ sequence of pose: L[LEU:NtermProteinFull]RVGNRYRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFRNLFHRQGFSYDYVFDWNMLK[LYS:CtermProteinFull]\n\
+  protocols.looprelax: ==== Loop protocol: =================================================\n\
+  protocols.looprelax:  remodel        perturb_kic\nprotocols.looprelax:  intermedrelax\
+  \  no\nprotocols.looprelax:  refine         refine_kic\nprotocols.looprelax:  relax\
+  \          no\nprotocols.evaluation.ChiWellRmsdEvaluatorCreator: Evaluation Creator\
+  \ active ... \ncore.chemical.ResidueTypeSet: Finished initializing centroid residue\
+  \ type set.  Created 1010 residue types\nprotocols.loops.Loop: Autoset cut_ for\
+  \ loop 16 18 as 17.\nprotocols.loops.Loop: Autoset cut_ for loop 151 153 as 151.\n\
+  protocols.looprelax: ====================================================================================\n\
+  protocols.looprelax: ===\nprotocols.looprelax: ===   Remodel    \nprotocols.looprelax:\
+  \ ===\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: ALL_LOOPS:LOOP\
+  \  begin  end  cut  skip_rate  extended\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ LOOP start: 16  stop: 18  cut: 17  size: 3  skip rate: 0  extended?: True\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: LOOP start: 151  stop:\
+  \ 153  cut: 151  size: 3  skip rate: 0  extended?: True\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ SELECTEDLOOPS:LOOP  begin  end  cut  skip_rate  extended\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ LOOP start: 151  stop: 153  cut: 151  size: 3  skip rate: 0  extended?: True\n\
+  protocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ LOOP start: 16  stop: 18  cut: 17  size: 3  skip rate: 0  extended?: True\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: \nprotocols.loops.loops_main:\
+  \ Pose fold tree FOLD_TREE  EDGE 1 150 -1  EDGE 150 151 -1  EDGE 150 154 1  EDGE\
+  \ 154 152 -1  EDGE 154 292 -1 \nprotocols.loops.loops_main: \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ Setting extended torsions: LOOP start: 151  stop: 153  cut: 151  size: 3  skip\
+  \ rate: 0  extended?: True\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: Building Loop: LOOP\
+  \ start: 151  stop: 153  cut: 151  size: 3  skip rate: 0  extended?: True\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: Building Loop attempt:\
+  \ 0\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: perturb_one_loop_with_KIC:\
+  \ 151 3\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: remodel init\
+  \ temp: 2\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: remodel final\
+  \ temp: 1\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: kinematic initial\
+  \ perturb with start_res: 151  middle res: 152  end_res: 153\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ loop rmsd before initial kinematic perturbation:0\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ Attempting loop building: 0 ... \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ initial kinematic perturbation complete\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ loop rmsd after initial kinematic perturbation:0.171983\nprotocols.moves.MonteCarlo:\
+  \ MonteCarlo:: last_accepted_score,lowest_score: 20.5696 20.5696\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.187574\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.165056\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.192772\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.199874\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.182545\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.201783\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.185513\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.200526\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.177453\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.139291\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.175224\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.214645\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.222409\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.213659\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.182994\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.214652\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.22361\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.17748\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.188629\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.152745\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.21372\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.178053\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.204777\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.198008\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.246799\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.18015\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.15242\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.196062\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.188097\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.194698\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.199587\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.237189\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.217012\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.187343\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.230099\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.223757\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.19183\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.211294\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.162965\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.167845\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.166804\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.231972\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.215615\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.199557\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.188642\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.182703\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.168945\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.170604\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.175551\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.210731\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.159905\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.202493\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.195382\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.166729\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.206837\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.185862\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.196795\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.150469\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.190377\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.173512\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.204638\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.207288\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.229\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.182008\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.200934\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.156591\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.161551\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.140633\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.233981\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.231935\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.18073\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.23613\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.204043\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.183235\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.161593\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.203936\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.170172\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.186085\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.199391\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.20619\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.222754\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.600636\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.660147\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.713874\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.194006\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.257403\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.230767\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.2101\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.219671\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.17051\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.219657\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.239334\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.19356\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.171943\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.185091\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.214735\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.24622\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.201809\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.166306\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.179235\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.161589\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.194636\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.215104\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.218582\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.208841\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.21845\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.222136\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.188287\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.222532\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.22988\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.207672\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.194174\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.221597\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.20315\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.220388\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.204778\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.190088\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.265647\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.224329\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.187115\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.248211\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.210721\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.188017\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.212149\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.19696\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.196703\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.21192\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.19572\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.232381\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.2462\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.201577\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.164385\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.184972\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.160354\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.204347\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.218948\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.219176\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.192889\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.221212\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.220309\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.183637\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.180644\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.152272\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.198173\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.184692\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.161614\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.227367\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.184506\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.198714\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.194938\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.264945\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.208296\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.250318\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.237092\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.27532\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.292522\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.222891\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.218503\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.239875\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.198802\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.194804\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ result of loop closure:0 success, 3 failure 0\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ Loopstat:   151  153  151  153    3  time  29.0    0  time   0.0  19.8102   ext\
+  \ \nprotocols.loops.loops_main: Pose fold tree FOLD_TREE  EDGE 1 15 -1  EDGE 15\
+  \ 17 -1  EDGE 15 19 1  EDGE 19 18 -1  EDGE 19 292 -1 \nprotocols.loops.loops_main:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: Setting extended torsions:\
+  \ LOOP start: 16  stop: 18  cut: 17  size: 3  skip rate: 0  extended?: True\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: Building Loop: LOOP\
+  \ start: 16  stop: 18  cut: 17  size: 3  skip rate: 0  extended?: True\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: Building Loop attempt:\
+  \ 0\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: perturb_one_loop_with_KIC:\
+  \ 16 3\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: remodel init temp:\
+  \ 2\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: remodel final temp:\
+  \ 1\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC: kinematic initial\
+  \ perturb with start_res: 16  middle res: 17  end_res: 18\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ loop rmsd before initial kinematic perturbation:0\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ Attempting loop building: 0 ... \nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ initial kinematic perturbation complete\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ loop rmsd after initial kinematic perturbation:0.201354\nprotocols.moves.MonteCarlo:\
+  \ MonteCarlo:: last_accepted_score,lowest_score: 20.0654 20.0654\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52356\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53217\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5474\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53012\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5347\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.187592\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.149585\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51237\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51412\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.22729\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53486\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.555015\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5571\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.366902\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55136\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52145\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56686\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52002\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52899\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54906\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.330883\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51113\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5161\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52855\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54496\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55468\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53074\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53033\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53352\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52601\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52234\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53148\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.50429\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51389\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52419\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51891\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53365\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54528\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51539\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53674\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51877\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55339\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53554\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54777\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5681\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55337\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54907\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51393\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56462\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54244\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55128\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55987\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53215\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51336\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56139\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5692\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52308\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57074\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5204\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55352\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52231\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.305162\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55479\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57593\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55049\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5533\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5162\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.50511\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53451\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51458\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55767\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54198\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51492\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56802\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53517\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56499\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.202219\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57522\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54822\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54614\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53455\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56549\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55888\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53152\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.247213\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55116\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57296\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5163\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54915\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54238\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.201363\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56329\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56032\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54313\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.318112\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.325766\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57592\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55182\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53313\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53847\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53277\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54673\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55335\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53825\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53996\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54824\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54776\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55796\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53457\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56122\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54939\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54588\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54434\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.200411\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.227037\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.240743\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.242471\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.250371\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.583159\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.225844\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.196434\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.157911\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54778\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54722\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5631\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51122\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.232778\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51176\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56398\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57147\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.50253\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54115\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52726\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54411\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57023\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52612\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52548\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52905\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51668\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.54908\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56943\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53483\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5351\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.380213\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56265\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51369\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.58049\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52653\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.53159\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52884\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52043\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5554\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52761\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52583\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52582\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.50152\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51003\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56445\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51791\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.5313\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 0.159166\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56716\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.55466\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51659\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52202\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.52672\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57608\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.51621\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.56038\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57335\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ new centroid perturb rmsd: 1.57321\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ result of loop closure:0 success, 3 failure 0\nprotocols.loops.loop_mover.perturb.LoopMover_Perturb_KIC:\
+  \ Loopstat:    16   18   16   18    3  time  25.0    0  time   0.0  19.7025   ext\
+  \ \nprotocols::checkpoint: Deleting checkpoints of Remodel\nprotocols.looprelax:\
+  \ Buildtime: 54\nprotocols.looprelax: FOLD_TREE  EDGE 1 292 -1 \nprotocols.looprelax:\
+  \ \nprotocols.looprelax: ====================================================================================\n\
+  protocols.looprelax: ===\nprotocols.looprelax: ===   Fullatom \nprotocols.looprelax:\
+  \ ===\nprotocols.looprelax: Annotated sequence before fa switch: L[LEU:NtermProteinFull]RVGNRYRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFRNLFHRQGFSYDYVFDWNMLK[LYS:CtermProteinFull]\n\
+  protocols.looprelax: Repacking required\nprotocols.looprelax: Detecting disulfides\n\
+  protocols.looprelax: Annotated sequence before repack: L[LEU:NtermProteinFull]RVGNRYRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFRNLFHRQGFSYDYVFDWNMLK[LYS:CtermProteinFull]\n\
+  core.pack.task: Packer task: initialize from command line() \ncore.pack.dunbrack:\
+  \ Dunbrack 2010 library took 0.130798 seconds to load from binary\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 357 rotamers\
+  \ at 18 positions.\ncore.pack.pack_rotamers: IG: 115068 bytes\nprotocols.looprelax:\
+  \     0.000    0.000    0.000    0.000    0.000    0.000    0.000    0.000    0.000\
+  \    0.000    0.000    0.000    0.000    0.000    0.000    0.000    0.000 3291.865\
+  \ -1178.208 3511.564  653.624    5.562  -79.990   40.192  -70.198  -33.827  -21.707\
+  \  -14.945    0.000   -8.411   44.027  463.039  -17.573   -1.285====================================================================================\n\
+  protocols.looprelax: ===\nprotocols.looprelax: ===   Refine \nprotocols.looprelax:\
+  \ ===\nprotocols.looprelax: fold_tree_before_refine FOLD_TREE  EDGE 1 15 -1  EDGE\
+  \ 15 17 -1  EDGE 15 19 1  EDGE 19 18 -1  EDGE 19 150 -1  EDGE 150 151 -1  EDGE 150\
+  \ 154 2  EDGE 154 152 -1  EDGE 154 292 -1 \nprotocols.looprelax: \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refine init temp: 1.5\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refine final temp: 0.5\ncore.pack.task: Packer task: initialize from command line()\
+  \ \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: Not designing\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1803 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2731048 bytes\ncore.pack.task:\
+  \ Packer task: initialize from command line() \nprotocols.moves.MonteCarlo: MonteCarlo::\
+  \ last_accepted_score,lowest_score: 2203.57 2203.57\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ cycle: 1  2203.57\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: refinement\
+  \ cycle (outer/inner): 1/3 1/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.198681\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2202.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.168206\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2202.27\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 2/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.173858\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2201.41\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.156469\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.85\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 3/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 4/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.156182\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.8\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.166382\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2201.72\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 5/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.141475\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2201.06\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 6/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.164752\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.95\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.146057\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.74\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 7/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.157614\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.9\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.15908\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.67\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 8/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.211182\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.62\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.1887\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.36\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 9/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.196144\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.57\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.198759\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.71\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 10/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.180538\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.34\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.215741\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.26\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 11/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.219493\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2199.92\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 12/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.204241\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2199.96\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 13/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.165853\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2198.91\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.155843\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2198.29\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 14/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.178252\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2198.71\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 15/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.184832\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2198.16\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 16/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.177259\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.73\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.199116\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.59\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 17/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.20931\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.92\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.175904\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.67\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 18/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.178485\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.06\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.227869\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.71\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 19/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.222703\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.91\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 20/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1802 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2712196 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2197.94\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2197.49 2197.06\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2197.49\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.222915\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.45\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1806 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2736800 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2198.27\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2197.77 2197.06\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2197.77\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.205171\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.31\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 21/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.272064\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2198.7\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.364992\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2200.62\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 22/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.395334\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2203.09\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.363525\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2201.01\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 23/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.246744\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2197.37\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.20433\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2196.49\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 24/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.217719\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2196.24\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.265294\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2196.52\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 25/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.233467\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2196.01\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.219433\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2195.82\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 26/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.289238\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2196.02\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 27/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.283182\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2196\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.288302\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2195.96\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 28/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.280295\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2195.94\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.280669\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2195.94\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 29/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.233947\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2194.66\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 30/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.237639\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2194.89\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.248608\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2194.57\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 31/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.238489\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2195.19\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 32/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 33/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.23516\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2195.47\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 34/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.193728\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2194.04\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 35/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.199932\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2193.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.197178\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2193.84\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 36/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.183853\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2193.94\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.178981\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2194.03\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 37/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.17921\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2194\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 38/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.195307\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2194.28\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.190568\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2193.83\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 39/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 40/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1790 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2694580 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2193.42\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2193.1 2193.1\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2193.1\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.178143\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.79\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1797 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2719976 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2193.23\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2192.89 2192.79\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2192.89\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.18188\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.55\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 41/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.188492\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.59\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.190215\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.63\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 42/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.181108\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.48\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.205245\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.58\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 43/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.189148\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.39\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 44/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.17002\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.42\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.184472\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.69\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 45/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.209715\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.73\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.14345\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.44\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 46/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.161079\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.83\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 47/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.167633\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.19\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 48/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.190426\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2192.26\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.162042\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.94\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 49/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 50/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.196524\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.22\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.187099\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.7\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 51/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 52/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.205095\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.47\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 53/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.210438\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.5\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 54/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.204264\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.7\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.260305\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.9\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 55/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.269326\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.35\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 56/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.258431\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.2\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.279571\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.17\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 57/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.24742\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.36\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 58/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.245641\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.72\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.26432\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.61\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 59/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.235012\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.42\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.228671\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.34\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 1/3 60/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1698 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2362084 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2190.6\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2190.24 2190.24\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2190.24\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.244522\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.05\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1809 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2746220 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2190.6\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2190.1 2190.05\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2190.1\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.225851\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2189.95\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1809 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2746220 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2189.95\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2189.65 2189.65\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2189.65\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ cycle: 2  2190.09\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: refinement\
+  \ cycle (outer/inner): 2/3 1/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.221724\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2189.97\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.264719\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.14\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 2/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.235926\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.09\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.248065\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2191.05\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 3/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.258995\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.51\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 4/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.241798\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.12\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.23267\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2189.86\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 5/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.211615\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2190.06\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.201866\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2189.88\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 6/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.208804\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2189.86\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.188179\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.94\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 7/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.199942\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.8\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.204706\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.48\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 8/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.215341\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.6\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.241294\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.84\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 9/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.210956\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.66\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.233493\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.68\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 10/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.207889\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.4\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.207649\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.59\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 11/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.208227\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.55\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.211994\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.74\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 12/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.216664\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.34\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.206496\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.77\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 13/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.219565\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.81\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.212367\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.62\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 14/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.208563\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.39\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 15/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.179141\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.14\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.206988\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.98\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 16/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.225231\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.08\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.249699\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.21\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 17/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.214626\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.05\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.211028\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.1\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 18/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.236807\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.96\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.217166\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.89\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 19/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.216108\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.96\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.180233\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.33\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 20/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1808 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2757460 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2187.58\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2187.33 2187.33\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2187.33\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.18062\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.14\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1808 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2757460 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2187.49\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2187.24 2187.14\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2187.24\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.19436\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.01\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 21/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.24447\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2188.46\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.198534\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.92\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 22/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.195\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2187.07\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.218668\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.76\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 23/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.214978\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.38\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.201517\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.34\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 24/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 25/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.191955\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.05\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 26/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.202347\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.13\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 27/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.188615\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.64\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.200455\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.79\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 28/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.192206\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.71\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.185156\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.8\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 29/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.207154\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.26\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.173042\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.36\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 30/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.171281\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.37\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.172243\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.43\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 31/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.181177\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.05\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.179436\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.31\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 32/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.171284\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.44\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 33/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.196497\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.65\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.193463\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.14\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 34/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.189847\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.92\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 35/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 36/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.197799\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.26\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.193942\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 37/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 38/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.21335\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.28\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.188951\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.93\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 39/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.183868\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.97\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 40/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1656 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2189376 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2191.01\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2184.97 2184.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2184.97\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.183828\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.88\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1701 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2369148 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2186.19\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2185.87 2184.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2185.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.220469\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.67\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 41/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.182158\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.88\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 42/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.170192\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.07\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 43/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.171785\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.13\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.178308\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.18\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 44/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.181229\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.84\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 45/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.200488\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.66\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 46/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.21296\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.93\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 47/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 48/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.220299\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.3\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.231959\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2186.29\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 49/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.198552\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.83\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 50/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 51/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.231068\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.95\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.18627\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.18\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 52/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.175856\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.37\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.184826\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.18\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 53/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.18861\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.39\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 54/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.196245\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.16\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 55/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.187203\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.47\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.182175\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2185.34\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 56/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.134323\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.07\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 57/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.155317\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.5\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.170231\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.03\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 58/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.16646\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.12\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.179461\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.13\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 59/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.180118\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2184.04\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 2/3 60/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1803 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2745124 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2185.19\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2184.04 2184.03\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2184.04\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.179913\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.94\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1652 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2179488 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2190.18\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2183.94 2183.94\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2183.94\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.179762\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.85\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1795 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2716380 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2183.85\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2183.7 2183.7\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2183.7\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ cycle: 3  2183.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: refinement\
+  \ cycle (outer/inner): 3/3 1/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.204332\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.7\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.201521\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.73\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 2/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.16967\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.9\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.178271\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 3/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 4/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.163125\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.75\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 5/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.156624\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.6\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.167255\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.65\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 6/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.19419\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.44\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.190096\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.29\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 7/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.176971\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.34\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 8/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 9/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 10/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.175983\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.31\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.175382\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.33\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 11/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.182561\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.27\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 12/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 13/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 14/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.197914\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.33\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.183861\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.42\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 15/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.184143\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.48\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.174937\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.27\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 16/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.203198\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.67\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.199021\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.2\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 17/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.181761\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.24\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 18/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 19/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.175694\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.14\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.176768\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.04\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 20/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1801 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2731464 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2183.69\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2183.47 2183.04\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2183.47\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.140152\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.29\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1801 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2731464 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2183.24\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2183.11 2183.04\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2183.11\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.156631\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.96\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 21/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.168883\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.98\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.172119\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.77\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 22/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.166205\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.87\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.167275\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.09\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 23/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.158468\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.89\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.153326\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.9\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 24/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 25/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.155987\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.99\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.155874\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.81\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 26/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.179397\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.24\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.1898\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.24\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 27/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.191762\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.1\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 28/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.183242\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.63\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.14543\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.77\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 29/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.134176\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.07\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.162871\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.09\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 30/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 31/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.17396\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.11\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 32/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.171922\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.57\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.179383\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.85\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 33/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.213452\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.27\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 34/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 2: 0.219256\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.25\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 35/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.198684\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.93\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.184217\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.91\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 36/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.205556\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.14\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.191245\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.62\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 37/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.212033\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.62\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 38/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.225301\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.19\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.231848\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.9\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 39/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.21999\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.85\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.221183\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.01\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 40/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1793 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2706660 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2182.97\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2182.75 2182.57\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2182.75\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.231181\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.69\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1791 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2701692 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2183.05\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2182.86 2182.57\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2182.86\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.235657\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.58\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 41/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.229283\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.45\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.190424\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.77\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 42/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 43/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 44/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 45/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.241724\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2183.2\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.207351\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.35\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 46/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.198957\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.46\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 47/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 48/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 49/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.210209\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.75\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.224765\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.7\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 50/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 51/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 52/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 53/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.247949\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.91\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 54/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.234633\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.66\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 55/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.249006\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.46\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 56/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 57/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 2: 0.188937\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2181.97\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 58/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.185844\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2181.81\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.174026\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2182.05\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 59/60 \nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ refinement cycle (outer/inner): 3/3 60/60 \ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1798 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2721628 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2182.16\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2181.98 2181.81\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2181.98\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 1 move on loop 1: 0.174898\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2181.91\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1796 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2714140 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2182.32\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2181.91 2181.81\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2181.91\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ RMS to native after accepted kinematic round 2 move on loop 1: 0.177204\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after accepted move: 2181.87\ncore.pack.interaction_graph.interaction_graph_factory:\
+  \ Instantiating DensePDInteractionGraph\ncore.pack.pack_rotamers: built 1797 rotamers\
+  \ at 48 positions.\ncore.pack.pack_rotamers: IG: 2717884 bytes\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC:\
+  \ energy after design: 2181.87\nprotocols.moves.MonteCarlo: MonteCarlo:: last_accepted_score,lowest_score:\
+  \ 2181.78 2181.78\nprotocols.loops.loop_mover.refine.LoopMover_Refine_KIC: energy\
+  \ after repack: 2181.78\nprotocols.moves.TrialCounter:    kic_refine_r1 trials=\
+  \    180;  accepts= 0.7333;  energy_drop/trial=  -0.06347\nprotocols.moves.TrialCounter:\
+  \    kic_refine_r2 trials=    180;  accepts= 0.6778;  energy_drop/trial=  -0.06036\n\
+  protocols.moves.TrialCounter:           repack trials=     22;  accepts= 0.7727;\
+  \  energy_drop/trial= -49.47609\nprotocols::checkpoint: Deleting checkpoints of\
+  \ LoopMover\nprotocols.looprelax: Refinetime: 162\nprotocols.looprelax: ====================================================================================\n\
+  protocols.looprelax: ===\nprotocols.looprelax: ===  Getting Statistics \nprotocols.looprelax:\
+  \ ===\nprotocols.looprelax: ===\nprotocols::checkpoint: Deleting checkpoints of\
+  \ Loopbuild\nprotocols.loop_build.LoopBuildMover: loop_cenrms: 0\nprotocols.loop_build.LoopBuildMover:\
+  \ loop_rms 0\nprotocols.loop_build.LoopBuildMover: total_energy 2181.76\nprotocols.loop_build.LoopBuildMover:\
+  \ chainbreak 0.0343935\nprotocols.jd2.JobDistributor: template_0001 reported success\
+  \ in 223 seconds\nprotocols.jd2.JobDistributor: no more batches to process... \n\
+  protocols.jd2.JobDistributor: 1 jobs considered, 1 jobs attempted in 223 seconds\n"
+mpi_rank: 0
+successful: true
+templateid: KC1D_HUMAN_D0_4HNF_A

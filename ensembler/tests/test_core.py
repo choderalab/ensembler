@@ -1,4 +1,5 @@
-import msmseeder
+import ensembler
+
 
 def test_project_metadata():
-    project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+    project_metadata = ensembler.core.ProjectMetadata(project_stage='init')

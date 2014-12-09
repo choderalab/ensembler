@@ -260,10 +260,10 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
 
             import sys
             import yaml
-            import msmseeder
-            import msmseeder.version
+            import ensembler
+            import ensembler.version
             import simtk.openmm.version
-            datestamp = msmseeder.core.get_utcnow_formatted()
+            datestamp = ensembler.core.get_utcnow_formatted()
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             with open(meta_filepath) as meta_file:
@@ -273,16 +273,16 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
                 'target_id': target.id,
                 'datestamp': datestamp,
                 'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': msmseeder.core.literal_str(sys.version),
-                'msmseeder_version': msmseeder.version.short_version,
-                'msmseeder_commit': msmseeder.version.git_revision,
+                'python_full_version': ensembler.core.literal_str(sys.version),
+                'ensembler_version': ensembler.version.short_version,
+                'ensembler_commit': ensembler.version.git_revision,
                 'biopython_version': Bio.__version__,
                 'openmm_version': simtk.openmm.version.short_version,
                 'openmm_commit': simtk.openmm.version.git_revision
             }
 
             meta_filepath = os.path.join(project_dir, 'meta.yaml')
-            metadata = msmseeder.core.ProjectMetadata(metadata)
+            metadata = ensembler.core.ProjectMetadata(metadata)
             metadata.write(meta_filepath)
 
     comm.Barrier()

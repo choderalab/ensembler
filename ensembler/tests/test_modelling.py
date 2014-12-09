@@ -1,11 +1,11 @@
 import os
 import shutil
-import msmseeder
-import msmseeder.tests
-import msmseeder.modelling
+import ensembler
+import ensembler.tests
+import ensembler.modelling
 from mock import Mock
 import datetime
-from msmseeder.utils import enter_temp_dir
+from ensembler.utils import enter_temp_dir
 
 
 def test_build_model():
@@ -18,17 +18,17 @@ def test_build_model():
         target.id = 'mock_target'
         target.seq = 'YILGDTLGVGGKVKVGKH'
         template.id = 'mock_template'
-        template.seq = 'YQNLSPVGSGAYGSVCAAFD'
+        template.seq = 'YQNLSPVGSGGSVCAAFD'
         target_setup_data.target_starttime = datetime.datetime.utcnow()
-        target_setup_data.models_target_dir = os.path.join(msmseeder.core.default_project_dirnames.models, target.id)
-        os.mkdir(msmseeder.core.default_project_dirnames.models)
-        os.mkdir(msmseeder.core.default_project_dirnames.templates)
-        os.mkdir(msmseeder.core.default_project_dirnames.templates_structures)
+        target_setup_data.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
+        os.mkdir(ensembler.core.default_project_dirnames.models)
+        os.mkdir(ensembler.core.default_project_dirnames.templates)
+        os.mkdir(ensembler.core.default_project_dirnames.templates_structures_resolved)
         os.mkdir(target_setup_data.models_target_dir)
 
-        shutil.copy(template_filepath, msmseeder.core.default_project_dirnames.templates_structures)
+        shutil.copy(template_filepath, ensembler.core.default_project_dirnames.templates_structures_resolved)
 
-        msmseeder.modelling.build_model(
+        ensembler.modelling.build_model(
             target,
             template,
             target_setup_data=target_setup_data

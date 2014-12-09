@@ -5,7 +5,7 @@
 # Daniel L. Parton <daniel.parton@choderalab.org> - 11 Mar 2014
 
 import argparse
-import msmseeder.initproject
+import ensembler.initproject
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
     # ========
 
     argparser = argparse.ArgumentParser(
-        description='Initialize MSMSeeder project by creating necessary subdirectories and a project metadata .yaml file.'
+        description='Initialize Ensembler project by creating necessary subdirectories and a project metadata .yaml file.'
     )
     argparser.add_argument(
         '--project_dir', type=str, default='.',
@@ -22,7 +22,7 @@ def main():
     )
     args = argparser.parse_args()
 
-    msmseeder.initproject.initproject(args.project_dir)
+    ensembler.initproject.initproject(args.project_dir)
 
 
 if __name__ == '__main__':

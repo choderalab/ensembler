@@ -35,7 +35,7 @@ project_stages = [
 
 ProjectDirNames = namedtuple(
     'ProjectDirNames',
-    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures']
+    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures_resolved', 'templates_structures_modeled_loops']
 )
 
 default_project_dirnames = ProjectDirNames(
@@ -46,7 +46,8 @@ default_project_dirnames = ProjectDirNames(
     packaged_models='packaged_models',
     structures_pdb=os.path.join('structures', 'pdb'),
     structures_sifts=os.path.join('structures', 'sifts'),
-    templates_structures=os.path.join('templates', 'structures'),
+    templates_structures_resolved=os.path.join('templates', 'structures-resolved'),
+    templates_structures_modeled_loops=os.path.join('templates', 'structures-modeled-loops'),
 )
 
 logger = logging.getLogger('info')
@@ -198,10 +199,10 @@ class TemplateManualOverrides:
             self.skip_pdbs = []
 
 
-def gen_metadata_filename(msmseeder_stage, metadata_file_index):
+def gen_metadata_filename(ensembler_stage, metadata_file_index):
     for modelling_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
-        if msmseeder_stage == modelling_stage:
-            return '%s-meta%d.yaml' % (msmseeder_stage, metadata_file_index)
+        if ensembler_stage == modelling_stage:
+            return '%s-meta%d.yaml' % (ensembler_stage, metadata_file_index)
     return 'meta%d.yaml' % metadata_file_index
 
 
@@ -213,18 +214,19 @@ class ProjectMetadata:
     """
     Examples
     --------
-    >>> init_project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
+    >>> init_project_metadata = ensembler.core.ProjectMetadata(project_stage='init')
     >>> test_data = {'test_field': 'test_value'}
     >>> init_project_metadata.add_data(test_data)
     >>> init_project_metadata.write()
-    >>> gather_targets_project_metadata = msmseeder.core.ProjectMetadata(project_stage='gather_targets')
+    >>> gather_targets_project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_targets')
     >>> gather_targets_project_metadata.add_data(test_data)
     >>> gather_targets_project_metadata.write()
     """
-    def __init__(self, project_stage='init', target_id=None):
+    def __init__(self, project_stage='init', target_id=None, project_toplevel_dir='.'):
         self.data = {}
         self.project_stage = project_stage
         self.target_id = target_id
+        self.project_toplevel_dir = project_toplevel_dir
         if project_stage != project_stages[0]:
             self.add_all_prev_metadata(project_stage)
 
@@ -287,51 +289,6 @@ class ProjectMetadata:
         metadata_filepath = os.path.join(dirpath, '%s%d.yaml' % (file_basename, index))
         return metadata_filepath
 
-    # def determine_latest_metadata_file(self, project_stage):
-    #     if self.project_stage in ['init', 'gather_targets', 'gather_templates']:
-    #         metadata_dir = metadata_dir_mapper(project_stage)
-    #     else:
-    #         metadata_dir = metadata_dir_mapper(project_stage, target_id=self.target_id)
-    #     latest_metadata_file_index = self.determine_latest_metadata_file_index(project_stage)
-    #     latest_metadata_filepath = self.gen_metadata_filepath_from_dir_and_index(metadata_dir, latest_metadata_file_index)
-    #     return latest_metadata_filepath
-    #
-    # def determine_latest_metadata_file_index(self, project_stage):
-    #     """
-    #     Returns -1 if no metadata files found
-    #     :param project_stage: str
-    #     :return: int
-    #     """
-    #     if self.project_stage in ['init', 'gather_targets', 'gather_templates']:
-    #         metadata_dir = metadata_dir_mapper(project_stage)
-    #     else:
-    #         metadata_dir = metadata_dir_mapper(project_stage, target_id=self.target_id)
-    #     dir_contents = os.listdir(metadata_dir)
-    #     metadata_file_indices = []
-    #     for filename in dir_contents:
-    #         match = re.match(metadata_filename_regex, filename)
-    #         if match:
-    #             metadata_file_indices.append(int(match.groups()[1]))
-    #     if len(metadata_file_indices) > 0:
-    #         return max(metadata_file_indices)
-    #     else:
-    #         return -1
-    #
-    # def gen_metadata_filepath_from_dir_and_index(self, dirpath, index):
-    #     metadata_filepath = os.path.join(dirpath, 'meta%d.yaml' % index)
-    #     return metadata_filepath
-    #
-    # def metadata_dir_mapper(self, msmseeder_stage, target_id=None):
-    # metadata_dir_dict = {
-    #     'init': '.',
-    #     'gather_targets': 'targets',
-    #     'gather_templates': 'templates',
-    # }
-    # if msmseeder_stage in metadata_dir_dict:
-    #     return metadata_dir_dict[msmseeder_stage]
-    # elif msmseeder_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
-    #     return os.path.join('models', target_id)
-
     def add_data(self, data, project_stage=None):
         """
         Add metadata to the ProjectMetadata object.
@@ -344,8 +301,8 @@ class ProjectMetadata:
 
         Examples
         --------
-        >>> project_metadata = msmseeder.core.ProjectMetadata(project_stage='init')
-        >>> metadata = {'datestamp': msmseeder.core.get_utcnow_formatted()}
+        >>> project_metadata = ensembler.core.ProjectMetadata(project_stage='init')
+        >>> metadata = {'datestamp': ensembler.core.get_utcnow_formatted()}
         >>> project_metadata.add_data(metadata)
         """
         if project_stage is None:
@@ -364,7 +321,7 @@ class ProjectMetadata:
         data['iteration'] = iter_number
 
     def write(self):
-        metadata_dir = self.metadata_dir_mapper(self.project_stage, target_id=self.target_id)
+        metadata_dir = os.path.join(self.project_toplevel_dir, self.metadata_dir_mapper(self.project_stage, target_id=self.target_id))
         metadata_file_basename = self.metadata_file_basename_mapper(self.project_stage)
         latest_metadata_file_index = self.determine_latest_metadata_file_index(self.project_stage)
         self.add_iteration_number_to_metadata(latest_metadata_file_index+1)
@@ -389,31 +346,31 @@ class DeprecatedProjectMetadata:
                     yaml.dump(subdict, ofile, default_flow_style=False)
 
 
-def write_metadata(new_metadata_dict, msmseeder_stage, target_id=None):
+def write_metadata(new_metadata_dict, ensembler_stage, target_id=None):
     # TODO deprecate
-    if msmseeder_stage == 'init':
+    if ensembler_stage == 'init':
         metadata_dict = {}
     else:
-        prev_msmseeder_stage = project_stages[project_stages.index(msmseeder_stage) - 1]
-        prev_metadata_filepath = metadata_file_mapper(prev_msmseeder_stage, target_id=target_id)
+        prev_ensembler_stage = project_stages[project_stages.index(ensembler_stage) - 1]
+        prev_metadata_filepath = metadata_file_mapper(prev_ensembler_stage, target_id=target_id)
         with open(prev_metadata_filepath) as prev_metadata_file:
             metadata_dict = yaml.load(prev_metadata_file)
 
     metadata_dict.update(new_metadata_dict)
     metadata = ProjectMetadata(metadata_dict)
-    metadata.write(metadata_file_mapper(msmseeder_stage, target_id=target_id))
+    metadata.write(metadata_file_mapper(ensembler_stage, target_id=target_id))
 
 
-def metadata_file_mapper(msmseeder_stage, target_id=None):
+def metadata_file_mapper(ensembler_stage, target_id=None):
     # TODO deprecate
     metadata_file_dict = {
         'init': 'meta.yaml',
         'gather_targets': os.path.join('targets', 'meta.yaml'),
         'gather_templates': os.path.join('templates', 'meta.yaml'),
     }
-    if msmseeder_stage in metadata_file_dict:
-        return metadata_file_dict[msmseeder_stage]
-    elif msmseeder_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+    if ensembler_stage in metadata_file_dict:
+        return metadata_file_dict[ensembler_stage]
+    elif ensembler_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
         return os.path.join('models', target_id, 'meta.yaml')
 
 
@@ -503,3 +460,14 @@ def get_targets_and_templates():
     targets = get_targets()
     templates = get_templates()
     return targets, templates
+
+
+def find_loopmodel_executable():
+    for path in os.environ['PATH'].split(os.pathsep):
+        if not os.path.exists(path):
+            continue
+        path = path.strip('"')
+        for filename in os.listdir(path):
+            if filename[0: 10] == 'loopmodel.':
+                return os.path.join(path, filename)
+    raise Exception('Loopmodel executable not found in PATH')

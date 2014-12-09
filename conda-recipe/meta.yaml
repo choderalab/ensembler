@@ -1,20 +1,20 @@
 package:
-  name: msmseeder
+  name: ensembler
   version: !!str dev
 
 source:
-   git_url: https://github.com/choderalab/msmseeder
+   git_url: https://github.com/choderalab/ensembler
 
 build:
   entry_points:
-    - MSMSeederInit = msmseeder.scripts.MSMSeederInit:main
-    - MSMSeederGatherTargets = msmseeder.scripts.MSMSeederGatherTargets:main
-    - MSMSeederGatherTemplates = msmseeder.scripts.MSMSeederGatherTemplates:main
-    - MSMSeederBuildModels = msmseeder.scripts.MSMSeederBuildModels:main
-    - MSMSeederRefineImplicitMD = msmseeder.scripts.MSMSeederRefineImplicitMD:main
-    - MSMSeederSolvate = msmseeder.scripts.MSMSeederSolvate:main
-    - MSMSeederRefineExplicitMD = msmseeder.scripts.MSMSeederRefineExplicitMD:main
-    - MSMSeederPackage = msmseeder.scripts.MSMSeederPackage:main
+    - EnsemblerInit = ensembler.scripts.EnsemblerInit:main
+    - EnsemblerGatherTargets = ensembler.scripts.EnsemblerGatherTargets:main
+    - EnsemblerGatherTemplates = ensembler.scripts.EnsemblerGatherTemplates:main
+    - EnsemblerBuildModels = ensembler.scripts.EnsemblerBuildModels:main
+    - EnsemblerRefineImplicitMD = ensembler.scripts.EnsemblerRefineImplicitMD:main
+    - EnsemblerSolvate = ensembler.scripts.EnsemblerSolvate:main
+    - EnsemblerRefineExplicitMD = ensembler.scripts.EnsemblerRefineExplicitMD:main
+    - EnsemblerPackage = ensembler.scripts.EnsemblerPackage:main
 
 requirements:
   build:
@@ -32,5 +32,5 @@ requirements:
     - pyyaml
 
 about:
-  home: https://github.com/choderalab/msmseeder
+  home: https://github.com/choderalab/ensembler
   license: GNU Lesser General Public License v2 or later (LGPLv2+)

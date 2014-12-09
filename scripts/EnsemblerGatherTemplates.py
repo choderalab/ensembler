@@ -7,8 +7,8 @@
 
 import argparse
 import os
-import msmseeder
-import msmseeder.initproject
+import ensembler
+import ensembler.initproject
 
 def main():
     # ========
@@ -57,30 +57,31 @@ def main():
     argparser.add_argument('--uniprot_query', type=str, help=helpstring_uniprot_query)
     argparser.add_argument('--uniprot_domain_regex', type=str, help=helpstring_uniprot_domain_regex)
     argparser.add_argument('--structure_paths', help='(Optional) Local directories within which to search for PDB and SIFTS files (space-separated).', nargs='*')
+    argparser.add_argument('--loopmodel', type=bool, default=True, help='Model template loops using Rosetta loopmodel (default: True)')
+    argparser.add_argument('--no_overwrite_structures', action='store_true', default=False, help='Use this flag to prevent structures (both resolved and loopmodel) from being overwritten')
     args = argparser.parse_args()
 
-    msmseeder.core.check_project_toplevel_dir()
+    ensembler.core.check_project_toplevel_dir()
 
     # ========
     # Get the template selection method
     # ========
-
-    template_selection_method = args.gather_from
 
     if args.structure_paths != None:
         structure_paths = [os.path.abspath(path) for path in args.structure_paths]
     else:
         structure_paths = []
 
+    overwrite_structures = False if args.no_overwrite_structures else True
+
     # ========
     # Run the selected gather templates method
     # ========
 
-    if template_selection_method == 'TargetExplorerDB':
-        msmseeder.initproject.gather_templates_from_targetexplorer(args.dbapi_uri, search_string=args.query, structure_dirs=args.structure_paths)
-
-    if template_selection_method == 'UniProt':
-        msmseeder.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_dirs=args.structure_paths)
+    if args.gather_from == 'TargetExplorerDB':
+        ensembler.initproject.gather_templates_from_targetexplorer(args.dbapi_uri, search_string=args.query, structure_dirs=structure_paths, loopmodel=args.loopmodel, overwrite_structures=overwrite_structures)
+    elif args.gather_from == 'UniProt':
+        ensembler.initproject.gather_templates_from_uniprot(args.uniprot_query, args.uniprot_domain_regex, structure_dirs=structure_paths, loopmodel=args.loopmodel, overwrite_structures=overwrite_structures)
 
 if __name__ == '__main__':
     main()
