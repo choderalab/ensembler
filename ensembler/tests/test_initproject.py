@@ -9,7 +9,7 @@ from lxml import etree
 
 def test_initproject():
     with enter_temp_dir():
-        ensembler.initproject.initproject('.')
+        ensembler.initproject.InitProject('.')
         assert os.path.exists(ensembler.core.default_project_dirnames.targets)
         assert os.path.exists(ensembler.core.default_project_dirnames.templates)
         assert os.path.exists(ensembler.core.default_project_dirnames.structures)
@@ -23,7 +23,8 @@ def test_initproject():
 
 
 def test_gen_init_metadata():
-    metadata = ensembler.initproject.gen_init_metadata('.')
+    initproject_obj = ensembler.initproject.InitProject('.', run=False)
+    metadata = initproject_obj._gen_init_metadata()
     metadata_keys = [
         'datestamp',
         'init_path',

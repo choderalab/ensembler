@@ -42,14 +42,49 @@ class LoopmodelOutput:
         self.no_missing_residues = no_missing_residues
 
 
-@ensembler.utils.notify_when_done
-def initproject(project_toplevel_dir):
-    """Initialize Ensembler project within the given directory. Creates
-    necessary subdirectories and a project metadata .yaml file.
-    :param project_toplevel_dir: str
-    """
-    create_project_dirs(project_toplevel_dir)
-    write_init_metadata(project_toplevel_dir)
+class InitProject:
+    @ensembler.utils.notify_when_done
+    def __init__(self, project_toplevel_dir, run=True):
+        """Initialize Ensembler project within the given directory. Creates
+        necessary subdirectories and a project metadata .yaml file.
+        :param project_toplevel_dir: str
+        """
+        self.project_toplevel_dir = project_toplevel_dir
+        if run:
+            self._main()
+
+    def _main(self):
+        self._create_project_dirs()
+        self._write_init_metadata()
+
+    def _create_project_dirs(self):
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.targets))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.templates))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.structures))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.models))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.packaged_models))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.structures_pdb))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.structures_sifts))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.templates_structures_resolved))
+        ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.templates_structures_modeled_loops))
+
+    def _write_init_metadata(self):
+        project_metadata = ensembler.core.ProjectMetadata(project_stage='init', project_toplevel_dir=self.project_toplevel_dir)
+        init_metadata = self._gen_init_metadata()
+        project_metadata.add_data(init_metadata)
+        project_metadata.write()
+
+    def _gen_init_metadata(self):
+        datestamp = ensembler.core.get_utcnow_formatted()
+        metadata_dict = {
+            'datestamp': datestamp,
+            'init_path': os.path.abspath(self.project_toplevel_dir),
+            'python_version': sys.version.split('|')[0].strip(),
+            'python_full_version': ensembler.core.literal_str(sys.version),
+            'ensembler_version': ensembler.version.short_version,
+            'ensembler_commit': ensembler.version.git_revision
+        }
+        return metadata_dict
 
 
 @ensembler.utils.notify_when_done
@@ -87,38 +122,6 @@ def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
     targets = extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
     write_seqs_to_fasta_file(targets)
     write_gather_targets_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(targets))
-
-
-def create_project_dirs(project_toplevel_dir):
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.targets))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.templates))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.structures))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.models))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.packaged_models))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.structures_pdb))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.structures_sifts))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.templates_structures_resolved))
-    ensembler.utils.create_dir(os.path.join(project_toplevel_dir, ensembler.core.default_project_dirnames.templates_structures_modeled_loops))
-
-
-def write_init_metadata(project_toplevel_dir):
-    project_metadata = ensembler.core.ProjectMetadata(project_stage='init', project_toplevel_dir=project_toplevel_dir)
-    init_metadata = gen_init_metadata(project_toplevel_dir)
-    project_metadata.add_data(init_metadata)
-    project_metadata.write()
-
-
-def gen_init_metadata(project_toplevel_dir):
-    datestamp = ensembler.core.get_utcnow_formatted()
-    metadata_dict = {
-        'datestamp': datestamp,
-        'init_path': os.path.abspath(project_toplevel_dir),
-        'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': ensembler.core.literal_str(sys.version),
-        'ensembler_version': ensembler.version.short_version,
-        'ensembler_commit': ensembler.version.git_revision
-    }
-    return metadata_dict
 
 
 def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present=False):

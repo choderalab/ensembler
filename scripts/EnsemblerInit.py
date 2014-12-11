@@ -22,7 +22,7 @@ def main():
     )
     args = argparser.parse_args()
 
-    ensembler.initproject.initproject(args.project_dir)
+    ensembler.initproject.InitProject(args.project_dir)
 
 
 if __name__ == '__main__':
