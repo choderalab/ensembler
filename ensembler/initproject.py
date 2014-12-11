@@ -3,23 +3,22 @@ import json
 import sys
 import os
 import shutil
-import logging
 import subprocess
 import traceback
 import tempfile
 from lxml import etree
 import yaml
 import Bio.SeqUtils
+import Bio.SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 import ensembler
 import ensembler.TargetExplorer
 import ensembler.UniProt
 import ensembler.PDB
 import ensembler.version
-from ensembler.core import construct_fasta_str
 from ensembler.utils import file_exists_and_not_empty
-from ensembler.core import mpistate
-
-logger = logging.getLogger('info')
+from ensembler.core import mpistate, logger
 
 
 class TemplateData:
@@ -34,26 +33,26 @@ class TemplateData:
 
 
 class LoopmodelOutput:
-    def __init__(self, output_text=None, exception=None, traceback=None, successful=False, no_missing_residues=False):
+    def __init__(self, output_text=None, exception=None, trbk=None, successful=False, no_missing_residues=False):
         self.output_text = output_text
         self.exception = exception
-        self.traceback = traceback
+        self.traceback = trbk
         self.successful = successful
         self.no_missing_residues = no_missing_residues
 
 
-class InitProject:
-    @ensembler.utils.notify_when_done
-    def __init__(self, project_toplevel_dir, run=True):
+class InitProject(object):
+    def __init__(self, project_toplevel_dir, run_main=True):
         """Initialize Ensembler project within the given directory. Creates
         necessary subdirectories and a project metadata .yaml file.
         :param project_toplevel_dir: str
         """
         self.project_toplevel_dir = project_toplevel_dir
-        if run:
-            self._main()
+        if run_main:
+            self._init_project()
 
-    def _main(self):
+    @ensembler.utils.notify_when_done
+    def _init_project(self):
         self._create_project_dirs()
         self._write_init_metadata()
 
@@ -87,136 +86,72 @@ class InitProject:
         return metadata_dict
 
 
-@ensembler.utils.notify_when_done
-def gather_targets_from_targetexplorer(dbapi_uri, search_string=''):
-    """Gather protein target data from a TargetExplorer DB network API.
-    Pass the URI for the database API and a search string.
-    The search string uses SQLAlchemy syntax and standard TargetExplorer
-    frontend data fields.
-    Example:
-    dbapi_uri='http://plfah2.mskcc.org/kinomeDBAPI'
-    search_string='species="Human"'
+class GatherTargets(object):
+    def __init__(self):
+        self.manual_overrides = ensembler.core.ManualOverrides()
 
-    To select all domains within the database:
-    search_string=''
-    """
-    manual_overrides = ensembler.core.ManualOverrides()
-    domain_span_overrides_present = True if len(manual_overrides.target.domain_spans) > 0 else False
-
-    targets_json = get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present)
-    targets = extract_targets_from_targetexplorer_json(targets_json, manual_overrides=manual_overrides)
-    write_seqs_to_fasta_file(targets)
-
-    write_gather_targets_from_targetexplorer_metadata(dbapi_uri, search_string, len(targets))
+    def _gen_gather_targets_metadata(self, ntargets, additional_metadata=None):
+        if additional_metadata is None:
+            additional_metadata = {}
+        datestamp = ensembler.core.get_utcnow_formatted()
+        metadata = {
+            'datestamp': datestamp,
+            'ntargets': '%d' % ntargets,
+            'python_version': sys.version.split('|')[0].strip(),
+            'python_full_version': ensembler.core.literal_str(sys.version),
+            'ensembler_version': ensembler.version.short_version,
+            'ensembler_commit': ensembler.version.git_revision,
+        }
+        metadata.update(additional_metadata)
+        return metadata
 
 
-@ensembler.utils.notify_when_done
-def gather_targets_from_uniprot(uniprot_query_string, uniprot_domain_regex):
-    """Searches UniProt for a set of target proteins with a user-defined
-    query string, then saves target IDs and sequences."""
-    manual_overrides = ensembler.core.ManualOverrides()
-    uniprotxml = get_uniprot_xml(uniprot_query_string)
-    log_unique_domain_names(uniprot_query_string, uniprotxml)
-    if uniprot_domain_regex != None:
-        log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
-    targets = extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
-    write_seqs_to_fasta_file(targets)
-    write_gather_targets_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(targets))
+class GatherTargetsFromTargetExplorer(GatherTargets):
+    def __init__(self, dbapi_uri, search_string='', run_main=True):
+        super(GatherTargetsFromTargetExplorer, self).__init__()
+        self.dbapi_uri = dbapi_uri
+        self.search_string = search_string
+        if run_main:
+            self._gather_targets()
+
+    @ensembler.utils.notify_when_done
+    def _gather_targets(self):
+        targetexplorer_json = ensembler.TargetExplorer.get_targetexplorer_json(self.dbapi_uri, self.search_string, return_data='domain_seqs,seqs')
+        self.targets = self._extract_targets_from_json(targetexplorer_json)
+        fasta_ofilepath = os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')
+        Bio.SeqIO.write(self.targets, fasta_ofilepath, 'fasta')
+        self._write_metadata()
+
+    def _extract_targets_from_json(self, targetexplorer_json):
+        """
+        :param targetexplorer_json: dict
+        :return: list of BioPython SeqRecord objects
+        """
+        targets = []
+        for target in targetexplorer_json['results']:
+            for target_domain in target['domains']:
+                targetid = target_domain.get('targetid')
+                targetseq = target_domain.get('sequence')
+                # domain span override
+                if targetid in self.manual_overrides.target.domain_spans:
+                    fullseq = target.get('sequence')
+                    start, end = [int(x) - 1 for x in self.manual_overrides.target.domain_spans[targetid].split('-')]
+                    targetseq = fullseq[start:end + 1]
+                target = SeqRecord(Seq(targetseq), id=targetid, description=targetid)
+                targets.append(target)
+
+        return targets
+
+    def _write_metadata(self):
+        targetexplorer_metadata = gen_targetexplorer_metadata(self.dbapi_uri, self.search_string)
+        gather_targets_metadata = self._gen_gather_targets_metadata(len(self.targets), additional_metadata=targetexplorer_metadata)
+        project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_targets')
+        project_metadata.add_data(gather_targets_metadata)
+        project_metadata.write()
 
 
-def get_targetexplorer_targets_json(dbapi_uri, search_string, domain_span_overrides_present=False):
-    """
-    :param dbapi_uri: str
-    :param search_string: str
-    :param domain_span_overrides_present: bool
-    :return: list containing nested lists and dicts
-    """
-    if domain_span_overrides_present:
-        targetexplorer_jsonstr = ensembler.TargetExplorer.query_targetexplorer(
-            dbapi_uri, search_string, return_data='domain_seqs,seqs'
-        )
-    else:
-        targetexplorer_jsonstr = ensembler.TargetExplorer.query_targetexplorer(
-            dbapi_uri, search_string, return_data='domain_seqs'
-        )
-    targetexplorer_json = json.loads(targetexplorer_jsonstr)
-    return targetexplorer_json
-
-
-def get_uniprot_xml(uniprot_query_string):
-    logger.info('Querying UniProt web server...')
-    uniprotxmlstring = ensembler.UniProt.retrieve_uniprot(uniprot_query_string)
-    parser = etree.XMLParser(huge_tree=True)
-    uniprotxml = etree.fromstring(uniprotxmlstring, parser)
-    logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
-    return uniprotxml
-
-
-def extract_targets_from_targetexplorer_json(targets_json, manual_overrides=ensembler.core.ManualOverrides()):
-    """
-    :param targets_json:
-    :param manual_overrides:
-    :return: list of tuples: [(id, seq), (id, seq), ...]
-    """
-    targets = []
-    for target in targets_json['results']:
-        for target_domain in target['domains']:
-            targetid = target_domain.get('targetid')
-            targetseq = target_domain.get('sequence')
-            # domain span override
-            if targetid in manual_overrides.target.domain_spans:
-                fullseq = target.get('sequence')
-                start, end = [int(x) - 1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
-                targetseq = fullseq[start:end + 1]
-            targets.append((targetid, targetseq))
-
-    return targets
-
-
-def extract_targets_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides):
-    targets = []
-    for entry in uniprotxml.findall('entry'):
-        entry_name = entry.find('name').text
-        fullseq = ensembler.core.sequnwrap(entry.find('sequence').text)
-        if uniprot_domain_regex is not None:
-            selected_domains = entry.xpath(
-                'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
-                extensions={(None, 'match_regex'): ensembler.core.xpath_match_regex_case_sensitive}
-            )
-        else:
-            selected_domains = entry.findall('feature[@type="domain"]')
-
-        domain_iter = 0
-        for domain in selected_domains:
-            targetid = '%s_D%d' % (entry_name, domain_iter)
-            # domain span override
-            if targetid in manual_overrides.target.domain_spans:
-                start, end = [int(x) - 1 for x in manual_overrides.target.domain_spans[targetid].split('-')]
-            else:
-                start, end = [int(domain.find('location/begin').get('position')) - 1,
-                              int(domain.find('location/end').get('position')) - 1]
-            targetseq = fullseq[start:end + 1]
-            targets.append((targetid, targetseq))
-            domain_iter += 1
-
-    return targets
-
-
-def write_seqs_to_fasta_file(targets, fasta_ofilepath=os.path.join('targets', 'targets.fa')):
-    """
-    :param targets: list of tuples [(id, seq), (id, seq), ...]
-    :param fasta_ofilepath: str
-    """
-    logger.info('Writing target data to FASTA file "%s"...' % fasta_ofilepath)
-    with open(fasta_ofilepath, 'w') as fasta_ofile:
-        for target in targets:
-            targetid, targetseq = target
-            target_fasta_string = construct_fasta_str(targetid, targetseq)
-            fasta_ofile.write(target_fasta_string)
-
-
-def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
-    db_metadata = get_targetexplorer_db_metadata(dbapi_uri)
+def gen_targetexplorer_metadata(dbapi_uri, search_string):
+    db_metadata = ensembler.TargetExplorer.get_targetexplorer_metadata(dbapi_uri)
     metadata = {
         'method': 'TargetExplorer',
         'gather_from_targetexplorer': {
@@ -229,7 +164,64 @@ def gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri):
     return metadata
 
 
-def gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex):
+class GatherTargetsFromUniProt(GatherTargets):
+    def __init__(self, uniprot_query_string, uniprot_domain_regex='', run_main=True):
+        super(GatherTargetsFromUniProt, self).__init__()
+        self.uniprot_query_string = uniprot_query_string
+        self.uniprot_domain_regex = uniprot_domain_regex
+        if run_main:
+            self._gather_targets()
+
+    @ensembler.utils.notify_when_done
+    def _gather_targets(self):
+        logger.info('Querying UniProt web server...')
+        uniprotxml = ensembler.UniProt.get_uniprot_xml(self.uniprot_query_string)
+        logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
+        log_unique_domain_names(self.uniprot_query_string, uniprotxml)
+        if self.uniprot_domain_regex is not None:
+            log_unique_domain_names_selected_by_regex(self.uniprot_domain_regex, uniprotxml)
+        fasta_ofilepath = os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')
+        self.targets = self._extract_targets_from_uniprot_xml(uniprotxml)
+        Bio.SeqIO.write(self.targets, fasta_ofilepath, 'fasta')
+        self._write_metadata()
+
+    def _extract_targets_from_uniprot_xml(self, uniprotxml):
+        targets = []
+        for entry in uniprotxml.findall('entry'):
+            entry_name = entry.find('name').text
+            fullseq = ensembler.core.sequnwrap(entry.find('sequence').text)
+            if self.uniprot_domain_regex is not None:
+                selected_domains = entry.xpath(
+                    'feature[@type="domain"][match_regex(@description, "%s")]' % self.uniprot_domain_regex,
+                    extensions={(None, 'match_regex'): ensembler.core.xpath_match_regex_case_sensitive}
+                )
+            else:
+                selected_domains = entry.findall('feature[@type="domain"]')
+
+            domain_iter = 0
+            for domain in selected_domains:
+                targetid = '%s_D%d' % (entry_name, domain_iter)
+                # domain span override
+                if targetid in self.manual_overrides.target.domain_spans:
+                    start, end = [int(x) - 1 for x in self.manual_overrides.target.domain_spans[targetid].split('-')]
+                else:
+                    start, end = [int(domain.find('location/begin').get('position')) - 1,
+                                  int(domain.find('location/end').get('position')) - 1]
+                targetseq = fullseq[start:end + 1]
+                targets.append(SeqRecord(Seq(targetseq), id=targetid, description=targetid))
+                domain_iter += 1
+
+        return targets
+
+    def _write_metadata(self):
+        uniprot_metadata = gen_uniprot_metadata(self.uniprot_query_string, self.uniprot_domain_regex)
+        gather_targets_metadata = self._gen_gather_targets_metadata(len(self.targets), additional_metadata=uniprot_metadata)
+        project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_targets')
+        project_metadata.add_data(gather_targets_metadata)
+        project_metadata.write()
+
+
+def gen_uniprot_metadata(uniprot_query_string, uniprot_domain_regex):
     metadata = {
         'method': 'UniProt',
         'gather_from_uniprot': {
@@ -237,43 +229,6 @@ def gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
             'uniprot_domain_regex': uniprot_domain_regex,
         }
     }
-    return metadata
-
-
-def get_targetexplorer_db_metadata(dbapi_uri):
-    db_metadata_jsonstr = ensembler.TargetExplorer.get_targetexplorer_metadata(dbapi_uri)
-    return json.loads(db_metadata_jsonstr)
-
-
-def write_gather_targets_from_targetexplorer_metadata(dbapi_uri, search_string, ntargets):
-    gather_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
-    gather_targets_metadata = gen_gather_targets_metadata(ntargets, additional_metadata=gather_from_targetexplorer_metadata)
-    project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_targets')
-    project_metadata.add_data(gather_targets_metadata)
-    project_metadata.write()
-
-
-def write_gather_targets_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntargets):
-    gather_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
-    gather_targets_metadata = gen_gather_targets_metadata(ntargets, additional_metadata=gather_from_uniprot_metadata)
-    project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_targets')
-    project_metadata.add_data(gather_targets_metadata)
-    project_metadata.write()
-
-
-def gen_gather_targets_metadata(ntarget_domains, additional_metadata=None):
-    if additional_metadata is None:
-        additional_metadata = {}
-    datestamp = ensembler.core.get_utcnow_formatted()
-    metadata = {
-        'datestamp': datestamp,
-        'ntargets': str(ntarget_domains),
-        'python_version': sys.version.split('|')[0].strip(),
-        'python_full_version': ensembler.core.literal_str(sys.version),
-        'ensembler_version': ensembler.version.short_version,
-        'ensembler_commit': ensembler.version.git_revision,
-    }
-    metadata.update(additional_metadata)
     return metadata
 
 
@@ -346,7 +301,7 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
     manual_overrides = ensembler.core.ManualOverrides()
     selected_pdbchains = None
     if mpistate.rank == 0:
-        uniprotxml = get_uniprot_xml(uniprot_query_string)
+        uniprotxml = ensembler.UniProt.get_uniprot_xml(uniprot_query_string)
         log_unique_domain_names(uniprot_query_string, uniprotxml)
         if uniprot_domain_regex is not None:
             log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
@@ -569,8 +524,8 @@ def extract_pdb_template_seq(pdbchain):
 def write_template_seqs_to_fasta_file(selected_templates):
     selected_template_seq_tuples = [(template.templateid, template.full_seq) for template in selected_templates]
     selected_template_seq_resolved_tuples = [(template.templateid, template.resolved_seq) for template in selected_templates]
-    write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates-full-seq.fa'))
-    write_seqs_to_fasta_file(selected_template_seq_resolved_tuples, fasta_ofilepath=os.path.join('templates', 'templates-resolved.fa'))
+    ensembler.core.write_seqs_to_fasta_file(selected_template_seq_tuples, fasta_ofilepath=os.path.join('templates', 'templates-full-seq.fa'))
+    ensembler.core.write_seqs_to_fasta_file(selected_template_seq_resolved_tuples, fasta_ofilepath=os.path.join('templates', 'templates-resolved.fa'))
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
@@ -588,7 +543,7 @@ def extract_template_structures_from_pdb_files(selected_templates, overwrite_str
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
 def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs, loopmodel):
-    gather_templates_from_targetexplorer_metadata = gen_metadata_gather_from_targetexplorer(search_string, dbapi_uri)
+    gather_templates_from_targetexplorer_metadata = gen_targetexplorer_metadata(search_string, dbapi_uri)
     gather_templates_from_targetexplorer_metadata['structure_dirs'] = structure_dirs
     gather_templates_metadata = gen_gather_templates_metadata(ntemplates, loopmodel=loopmodel, additional_metadata=gather_templates_from_targetexplorer_metadata)
     project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_templates')
@@ -598,7 +553,7 @@ def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
 def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs, loopmodel):
-    gather_templates_from_uniprot_metadata = gen_metadata_gather_from_uniprot(uniprot_query_string, uniprot_domain_regex)
+    gather_templates_from_uniprot_metadata = gen_uniprot_metadata(uniprot_query_string, uniprot_domain_regex)
     gather_templates_from_uniprot_metadata['structure_dirs'] = structure_dirs
     gather_templates_metadata = gen_gather_templates_metadata(ntemplates, loopmodel=loopmodel, additional_metadata=gather_templates_from_uniprot_metadata)
     project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_templates')
@@ -851,10 +806,10 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
         raise
     except subprocess.CalledProcessError as e:
         shutil.rmtree(temp_dir)
-        return LoopmodelOutput(exception=e, traceback=traceback.format_exc(), successful=False)
+        return LoopmodelOutput(exception=e, trbk=traceback.format_exc(), successful=False)
     except Exception as e:
         shutil.rmtree(temp_dir)
-        return LoopmodelOutput(output_text=output_text, exception=e, traceback=traceback.format_exc(), successful=False)
+        return LoopmodelOutput(output_text=output_text, exception=e, trbk=traceback.format_exc(), successful=False)
 
 
 def check_loopmodel_complete_and_successful(template):

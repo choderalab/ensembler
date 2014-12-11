@@ -23,7 +23,7 @@ def test_initproject():
 
 
 def test_gen_init_metadata():
-    initproject_obj = ensembler.initproject.InitProject('.', run=False)
+    initproject_obj = ensembler.initproject.InitProject('.', run_main=False)
     metadata = initproject_obj._gen_init_metadata()
     metadata_keys = [
         'datestamp',
@@ -38,7 +38,7 @@ def test_gen_init_metadata():
 
 
 def test_extract_targets_from_targetexplorer_json():
-    targets_json = {
+    targetexplorer_json = {
         "results": [
             {
                 "ac": "P51566",
@@ -72,10 +72,11 @@ def test_extract_targets_from_targetexplorer_json():
             },
         ]
     }
-    targets = ensembler.initproject.extract_targets_from_targetexplorer_json(targets_json)
-    assert targets[0] == ('AFC1_ARATH_D0',
+    gather_targets_obj = ensembler.initproject.GatherTargetsFromTargetExplorer('', run_main=False)
+    targets = gather_targets_obj._extract_targets_from_json(targetexplorer_json)
+    assert (targets[0].id, str(targets[0].seq)) == ('AFC1_ARATH_D0',
                           'YQILSKMGEGTFGQVLECFDNKNKEVVAIKVIRSINKYREAAMIEIDVLQRLTRHDVGGSRCVQIRNWFDYRNHICIVFEKLGPSLYDFLRKNSYRSFPIDLVRELGRQLLESVAYMHDLRLIHTDLKPENILLVSSEYIKIPDYKFLSRPTKDGSYFKNLPKSSAIKLIDFGSTTFEHQDHNYIVSTRHYRAPEVILGVGWNYPCDLWSIGCILVELCSGEALFQTHENLEHLAMMERVLGPLPPHMVLRADRRSEKYFRRGAKLDWPEGATSRDSLKAVWKLPRLPNLIMQHVDHSAGDLIDLLQGLLRYDPTERFKAREALNHPFF')
-    assert targets[1] == ('AFC2_ARATH_D0',
+    assert (targets[1].id, str(targets[1].seq)) == ('AFC2_ARATH_D0',
                           'YKIYSKMGEGTFGQVLECWDRERKEMVAVKIVRGVKKYREAAMIEIEMLQQLGKHDKGGNRCVQIRNWFDYRNHICIVFEKLGSSLYDFLRKNNYRSFPIDLVREIGWQLLECVAFMHDLRMIHTDLKPENILLVSSDYVKIPEYKGSRLQRDVCYKRVPKSSAIKVIDFGSTTYERQDQTYIVSTRHYRAPEVILGLGWSYPCDVWSVGCIIVELCTGEALFQTHENLEHLAMMERVLGPFPQQMLKKVDRHSEKYVRRGRLDWPDGATSRDSLKAVLKLPRLQNLIMQHVDHSAGELINMVQGLLRFDPSERITAREALRHPFF')
 
 

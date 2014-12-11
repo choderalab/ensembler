@@ -2,13 +2,13 @@ import os
 import logging
 import sys
 import re
+import Bio
+import Bio.SeqIO
 from collections import namedtuple
 
 # ========
 # Global package variables
 # ========
-import Bio
-
 src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
@@ -437,8 +437,8 @@ def seqwrap(sequence, add_star=False):
     return wrapped
 
 
-def construct_fasta_str(seqid, seq):
-    target_fasta_string = '>%s\n%s\n' % (seqid, seqwrap(seq).strip())
+def construct_fasta_str(id, seq):
+    target_fasta_string = '>%s\n%s\n' % (id, seqwrap(seq).strip())
     return target_fasta_string
 
 

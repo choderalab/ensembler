@@ -70,10 +70,10 @@ def main():
     # ========
 
     if target_selection_method == 'TargetExplorerDB':
-        ensembler.initproject.gather_targets_from_targetexplorer(args.dbapi_uri, search_string=args.query)
+        ensembler.initproject.GatherTargetsFromTargetExplorer(args.dbapi_uri, search_string=args.query)
 
     elif target_selection_method == 'UniProt':
-        ensembler.initproject.gather_targets_from_uniprot(args.uniprot_query, args.uniprot_domain_regex)
+        ensembler.initproject.GatherTargetsFromUniProt(args.uniprot_query, uniprot_domain_regex=args.uniprot_domain_regex)
 
 if __name__ == '__main__':
     main()
