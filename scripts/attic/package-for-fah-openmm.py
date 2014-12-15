@@ -285,10 +285,10 @@ if __name__ == '__main__':
 
         if archive:
             if verbose: print "Generating archive ..."
-            import commands
+            import deprecated_commands
             archive_filename = os.path.join(projects_directory, target + '.tgz')
             project_directory = os.path.join(projects_directory, target)
-            commands.getoutput('tar zcf %s %s' % (archive_filename, project_directory))
+            deprecated_commands.getoutput('tar zcf %s %s' % (archive_filename, project_directory))
     
 
 

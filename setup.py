@@ -87,13 +87,29 @@ def find_packages():
     contributors, licensed under the BSD license.
     """
     packages = ['ensembler.scripts']
-    for dir,subdirs,files in os.walk('ensembler'):
+    for dir, subdirs, files in os.walk('ensembler'):
         package = dir.replace(os.path.sep, '.')
         if '__init__.py' not in files:
             # not a package
             continue
         packages.append(package)
     return packages
+
+
+def find_package_data():
+    package_data = []
+    basepath = os.path.join('ensembler', 'tests')
+    dirs_to_search = [
+        os.path.join('ensembler', 'tests', 'resources'),
+        os.path.join('ensembler', 'tests', 'integration_test_resources')
+    ]
+    for dir_to_search in dirs_to_search:
+        for dir, subdirs, files in os.walk(dir_to_search):
+            for file in files:
+                if file[0] != '.':
+                    filepath = os.path.join(dir, file).replace(basepath + os.path.sep, '')
+                    package_data.append(filepath)
+    return package_data
 
 ##########################
 # Setup
@@ -110,9 +126,9 @@ setup(
     long_description = read_readme('README.md'),
     packages = find_packages(),
     package_dir = {'ensembler.scripts': 'scripts'},
-    package_data = {'ensembler.tests': ['resources/*']},
-    # scripts = ['scripts/EnsemblerInit.py', 'scripts/EnsemblerGatherTargets.py', 'scripts/EnsemblerGatherTemplates.py', 'scripts/EnsemblerBuildModels.py', 'scripts/EnsemblerRefineImplicitMD.py', 'scripts/EnsemblerSolvate.py', 'scripts/EnsemblerRefineExplicitMD.py', 'scripts/EnsemblerPackageModels.py'],
-    # data_files = [('', ['LICENSE']), ('templates', ['project-data.yaml-TEMPLATE', 'manual-specifications.yaml-TEMPLATE'])],
+    package_data = {
+        'ensembler.tests': find_package_data(),
+    },
     entry_points = {'console_scripts':
         [
             'EnsemblerInit = ensembler.scripts.EnsemblerInit:main',
@@ -125,6 +141,7 @@ setup(
             'EnsemblerRefineExplicitMD = ensembler.scripts.EnsemblerRefineExplicitMD:main',
             'EnsemblerPackageModels = ensembler.scripts.EnsemblerPackageModels:main',
             'EnsemblerInspect = ensembler.scripts.EnsemblerInspect:main',
+            'ensembler = ensembler.cli:main'
         ]
     },
 )

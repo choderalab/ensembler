@@ -96,8 +96,8 @@ original_directory = os.getcwd()
 
 # Determine number of runs.
 # UGLY HACK
-import commands
-output = commands.getoutput('ls -1 %s | grep RUN' % project_directory) 
+import deprecated_commands
+output = deprecated_commands.getoutput('ls -1 %s | grep RUN' % project_directory)
 elements = output.split()
 nruns = len(elements)
 
@@ -108,7 +108,7 @@ for run in range(rank,nruns,size):
         raise Exception("Expected RUN directory %s does not exist" % run_directory)
 
     # Determine number of clones.
-    output = commands.getoutput('ls -1 %s | grep state | grep xml' % run_directory) 
+    output = deprecated_commands.getoutput('ls -1 %s | grep state | grep xml' % run_directory)
     elements = output.split()
     nclones = len(elements)
 

@@ -2,8 +2,10 @@ import os
 import StringIO
 import ensembler.PDB
 from mock import Mock
+from nose.plugins.attrib import attr
 
 
+@attr('unit')
 def test_extract_residues_by_resnum_from_4CFE():
     # 4CFE contains a 'TPO' residue
     pdb_input_filepath = os.path.join('tests', 'resources', '4CFE.pdb.gz')
@@ -15,6 +17,7 @@ def test_extract_residues_by_resnum_from_4CFE():
     ofile.close()
 
 
+@attr('unit')
 def test_extract_residues_by_resnum_from_3HLL():
     # 3HLL contains resnums '56A' and '93B'
     pdb_input_filepath = os.path.join('tests', 'resources', '3HLL.pdb.gz')
@@ -28,6 +31,7 @@ def test_extract_residues_by_resnum_from_3HLL():
     ofile.close()
 
 
+@attr('unit')
 def test_extract_residues_by_resnum_output():
     pdb_input_filepath = os.path.join('tests', 'resources', '3HLL.pdb.gz')
     template = Mock()

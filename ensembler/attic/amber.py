@@ -448,10 +448,10 @@ def run_sander(verbose=False, restart=False, overwrite_mdin=False):
     create_mdin(ntimesteps, restart=restart)
 
     # Run sander.
-    import commands
+    import deprecated_commands
     print "Running sander..."
     command = 'sander -O -i md.sander.in -o md.sander.out -p amber.prmtop -c amber.crd -r md.rst -x md.nc -e md.ene'
-    output = commands.getoutput(command)
+    output = deprecated_commands.getoutput(command)
     print output
 
     return

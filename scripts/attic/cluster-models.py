@@ -165,7 +165,7 @@ for target in targets:
         # And plot a histogram
         plot_path = os.path.join(models_directory,target,'min_rmsd.png')
         bin_ranges=arange(0,18,0.1)
-        # Following matplotlib commands may fail if this script is being run on a remote server without X forwarding
+        # Following matplotlib cli_commands may fail if this script is being run on a remote server without X forwarding
         try:
             hist(min_rmsd, bins=bin_ranges)
             xlim(0,2)

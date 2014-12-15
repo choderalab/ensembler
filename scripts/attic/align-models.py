@@ -106,7 +106,7 @@ infile.close()
 # ALIGN MODELS ONTO REFERENCE
 #
 
-import commands
+import deprecated_commands
 import os.path
 for target in targets:
     
@@ -148,9 +148,9 @@ for target in targets:
     # Determine residues to use in alignment.
     try:
         # Get secondary structure information from STRIDE.
-        import commands
+        import deprecated_commands
         cmd = stride_path + ' ' + os.path.join(models_directory, reference_pdbfile)
-        output = commands.getoutput(cmd) 
+        output = deprecated_commands.getoutput(cmd)
         # Parse STRIDE output, retaining only specified secondary structure types. 
         atmsel = selection()
         core_filename = os.path.join(target_directory, 'core.txt')

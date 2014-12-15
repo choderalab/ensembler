@@ -1,12 +1,15 @@
 import os
+import ensembler
 import ensembler.initproject
 import ensembler.tests
 import ensembler.core
 import ensembler.UniProt
 from ensembler.utils import enter_temp_dir
 from lxml import etree
+from nose.plugins.attrib import attr
 
 
+@attr('unit')
 def test_initproject():
     with enter_temp_dir():
         ensembler.initproject.InitProject('.')
@@ -22,6 +25,7 @@ def test_initproject():
         assert os.path.exists('meta0.yaml')
 
 
+@attr('unit')
 def test_gen_init_metadata():
     initproject_obj = ensembler.initproject.InitProject('.', run_main=False)
     metadata = initproject_obj._gen_init_metadata()
@@ -37,6 +41,7 @@ def test_gen_init_metadata():
         assert metadata.get(key) is not None
 
 
+@attr('unit')
 def test_extract_targets_from_targetexplorer_json():
     targetexplorer_json = {
         "results": [
@@ -80,6 +85,7 @@ def test_extract_targets_from_targetexplorer_json():
                           'YKIYSKMGEGTFGQVLECWDRERKEMVAVKIVRGVKKYREAAMIEIEMLQQLGKHDKGGNRCVQIRNWFDYRNHICIVFEKLGSSLYDFLRKNNYRSFPIDLVREIGWQLLECVAFMHDLRMIHTDLKPENILLVSSDYVKIPEYKGSRLQRDVCYKRVPKSSAIKVIDFGSTTYERQDQTYIVSTRHYRAPEVILGLGWSYPCDVWSVGCIIVELCTGEALFQTHENLEHLAMMERVLGPFPQQMLKKVDRHSEKYVRRGRLDWPDGATSRDSLKAVLKLPRLQNLIMQHVDHSAGELINMVQGLLRFDPSERITAREALRHPFF')
 
 
+@attr('unit')
 def test_attempt_symlink_structure_files():
     pdbid = '4CFE'
     structure_paths = [os.path.abspath(os.path.join('tests', 'resources'))]
@@ -91,8 +97,38 @@ def test_attempt_symlink_structure_files():
         assert os.path.exists(project_pdb_filepath)
 
 
+@attr('unit')
 def test_log_unique_domain_names():
     with open(os.path.join('tests', 'resources', 'uniprot-CK1-kinases.xml')) as uniprotxml_file:
         uniprotxml_string = ensembler.UniProt.remove_uniprot_xmlns(uniprotxml_file.read())
         uniprotxml = etree.fromstring(uniprotxml_string)
     ensembler.initproject.log_unique_domain_names('domain:"Protein kinase" AND reviewed:yes AND family:"CK1" AND taxonomy:9606', uniprotxml)
+
+
+@attr('integration')
+def test_command_gather_targets_from_uniprot():
+    with ensembler.tests.integration_test_utils.integration_test_context(set_up_project_stage='init'):
+        ref_fasta = """\
+>EGFR_HUMAN_D0
+FKKIKVLGSGAFGTVYKGLWIPEGEKVKIPVAIKELREATSPKANKEILDEAYVMASVDN
+PHVCRLLGICLTSTVQLITQLMPFGCLLDYVREHKDNIGSQYLLNWCVQIAKGMNYLEDR
+RLVHRDLAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPIKWMALESILHRIY
+THQSDVWSYGVTVWELMTFGSKPYDGIPASEISSILEKGERLPQPPICTIDVYMIMVKCW
+MIDADSRPKFRELIIEFSKMARDPQRYL
+>SRC_HUMAN_D0
+LRLEVKLGQGCFGEVWMGTWNGTTRVAIKTLKPGTMSPEAFLQEAQVMKKLRHEKLVQLY
+AVVSEEPIYIVTEYMSKGSLLDFLKGETGKYLRLPQLVDMAAQIASGMAYVERMNYVHRD
+LRAANILVGENLVCKVADFGLARLIEDNEYTARQGAKFPIKWTAPEAALYGRFTIKSDVW
+SFGILLTELTTKGRVPYPGMVNREVLDQVERGYRMPCPPECPESLHDLMCQCWRKEPEER
+PTFEYLQAFLEDYF
+"""
+
+        args = {
+            '--gather_from': 'uniprot',
+            '--query': 'accession:P00533 OR accession:P12931',
+            '--uniprot_domain_regex': '^Protein kinase(?!; truncated)(?!; active)',
+            '--help': False,
+        }
+        ensembler.cli_commands.gather_targets.dispatch(args)
+        test_fasta = open(os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')).read()
+        assert test_fasta == ref_fasta

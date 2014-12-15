@@ -2,12 +2,14 @@ import os
 import shutil
 import ensembler
 import ensembler.tests
-import ensembler.modelling
+import ensembler.modeling
 from mock import Mock
 import datetime
 from ensembler.utils import enter_temp_dir
+from nose.plugins.attrib import attr
 
 
+@attr('unit')
 def test_build_model():
     template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
 
@@ -28,11 +30,7 @@ def test_build_model():
 
         shutil.copy(template_filepath, ensembler.core.default_project_dirnames.templates_structures_resolved)
 
-        ensembler.modelling.build_model(
-            target,
-            template,
-            target_setup_data=target_setup_data
-        )
+        ensembler.modeling.build_model(target, template, template, target_setup_data=target_setup_data)
 
         # Example model.pdb.gz contents (not testing this as it may be dependent
         # upon Modeller version as well as modelling stochasticity):
@@ -46,3 +44,17 @@ def test_build_model():
         model_filepath = os.path.join(target_setup_data.models_target_dir, template.id, 'model.pdb.gz')
         assert os.path.exists(model_filepath)
         assert os.path.getsize(model_filepath) > 0
+
+
+@attr('integration')
+def test_build_models():
+    with ensembler.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
+        args = {
+            '--targets': ['SRC_HUMAN_D0'],
+            '--templates': ['KC1D_HUMAN_D0_3UZP_A', 'KC1D_HUMAN_D0_4KB8_D'],
+            '--verbose': False,
+            '--help': False,
+        }
+        ensembler.cli_commands.build_models.dispatch(args)
+        assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'SRC_HUMAN_D0', 'KC1D_HUMAN_D0_3UZP_A', 'model.pdb'))
+        assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'SRC_HUMAN_D0', 'KC1D_HUMAN_D0_4KB8_D', 'model.pdb'))

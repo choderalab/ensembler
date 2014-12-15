@@ -7,7 +7,7 @@
 
 import argparse
 import ensembler
-import ensembler.modelling
+import ensembler.modeling
 
 def main():
     argparser = argparse.ArgumentParser(description='Models a set of target sequences onto a set of template structures using Modeller.', formatter_class=argparse.RawTextHelpFormatter)
@@ -24,7 +24,7 @@ def main():
     else:
         loglevel = 'info'
 
-    ensembler.modelling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, loglevel=loglevel)
+    ensembler.modeling.build_models(process_only_these_targets=args.targets, process_only_these_templates=args.templates, loglevel=loglevel)
 
 if __name__ == '__main__':
     main()

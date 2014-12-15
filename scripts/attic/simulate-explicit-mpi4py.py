@@ -301,7 +301,7 @@ for target in targets:
         print "Simulating %s => %s in explicit solvent for %.1f ps" % (target, template, niterations * nsteps_per_iteration * timestep / units.picoseconds)
         print "-------------------------------------------------------------------------"
 
-        import commands
+        import deprecated_commands
         
         model_directory = os.path.join(models_directory, target, template)
         if not os.path.exists(model_directory): continue
@@ -424,14 +424,14 @@ for target in targets:
             system_file = open(system_filename, 'w')
             system_file.write(mm.XmlSerializer.serialize(system))
             system_file.close()
-            commands.getoutput('gzip %s' % system_filename)
+            deprecated_commands.getoutput('gzip %s' % system_filename)
 
             # Serialize integrator.
             if verbose: print "Serializing integrator..."
             integrator_file = open(integrator_filename, 'w')
             integrator_file.write(mm.XmlSerializer.serialize(integrator))
             integrator_file.close()            
-            commands.getoutput('gzip %s' % integrator_filename)
+            deprecated_commands.getoutput('gzip %s' % integrator_filename)
 
             # Serialize state.
             if verbose: print "Serializing state..."
@@ -439,7 +439,7 @@ for target in targets:
             state_file = open(state_filename, 'w')
             state_file.write(mm.XmlSerializer.serialize(state))
             state_file.close()            
-            commands.getoutput('gzip %s' % state_filename)
+            deprecated_commands.getoutput('gzip %s' % state_filename)
 
             os.chdir(original_directory)    
 

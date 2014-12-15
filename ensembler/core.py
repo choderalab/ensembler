@@ -16,7 +16,7 @@ datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 project_metadata_filename = 'project-data.yaml'
 manual_overrides_filename = 'manual-overrides.yaml'
 
-template_acceptable_ratio_observed_residues = 0.7
+template_acceptable_ratio_resolved_residues = 0.7
 
 # listed in order
 project_stages = [
@@ -451,15 +451,17 @@ def get_targets():
 
 def get_templates():
     templates_dir = os.path.abspath('templates')
-    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-    templates = list(Bio.SeqIO.parse(templates_fasta_filename, 'fasta'))
-    return templates
+    templates_resolved_seq_fasta_filename = os.path.join(templates_dir, 'templates-resolved.fa')
+    templates_resolved_seq = list(Bio.SeqIO.parse(templates_resolved_seq_fasta_filename, 'fasta'))
+    templates_full_seq_fasta_filename = os.path.join(templates_dir, 'templates-full-seq.fa')
+    templates_full_seq = list(Bio.SeqIO.parse(templates_full_seq_fasta_filename, 'fasta'))
+    return templates_resolved_seq, templates_full_seq
 
 
 def get_targets_and_templates():
     targets = get_targets()
-    templates = get_templates()
-    return targets, templates
+    templates_resolved_seq, templates_full_seq = get_templates()
+    return targets, templates_resolved_seq, templates_full_seq
 
 
 def find_loopmodel_executable():

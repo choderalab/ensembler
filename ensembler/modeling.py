@@ -37,19 +37,20 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     MPI-enabled.
     """
     ensembler.utils.loglevel_setter(logger, loglevel)
-    targets, templates = get_targets_and_templates()
-    ntemplates = len(templates)
+    targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
+    ntemplates = len(templates_resolved_seq)
     for target in targets:
         if process_only_these_targets and target.id not in process_only_these_targets: continue
         target_setup_data = build_models_setup_target(target)
         for template_index in range(mpistate.rank, ntemplates, mpistate.size):
-            template = templates[template_index]
-            if process_only_these_templates and template.id not in process_only_these_templates: continue
-            build_model(target, template, target_setup_data, loglevel=loglevel)
+            template_resolved_seq = templates_resolved_seq[template_index]
+            template_full_seq = templates_full_seq[template_index]
+            if process_only_these_templates and template_resolved_seq.id not in process_only_these_templates: continue
+            build_model(target, template_resolved_seq, template_full_seq, target_setup_data, loglevel=loglevel)
         write_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates)
 
 
-def build_model(target, template, target_setup_data, loglevel=None):
+def build_model(target, template_resolved_seq, template_full_seq, target_setup_data, loglevel=None):
     """Uses Modeller to build a homology model for a given target and
     template.
 
@@ -65,8 +66,11 @@ def build_model(target, template, target_setup_data, loglevel=None):
     ensembler.utils.loglevel_setter(logger, loglevel)
 
     template_structure_dir = os.path.abspath(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
-    if not os.path.exists(os.path.join(template_structure_dir, template.id + '.pdb')):
+    template = template_full_seq
+    if not os.path.exists(os.path.join(template_structure_dir, template_resolved_seq.id + '.pdb')):
         template_structure_dir = os.path.abspath(ensembler.core.default_project_dirnames.templates_structures_resolved)
+        template = template_resolved_seq
+
     model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
     ensembler.utils.create_dir(model_dir)
     model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))

@@ -7,7 +7,7 @@
 
 import argparse
 import ensembler
-import ensembler.modelling
+import ensembler.modeling
 
 def main():
     argparser = argparse.ArgumentParser(description='Sorts models by sequence identity, then performs clustering to filter out non-unique models.', formatter_class=argparse.RawTextHelpFormatter)
@@ -22,8 +22,8 @@ def main():
     # else:
     #     loglevel = 'info'
 
-    ensembler.modelling.sort_by_sequence_identity(process_only_these_targets=args.targets, loglevel=None)
-    ensembler.modelling.cluster_models(process_only_these_targets=args.targets, verbose=args.verbose)
+    ensembler.modeling.sort_by_sequence_identity(process_only_these_targets=args.targets, loglevel=None)
+    ensembler.modeling.cluster_models(process_only_these_targets=args.targets, verbose=args.verbose)
 
 if __name__ == '__main__':
     main()

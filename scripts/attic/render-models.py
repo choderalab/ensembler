@@ -221,7 +221,7 @@ for target in targets:
     # GATHER SEQUENCE IDENTITIES
     #
         
-    import commands
+    import deprecated_commands
     import os.path
     import numpy
 

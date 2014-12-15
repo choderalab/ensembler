@@ -1,8 +1,10 @@
 import os
 import yaml
 import ensembler
+from nose.plugins.attrib import attr
 
 
+@attr('unit')
 def test_project_metadata_init():
     project_metadata = ensembler.core.ProjectMetadata(project_stage='init')
     test_data = {'test_field': 'test_value'}
@@ -10,6 +12,7 @@ def test_project_metadata_init():
     assert project_metadata.data == {'init': test_data}
 
 
+@attr('unit')
 def test_project_metadata_init_write():
     with ensembler.utils.enter_temp_dir():
         project_metadata = ensembler.core.ProjectMetadata(project_stage='init')
@@ -25,6 +28,7 @@ def test_project_metadata_init_write():
         }
 
 
+@attr('unit')
 def test_project_metadata_init_write_twice():
     with ensembler.utils.enter_temp_dir():
         project_metadata = ensembler.core.ProjectMetadata(project_stage='init')
@@ -48,6 +52,7 @@ def test_project_metadata_init_write_twice():
         }
 
 
+@attr('unit')
 def test_project_metadata_add_prev_metadata():
     with ensembler.utils.enter_temp_dir():
         os.mkdir('targets')
@@ -69,6 +74,7 @@ def test_project_metadata_add_prev_metadata():
         }
 
 
+@attr('unit')
 def test_project_metadata_gather_targets_write():
     with ensembler.utils.enter_temp_dir():
         os.mkdir('targets')
@@ -91,6 +97,7 @@ def test_project_metadata_gather_targets_write():
         }
 
 
+@attr('unit')
 def test_project_metadata_gather_templates_write():
     with ensembler.utils.enter_temp_dir():
         os.mkdir('targets')
