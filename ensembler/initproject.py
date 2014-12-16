@@ -747,7 +747,7 @@ def loopmodel_template(template, missing_residues, overwrite_structures=False):
         'mpi_rank': mpistate.rank,
         'successful': loopmodel_output.successful,
         'exception': loopmodel_output.exception,
-        'loopmodel_exception': loopmodel_output.loopmodel_exception.output,
+        'loopmodel_exception': loopmodel_output.loopmodel_exception,
         'traceback': loopmodel_output.traceback,
         'timing': ensembler.core.strf_timedelta(timedelta),
         })
@@ -811,7 +811,7 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
         raise
     except subprocess.CalledProcessError as e:
         shutil.rmtree(temp_dir)
-        return LoopmodelOutput(loopmodel_exception=e, trbk=traceback.format_exc(), successful=False)
+        return LoopmodelOutput(loopmodel_exception=e.output, trbk=traceback.format_exc(), successful=False)
     except Exception as e:
         shutil.rmtree(temp_dir)
         return LoopmodelOutput(output_text=output_text, exception=e, trbk=traceback.format_exc(), successful=False)
