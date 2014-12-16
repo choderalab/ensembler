@@ -62,12 +62,15 @@ def dispatch(args):
     if args['--help']:
         print helpstring
         return
-    if args['--gather_from'] == 'targetexplorer':
+    if args['--gather_from'].lower() == 'targetexplorer':
         required_args = ['--dbapi_uri']
         ensembler.cli.validate_args(args, required_args)
         ensembler.initproject.gather_templates_from_targetexplorer(args['--dbapi_uri'], search_string=args['--query'], structure_dirs=args['--structure_path'], loopmodel=not args['--no-loopmodel'], overwrite_structures=args['--overwrite_structures'])
 
-    elif args['--gather_from']== 'uniprot':
+    elif args['--gather_from'].lower() == 'uniprot':
         required_args = ['--query']
         ensembler.cli.validate_args(args, required_args)
         ensembler.initproject.gather_templates_from_uniprot(args['--query'], uniprot_domain_regex=args['--uniprot_domain_regex'], structure_dirs=args['--structure_path'], loopmodel=not args['--no-loopmodel'], overwrite_structures=args['--overwrite_structures'])
+
+    else:
+        raise Exception('--gather_from flag must be set to either "uniprot" or "targetexplorer"')
