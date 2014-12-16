@@ -17,7 +17,8 @@ def validate_args(args, required_args):
 
 def main():
     args = docopt(docopt_full_helpstring, help=False)
-    ensembler.core.check_project_toplevel_dir()
+    if not args['init']:
+        ensembler.core.check_project_toplevel_dir()
 
     # print args
 

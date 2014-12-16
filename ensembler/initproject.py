@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import traceback
 import tempfile
+import datetime
 from lxml import etree
 import yaml
 import Bio.SeqUtils
@@ -730,12 +731,14 @@ def loopmodel_template(template, missing_residues, overwrite_structures=False):
             return
     logfile = ensembler.core.LogFile(log_filepath)
     write_loop_file(template, missing_residues)
+    starttime = datetime.datetime.utcnow()
     if len(missing_residues) == 0:
         loopmodel_output = LoopmodelOutput(successful=True, no_missing_residues=True)
     else:
         loopmodel_output = run_loopmodel(template_filepath, loop_filepath, output_pdb_filepath, output_score_filepath)
     if not loopmodel_output.successful:
         logger.error('MPI rank %d Loopmodel error for template %s - see logfile' % (mpistate.rank, template.templateid))
+    timedelta = datetime.datetime.utcnow() - starttime
     logfile.log({
         'templateid': str(template.templateid),
         'no_missing_residues': loopmodel_output.no_missing_residues,
@@ -744,6 +747,7 @@ def loopmodel_template(template, missing_residues, overwrite_structures=False):
         'successful': loopmodel_output.successful,
         'exception': loopmodel_output.exception,
         'traceback': loopmodel_output.traceback,
+        'timing': ensembler.core.strf_timedelta(timedelta),
         })
 
 
