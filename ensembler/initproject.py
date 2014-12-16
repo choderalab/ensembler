@@ -822,7 +822,7 @@ def check_loopmodel_complete_and_successful(template):
     log_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml')
     if os.path.exists(log_filepath) and os.path.exists(output_pdb_filepath):
         with open(log_filepath) as log_file:
-            log_data = yaml.load(log_file)
+            log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
             if log_data.get('successful') == True:
                 print template.templateid, 'Already pdbfixed'
                 return True

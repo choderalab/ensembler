@@ -267,7 +267,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
 
             meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
             with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file)
+                metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
 
             metadata['package_for_fah'] = {
                 'target_id': target.id,

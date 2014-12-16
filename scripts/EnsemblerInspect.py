@@ -146,7 +146,7 @@ def get_timings(dirpath):
         metadata_path = os.path.join(dirpath, metadata_filename)
         if os.path.exists(metadata_path):
             with open(metadata_path) as metadata_file:
-                model_metadata = yaml.load(metadata_file)
+                model_metadata = yaml.load(metadata_file, Loader=ensembler.core.YamlLoader)
         else:
             model_metadata = {}
 

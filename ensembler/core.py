@@ -81,6 +81,11 @@ mpistate = MPIState()
 # YAML
 # ========
 
+try:
+    from yaml import CLoader as YamlLoader, CDumper as YamlDumper
+except ImportError:
+    from yaml import Loader as YamlLoader, Dumper as YamlDumper
+
 class literal_str(str): pass
 
 def change_style(style, representer):
@@ -133,7 +138,7 @@ class LogFile:
         self.log_data.update(new_log_data)
 
         with open(self.log_filepath, 'w') as log_file:
-            yaml.dump(self.log_data, log_file, default_flow_style=False)
+            yaml.dump(self.log_data, log_file, default_flow_style=False, Dumper=YamlDumper)
 
 
 class ManualOverrides:
@@ -141,7 +146,7 @@ class ManualOverrides:
         import yaml
         if os.path.exists(manual_overrides_filename):
             with open(manual_overrides_filename, 'r') as manual_overrides_file:
-                manual_overrides_yaml = yaml.load(manual_overrides_file)
+                manual_overrides_yaml = yaml.load(manual_overrides_file, Loader=YamlLoader)
         else:
             manual_overrides_yaml = {}
 
@@ -238,7 +243,7 @@ class ProjectMetadata:
     def add_prev_metadata(self, project_stage):
         latest_metadata_filepath = self.determine_latest_metadata_filepath(project_stage)
         with open(latest_metadata_filepath) as latest_metadata_file:
-            prev_metadata = yaml.load(latest_metadata_file)
+            prev_metadata = yaml.load(latest_metadata_file, Loader=YamlLoader)
         self.add_data(prev_metadata[project_stage], project_stage=project_stage)
 
     def determine_latest_metadata_filepath(self, project_stage):
@@ -330,7 +335,7 @@ class ProjectMetadata:
             for stage in project_stages:
                 if stage in self.data.keys():
                     subdict = {stage: self.data[stage]}
-                    yaml.dump(subdict, ofile, default_flow_style=False)
+                    yaml.dump(subdict, ofile, default_flow_style=False, Dumper=YamlDumper)
 
 
 class DeprecatedProjectMetadata:
@@ -343,7 +348,7 @@ class DeprecatedProjectMetadata:
             for stage in project_stages:
                 if stage in self.data.keys():
                     subdict = {stage: self.data[stage]}
-                    yaml.dump(subdict, ofile, default_flow_style=False)
+                    yaml.dump(subdict, ofile, default_flow_style=False, Dumper=YamlDumper)
 
 
 def write_metadata(new_metadata_dict, ensembler_stage, target_id=None):
@@ -354,7 +359,7 @@ def write_metadata(new_metadata_dict, ensembler_stage, target_id=None):
         prev_ensembler_stage = project_stages[project_stages.index(ensembler_stage) - 1]
         prev_metadata_filepath = metadata_file_mapper(prev_ensembler_stage, target_id=target_id)
         with open(prev_metadata_filepath) as prev_metadata_file:
-            metadata_dict = yaml.load(prev_metadata_file)
+            metadata_dict = yaml.load(prev_metadata_file, Loader=YamlLoader)
 
     metadata_dict.update(new_metadata_dict)
     metadata = ProjectMetadata(metadata_dict)
