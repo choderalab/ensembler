@@ -319,7 +319,6 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
     extract_template_structures_from_pdb_files(selected_templates, overwrite_structures=overwrite_structures)
     if loopmodel:
         missing_residues = pdbfix_templates(selected_templates, overwrite_structures=overwrite_structures)
-        print 'Starting loopmodeling'
         loopmodel_templates(selected_templates, missing_residues, overwrite_structures=overwrite_structures)
     write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs, loopmodel)
 
@@ -824,7 +823,6 @@ def check_loopmodel_complete_and_successful(template):
         with open(log_filepath) as log_file:
             log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
             if log_data.get('successful') == True:
-                print template.templateid, 'Already pdbfixed'
                 return True
     else:
         return False
