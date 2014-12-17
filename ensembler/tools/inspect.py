@@ -6,7 +6,7 @@ import yaml
 
 
 class LoopmodelLogs:
-    def __init__(self, project_dir):
+    def __init__(self, project_dir='.'):
         self.project_dir = project_dir
         self.df = self.parse_loopmodel_logs()
 
