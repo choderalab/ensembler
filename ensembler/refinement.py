@@ -256,7 +256,7 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
         # TODO get this working
 
         # if rank == 0:
-        # 
+        #
         #     # ========
         #     # Metadata
         #     # ========
@@ -389,37 +389,39 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                     reject_file.write(exception_text + '\n')
                     reject_file.write(trbk + '\n')
 
-        if rank == 0:
+        # TODO get this working
 
-            # ========
-            # Metadata
-            # ========
-
-            import sys
-            import yaml
-            import ensembler
-            import ensembler.version
-            import simtk.openmm.version
-            datestamp = ensembler.core.get_utcnow_formatted()
-
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
-
-            metadata['solvate_models'] = {
-                'target_id': target.id,
-                'datestamp': datestamp,
-                'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': ensembler.core.literal_str(sys.version),
-                'ensembler_version': ensembler.version.short_version,
-                'ensembler_commit': ensembler.version.git_revision,
-                'biopython_version': Bio.__version__,
-                'openmm_version': simtk.openmm.version.short_version,
-                'openmm_commit': simtk.openmm.version.git_revision
-            }
-
-            metadata = ensembler.core.ProjectMetadata(metadata)
-            metadata.write(meta_filepath)
+        # if rank == 0:
+        #
+        #     # ========
+        #     # Metadata
+        #     # ========
+        #
+        #     import sys
+        #     import yaml
+        #     import ensembler
+        #     import ensembler.version
+        #     import simtk.openmm.version
+        #     datestamp = ensembler.core.get_utcnow_formatted()
+        #
+        #     meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+        #     with open(meta_filepath) as meta_file:
+        #         metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
+        #
+        #     metadata['solvate_models'] = {
+        #         'target_id': target.id,
+        #         'datestamp': datestamp,
+        #         'python_version': sys.version.split('|')[0].strip(),
+        #         'python_full_version': ensembler.core.literal_str(sys.version),
+        #         'ensembler_version': ensembler.version.short_version,
+        #         'ensembler_commit': ensembler.version.git_revision,
+        #         'biopython_version': Bio.__version__,
+        #         'openmm_version': simtk.openmm.version.short_version,
+        #         'openmm_commit': simtk.openmm.version.git_revision
+        #     }
+        #
+        #     metadata = ensembler.core.ProjectMetadata(metadata)
+        #     metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:
@@ -495,32 +497,34 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
             with open(filename, 'w') as outfile:
                 outfile.write('%d\n' % nwaters_array[index68])
 
-            # ========
-            # Metadata
-            # ========
+            # TODO get this working
 
-            import sys
-            import yaml
-            import ensembler
-            import ensembler.version
-            datestamp = ensembler.core.get_utcnow_formatted()
-
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
-
-            metadata['determine_nwaters'] = {
-                'target_id': target.id,
-                'datestamp': datestamp,
-                'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': ensembler.core.literal_str(sys.version),
-                'ensembler_version': ensembler.version.short_version,
-                'ensembler_commit': ensembler.version.git_revision,
-                'biopython_version': Bio.__version__,
-            }
-
-            metadata = ensembler.core.ProjectMetadata(metadata)
-            metadata.write(meta_filepath)
+            # # ========
+            # # Metadata
+            # # ========
+            #
+            # import sys
+            # import yaml
+            # import ensembler
+            # import ensembler.version
+            # datestamp = ensembler.core.get_utcnow_formatted()
+            #
+            # meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+            # with open(meta_filepath) as meta_file:
+            #     metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
+            #
+            # metadata['determine_nwaters'] = {
+            #     'target_id': target.id,
+            #     'datestamp': datestamp,
+            #     'python_version': sys.version.split('|')[0].strip(),
+            #     'python_full_version': ensembler.core.literal_str(sys.version),
+            #     'ensembler_version': ensembler.version.short_version,
+            #     'ensembler_commit': ensembler.version.git_revision,
+            #     'biopython_version': Bio.__version__,
+            # }
+            #
+            # metadata = ensembler.core.ProjectMetadata(metadata)
+            # metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:
@@ -571,7 +575,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     collision_rate = 20.0 / unit.picoseconds # Langevin collision rate
     barostat_period = 50
     nsteps_per_iteration = 500 # number of timesteps per iteration
-    niterations = 100 # number of iterations
+    niterations = 1000 # number of iterations
 
     nonbondedMethod = app.PME
 
@@ -884,41 +888,43 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                     reject_file.write(exception_text + '\n')
                     reject_file.write(trbk + '\n')
 
-        if rank == 0:
+        # TODO get this working
 
-            # ========
-            # Metadata
-            # ========
-            import sys
-            import yaml
-            import ensembler
-            import ensembler.version
-            import subprocess
-            import simtk.openmm.version
-            datestamp = ensembler.core.get_utcnow_formatted()
-            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb.gz']).count('\n')
-            target_timedelta = datetime.datetime.utcnow() - target_starttime
-
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
-
-            metadata['refine_explicit_md'] = {
-                'target_id': target.id,
-                'datestamp': datestamp,
-                'timing': ensembler.core.strf_timedelta(target_timedelta),
-                'nsuccessful_refinements': nsuccessful_refinements,
-                'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': ensembler.core.literal_str(sys.version),
-                'ensembler_version': ensembler.version.short_version,
-                'ensembler_commit': ensembler.version.git_revision,
-                'biopython_version': Bio.__version__,
-                'openmm_version': simtk.openmm.version.short_version,
-                'openmm_commit': simtk.openmm.version.git_revision
-            }
-
-            metadata = ensembler.core.ProjectMetadata(metadata)
-            metadata.write(meta_filepath)
+        # if rank == 0:
+        #
+        #     # ========
+        #     # Metadata
+        #     # ========
+        #     import sys
+        #     import yaml
+        #     import ensembler
+        #     import ensembler.version
+        #     import subprocess
+        #     import simtk.openmm.version
+        #     datestamp = ensembler.core.get_utcnow_formatted()
+        #     nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb.gz']).count('\n')
+        #     target_timedelta = datetime.datetime.utcnow() - target_starttime
+        #
+        #     meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+        #     with open(meta_filepath) as meta_file:
+        #         metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
+        #
+        #     metadata['refine_explicit_md'] = {
+        #         'target_id': target.id,
+        #         'datestamp': datestamp,
+        #         'timing': ensembler.core.strf_timedelta(target_timedelta),
+        #         'nsuccessful_refinements': nsuccessful_refinements,
+        #         'python_version': sys.version.split('|')[0].strip(),
+        #         'python_full_version': ensembler.core.literal_str(sys.version),
+        #         'ensembler_version': ensembler.version.short_version,
+        #         'ensembler_commit': ensembler.version.git_revision,
+        #         'biopython_version': Bio.__version__,
+        #         'openmm_version': simtk.openmm.version.short_version,
+        #         'openmm_commit': simtk.openmm.version.git_revision
+        #     }
+        #
+        #     metadata = ensembler.core.ProjectMetadata(metadata)
+        #     metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:
