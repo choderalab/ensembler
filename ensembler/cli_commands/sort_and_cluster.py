@@ -24,5 +24,5 @@ def dispatch(args):
         loglevel = 'debug'
     else:
         loglevel = 'info'
-    ensembler.modeling.sort_by_sequence_identity(process_only_these_targets=args['--targets'], loglevel=loglevel)
+    # ensembler.modeling.sort_by_sequence_identity(process_only_these_targets=args['--targets'], loglevel=loglevel)
     ensembler.modeling.cluster_models(process_only_these_targets=args['--targets'], verbose=args['--verbose'])

@@ -113,7 +113,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             # Integrator settings.
             constraint_tolerance = 1.0e-5 
             timestep = 2.0 * unit.femtoseconds
-            collision_rate = 5.0 / unit.picosecond
+            collision_rate = 1.0 / unit.picosecond
             temperature = 300.0 * unit.kelvin
 
             # Create new integrator to use.
