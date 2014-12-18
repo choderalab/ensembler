@@ -796,6 +796,8 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             models_target_dir = os.path.join(models_dir, target.id)
             if not os.path.exists(models_target_dir): continue
 
+        print target.id
+
         comm.Barrier()
 
         # Determine number of waters to use.
@@ -811,7 +813,6 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         for template_index in range(rank, len(templates_to_process), size):
             template = templates_to_process[template_index]
-            print 'Working on template', template.id
 
             model_dir = os.path.join(models_target_dir, template)
             if not os.path.exists(model_dir): continue
