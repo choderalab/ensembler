@@ -19,15 +19,11 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
     size = comm.size
     gpuid = rank % gpupn
 
-    targets_dir = os.path.abspath("targets")
-    templates_dir = os.path.abspath("templates")
     models_dir = os.path.abspath("models")
     original_dir = os.getcwd()
 
-    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
-    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-    templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    templates = templates_resolved_seq
 
     # ========
     # Simulation parameters
