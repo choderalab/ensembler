@@ -456,7 +456,7 @@ def get_targets():
 
 def get_templates():
     templates_dir = os.path.abspath('templates')
-    templates_resolved_seq_fasta_filename = os.path.join(templates_dir, 'templates-resolved.fa')
+    templates_resolved_seq_fasta_filename = os.path.join(templates_dir, 'templates-resolved-seq.fa')
     templates_resolved_seq = list(Bio.SeqIO.parse(templates_resolved_seq_fasta_filename, 'fasta'))
     templates_full_seq_fasta_filename = os.path.join(templates_dir, 'templates-full-seq.fa')
     templates_full_seq = list(Bio.SeqIO.parse(templates_full_seq_fasta_filename, 'fasta'))
