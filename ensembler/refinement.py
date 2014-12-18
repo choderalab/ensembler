@@ -1,3 +1,10 @@
+import sys
+import subprocess
+import ensembler
+import ensembler.version
+import simtk.openmm.version
+
+
 def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False, pH=8.0):
     # TODO - refactor
     '''Run MD refinement in implicit solvent.
@@ -246,42 +253,37 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
 
         comm.Barrier()
 
-        if rank == 0:
+        # TODO get this working
 
-            # ========
-            # Metadata
-            # ========
-
-            import sys
-            import yaml
-            import ensembler
-            import ensembler.version
-            import subprocess
-            import simtk.openmm.version
-            datestamp = ensembler.core.get_utcnow_formatted()
-            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb.gz']).count('\n')
-            target_timedelta = datetime.datetime.utcnow() - target_starttime
-
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
-
-            metadata['refine_implicit_md'] = {
-                'target_id': target.id,
-                'datestamp': datestamp,
-                'timing': ensembler.core.strf_timedelta(target_timedelta),
-                'nsuccessful_refinements': nsuccessful_refinements,
-                'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': ensembler.core.literal_str(sys.version),
-                'ensembler_version': ensembler.version.short_version,
-                'ensembler_commit': ensembler.version.git_revision,
-                'biopython_version': Bio.__version__,
-                'openmm_version': simtk.openmm.version.short_version,
-                'openmm_commit': simtk.openmm.version.git_revision
-            }
-
-            metadata = ensembler.core.ProjectMetadata(metadata)
-            metadata.write(meta_filepath)
+        # if rank == 0:
+        # 
+        #     # ========
+        #     # Metadata
+        #     # ========
+        #
+        #
+        #     project_metadata = ensembler.core.ProjectMetadata(project_stage='refine_implicit_md', target_id=target.id)
+        #
+        #     datestamp = ensembler.core.get_utcnow_formatted()
+        #
+        #     nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb.gz']).count('\n')
+        #
+        #     metadata = {
+        #         'target_id': target.id,
+        #         'datestamp': datestamp,
+        #         # 'timing': ensembler.core.strf_timedelta(target_timedelta),
+        #         'nsuccessful_refinements': nsuccessful_refinements,
+        #         'python_version': sys.version.split('|')[0].strip(),
+        #         'python_full_version': ensembler.core.literal_str(sys.version),
+        #         'ensembler_version': ensembler.version.short_version,
+        #         'ensembler_commit': ensembler.version.git_revision,
+        #         'biopython_version': Bio.__version__,
+        #         'openmm_version': simtk.openmm.version.short_version,
+        #         'openmm_commit': simtk.openmm.version.git_revision,
+        #     }
+        #
+        #     project_metadata.add_data(metadata)
+        #     project_metadata.write()
 
     comm.Barrier()
     if rank == 0:

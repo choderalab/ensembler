@@ -12,8 +12,5 @@ required_args = []
 
 
 def dispatch(args):
-    if args['--help']:
-        print helpstring
-        return
     ensembler.cli.validate_args(args, required_args)
     ensembler.initproject.InitProject(args['--project_dir'])

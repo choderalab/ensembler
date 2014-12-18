@@ -48,9 +48,6 @@ docopt_helpstring = helpstring
 
 
 def dispatch(args):
-    if args['--help']:
-        print helpstring
-        return
     if args['--gather_from'].lower() == 'targetexplorer':
         required_args = ['--dbapi_uri']
         ensembler.cli.validate_args(args, required_args)

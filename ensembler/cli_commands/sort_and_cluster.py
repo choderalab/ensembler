@@ -17,9 +17,6 @@ helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_nonunique_op
 docopt_helpstring = ''
 
 def dispatch(args):
-    if args['--help']:
-        print helpstring
-        return
     if args['--verbose']:
         loglevel = 'debug'
     else:

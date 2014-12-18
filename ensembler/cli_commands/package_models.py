@@ -26,10 +26,6 @@ helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_optio
 docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 def dispatch(args):
-    if args['--help']:
-        print helpstring
-        return
-
     if args['--package_for'] == 'transfer':
         ensembler.packaging.package_for_transfer(process_only_these_targets=args['--targets'])
 

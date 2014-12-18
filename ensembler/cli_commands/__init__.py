@@ -6,6 +6,7 @@ command_list = [
     'build_models',
     'sort_and_cluster',
     'refine_implicit',
+    'solvate',
     'refine_explicit',
     'package_models',
 ]
@@ -18,5 +19,6 @@ import align
 import build_models
 import sort_and_cluster
 import refine_implicit
+import solvate
 import refine_explicit
 import package_models

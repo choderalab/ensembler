@@ -466,7 +466,8 @@ def cluster_models(process_only_these_targets=None, verbose=False):
     '''
     # TODO refactor
     import mdtraj
-    targets, templates = get_targets_and_templates()
+    targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
+    templates = templates_resolved_seq
     cutoff = 0.06 # Cutoff for RMSD clustering (nm)
 
     for target in targets:
