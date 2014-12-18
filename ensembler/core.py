@@ -123,7 +123,7 @@ def check_project_toplevel_dir():
     import os
     for dirpath in ['structures', 'templates', 'targets', 'models']:
         if not os.path.exists(dirpath):
-            raise Exception, 'Current directory not recognized as the top-level directory of a project.'
+            raise Exception, 'This is not the top-level directory of an Ensembler project.'
 
 class LogFile:
     def __init__(self, log_filepath):

@@ -30,6 +30,67 @@ TargetSetupData = namedtuple(
 
 
 @ensembler.utils.notify_when_done
+def align_targets_and_templates(process_only_these_targets=None, process_only_these_templates=None, loglevel=None):
+    """
+    Conducts pairwise alignments of target sequences against template sequences.
+    Stores Modeller-compatible 'alignment.pir' files in each model directory,
+    and also outputs a table of model IDs, sorted by sequence identity.
+
+    :param process_only_these_targets:
+    :param process_only_these_templates:
+    :param loglevel:
+    :return:
+    """
+    ensembler.utils.loglevel_setter(logger, loglevel)
+    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    ntemplates = len(templates_resolved_seq)
+    for target in targets:
+        if process_only_these_targets and target.id not in process_only_these_targets: continue
+
+        models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
+        ensembler.utils.create_dir(models_target_dir)
+        seq_identity_data = []
+
+        # for template_index in range(mpistate.rank, ntemplates, mpistate.size): TODO implement
+        for template_index in range(ntemplates):
+            template = templates_resolved_seq[template_index]
+            if process_only_these_templates and template.id not in process_only_these_templates: continue
+
+            model_dir = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.models, target.id, template.id))
+            ensembler.utils.create_dir(model_dir)
+            aln = align_target_template(target, template)
+            aln_filepath = os.path.join(model_dir, 'alignment.pir')
+            write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
+            seq_identity_data.append({
+                'templateid': template.id,
+                'seq_identity': calculate_seq_identity(aln),
+            })
+
+        seq_identity_data = sorted(seq_identity_data, key=lambda x: x['seq_identity'], reverse=True)
+        # print seq_identity_data
+        write_sorted_seq_identities(target, seq_identity_data)
+
+
+def calculate_seq_identity(aln):
+    len_shorter_seq = min([len(aln[0][0].replace('-', '')), len(aln[0][1].replace('-', ''))])
+    seq_id = 0
+    for r in range(len(aln[0][0])):
+        if aln[0][0][r] == aln[0][1][r]:
+            seq_id += 1
+    seq_id = 100 * float(seq_id) / float(len_shorter_seq)
+    return seq_id
+
+
+def write_sorted_seq_identities(target, seq_identity_data):
+    seq_identity_file_str = ''
+    for seq_identity_dict in seq_identity_data:
+        seq_identity_file_str += '%s\t%.1f\n' % (seq_identity_dict['templateid'], seq_identity_dict['seq_identity'])
+    seq_identity_filepath = os.path.join(ensembler.core.default_project_dirnames.models, target.id, 'sequence-identities.txt')
+    with open(seq_identity_filepath, 'w') as seq_identity_file:
+        seq_identity_file.write(seq_identity_file_str)
+
+
+@ensembler.utils.notify_when_done
 def build_models(process_only_these_targets=None, process_only_these_templates=None, loglevel=None):
     """Uses the build_model method to build homology models for a given set of
     targets and templates.
@@ -72,7 +133,7 @@ def build_model(target, template_resolved_seq, template_full_seq, target_setup_d
         template = template_resolved_seq
 
     model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
-    ensembler.utils.create_dir(model_dir)
+    # ensembler.utils.create_dir(model_dir)
     model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))
     modeling_log_filepath = os.path.abspath(os.path.join(model_dir, 'modeling-log.yaml'))
 
@@ -90,9 +151,9 @@ def build_model(target, template_resolved_seq, template_full_seq, target_setup_d
         % (target.id, template.id)
     )
 
-    aln = align_target_template(target, template)
+    # aln = align_target_template(target, template)
     aln_filepath = os.path.abspath(os.path.join(model_dir, 'alignment.pir'))
-    write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
+    # write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
     log_file = init_build_model_logfile(modeling_log_filepath)
 
     with ensembler.utils.enter_temp_dir():
@@ -156,7 +217,7 @@ def build_models_setup_target(target):
             '========================================================================='
             % target.id
         )
-        ensembler.utils.create_dir(models_target_dir)
+        # ensembler.utils.create_dir(models_target_dir) TODO remove
         target_setup_data = TargetSetupData(
             target_starttime=target_starttime,
             models_target_dir=models_target_dir

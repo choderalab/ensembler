@@ -17,8 +17,6 @@ def validate_args(args, required_args):
 
 def main():
     args = docopt(docopt_full_helpstring, help=False)
-    if not args['init']:
-        ensembler.core.check_project_toplevel_dir()
 
     # print args
 
@@ -26,8 +24,14 @@ def main():
 
     for command_str in ensembler.cli_commands.command_list:
         if args[command_str]:
-            command = getattr(ensembler.cli_commands, command_str)
-            command.dispatch(args)
+            if args['--help']:
+                command = getattr(ensembler.cli_commands, command_str)
+                print command.helpstring
+            else:
+                if not args['init']:
+                    ensembler.core.check_project_toplevel_dir()
+                command = getattr(ensembler.cli_commands, command_str)
+                command.dispatch(args)
             command_dispatched = True
 
     if not command_dispatched and args['--help']:

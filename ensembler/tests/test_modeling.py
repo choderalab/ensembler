@@ -3,6 +3,8 @@ import shutil
 import ensembler
 import ensembler.tests
 import ensembler.modeling
+import ensembler.integration_test_utils
+import ensembler.cli_commands
 from mock import Mock
 import datetime
 from ensembler.utils import enter_temp_dir
@@ -47,7 +49,35 @@ def test_build_model():
 
 
 @attr('integration')
-def test_build_models():
+def test_align_command():
+    ref_resources_dirpath = os.path.abspath(os.path.join('tests', 'integration_test_resources'))
+    with ensembler.integration_test_utils.integration_test_context(set_up_project_stage='templates_modeled_loops'):
+        targets = ['KC1D_HUMAN_D0', 'EGFR_HUMAN_D0']
+        args = {
+            '--targets': targets,
+            '--verbose': False,
+        }
+        ensembler.cli_commands.align.dispatch(args)
+        for target in targets:
+            naln_files = 0
+            for dir, subdirs, files in os.walk(os.path.join(ensembler.core.default_project_dirnames.models, target)):
+                for file in files:
+                    if file == 'alignment.pir':
+                        naln_files += 1
+            assert naln_files == 67
+
+        for target in targets:
+            seqid_filepath = os.path.join(ensembler.core.default_project_dirnames.models, target, 'sequence-identities.txt')
+            ref_seqid_filepath = os.path.join(ref_resources_dirpath, seqid_filepath)
+            with open(seqid_filepath) as seqid_file:
+                seqid_file_text = seqid_file.read()
+            with open(ref_seqid_filepath) as ref_seqid_file:
+                ref_seqid_file_text = ref_seqid_file.read()
+            assert seqid_file_text == ref_seqid_file_text
+
+
+@attr('integration')
+def test_build_models_command():
     with ensembler.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
         args = {
             '--targets': ['SRC_HUMAN_D0'],

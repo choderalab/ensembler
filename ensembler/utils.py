@@ -43,13 +43,14 @@ def log_done():
     logger.info('Done.')
 
 
-def create_dir(dirpath):
+def create_dir(dirpath, quiet=True):
     """
     :param dirpath: str
     """
     try:
         os.makedirs(dirpath)
-        logger.info('Created directory "%s"' % dirpath)
+        if not quiet:
+            logger.info('Created directory "%s"' % dirpath)
     except OSError as e:
         if e.errno == 17:
             logger.debug('Directory "%s" already exists - will not overwrite' % dirpath)

@@ -2,6 +2,7 @@ command_list = [
     'init',
     'gather_targets',
     'gather_templates',
+    'align',
     'build_models',
     'sort_and_cluster',
     'refine_implicit',
@@ -13,6 +14,7 @@ import general
 import init
 import gather_targets
 import gather_templates
+import align
 import build_models
 import sort_and_cluster
 import refine_implicit
