@@ -16,7 +16,6 @@ def refine_implicit_md(openmm_platform='CUDA', gpupn=1, process_only_these_targe
     import traceback
     import gzip
     import ensembler
-    import Bio.SeqIO
     import simtk.openmm as openmm
     import simtk.unit as unit
     import simtk.openmm.app as app
@@ -298,7 +297,6 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     import os
     import gzip
     import traceback
-    import Bio.SeqIO
     import simtk.unit as unit
     import simtk.openmm.app as app
     import mpi4py.MPI
@@ -306,15 +304,11 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     rank = comm.rank
     size = comm.size
 
-    targets_dir = os.path.abspath("targets")
-    templates_dir = os.path.abspath("templates")
     models_dir = os.path.abspath("models")
     original_dir = os.getcwd()
 
-    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
-    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-    templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    templates = templates_resolved_seq
 
     # OpenMM parameters
 
@@ -433,21 +427,16 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
     '''
     import os
     import numpy
-    import Bio.SeqIO
     import mpi4py.MPI
     comm = mpi4py.MPI.COMM_WORLD
     rank = comm.rank
 
     # Run serially
     if rank == 0:
-        targets_dir = os.path.abspath("targets")
-        templates_dir = os.path.abspath("templates")
         models_dir = os.path.abspath("models")
 
-        targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-        targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
-        templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-        templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+        targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+        templates = templates_resolved_seq
 
         for target in targets:
 
@@ -543,7 +532,6 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     import os
     import traceback
     import gzip
-    import Bio.SeqIO
     import simtk.openmm as openmm
     import simtk.unit as unit
     import simtk.openmm.app as app
@@ -553,15 +541,11 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     size = comm.size
     gpuid = (rank % gpupn)
 
-    targets_dir = os.path.abspath("targets")
-    templates_dir = os.path.abspath("templates")
     models_dir = os.path.abspath("models")
     original_dir = os.getcwd()
 
-    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
-    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-    templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    templates = templates_resolved_seq
 
     # ========
     # Simulation parameters

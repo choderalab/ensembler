@@ -18,8 +18,6 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
     rank = comm.rank
     size = comm.size
 
-    targets_dir = os.path.abspath('targets')
-    templates_dir = os.path.abspath('templates')
     models_dir = os.path.abspath('models')
     packaged_models_dir = os.path.abspath('packaged-models')
     projects_dir = os.path.join(packaged_models_dir, 'fah-projects')
@@ -29,10 +27,8 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             os.mkdir(projects_dir)
     comm.Barrier()
 
-    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
-    targets = list( Bio.SeqIO.parse(targets_fasta_filename, 'fasta') )
-    templates_fasta_filename = os.path.join(templates_dir, 'templates.fa')
-    templates = list( Bio.SeqIO.parse(templates_fasta_filename, 'fasta') )
+    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    templates = templates_resolved_seq
 
     def generateRun(project_dir, source_dir, run, nclones, verbose=False):
         """
