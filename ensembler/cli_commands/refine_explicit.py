@@ -30,4 +30,4 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.refinement.refine_implicit_md(openmm_platform=args['--openmm_platform'], gpupn=int(args['--gpupn']), process_only_these_targets=args['--targets'], process_only_these_templates=args['--templates'], verbose=args['--verbose'])
+    ensembler.refinement.refine_explicitMD(openmm_platform=args['--openmm_platform'], gpupn=int(args['--gpupn']), process_only_these_targets=args['--targets'], process_only_these_templates=args['--templates'], verbose=args['--verbose'])
