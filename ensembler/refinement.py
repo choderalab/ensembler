@@ -796,8 +796,6 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             models_target_dir = os.path.join(models_dir, target.id)
             if not os.path.exists(models_target_dir): continue
 
-        print target.id
-
         comm.Barrier()
 
         # Determine number of waters to use.
