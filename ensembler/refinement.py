@@ -525,7 +525,7 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
 # MD refinement with explicit solvent
 # ========
 
-def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False, careful_cleaning=True):
+def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False, write_solvated_model=False, careful_cleaning=True):
     '''Run MD refinement in explicit solvent.
 
     MPI-enabled.
@@ -684,6 +684,13 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         if (nwaters != target_nwaters):
             raise Exception("Malfunction in solvate_pdb: nwaters = %d, target_nwaters = %d" % (nwaters, target_nwaters))
+        else:
+            if write_solvated_model:
+                # write solvated pdb file
+                with open('model-solvated.pdb', 'w') as pdb_outfile:
+                    app.PDBFile.writeHeader(topology, file=pdb_outfile)
+                    app.PDBFile.writeFile(topology, positions, file=pdb_outfile)
+                    app.PDBFile.writeFooter(topology, file=pdb_outfile)
 
         return [positions, topology]
 
