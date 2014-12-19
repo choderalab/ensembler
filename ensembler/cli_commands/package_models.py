@@ -30,4 +30,5 @@ def dispatch(args):
         ensembler.packaging.package_for_transfer(process_only_these_targets=args['--targets'])
 
     elif args['--package_for'] == 'FAH':
+        print 'WOO'
         ensembler.packaging.package_for_fah(process_only_these_targets=args['--targets'], nclones=int(args['--nFAHclones']), archive=args['--no-archiveFAHproject'])

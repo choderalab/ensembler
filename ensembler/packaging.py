@@ -1,3 +1,6 @@
+import ensembler
+
+
 def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, archive=True):
     '''Create the input files and directory structure necessary to start a Folding@Home project.
 
@@ -9,7 +12,6 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         A .tgz compressed archive will be created for each individual RUN directory.
     '''
     import os
-    import Bio.SeqIO
     import numpy
     import mpi4py.MPI
     import simtk.openmm as openmm
@@ -248,38 +250,39 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             if archive:
                 archiveRun(run_index, verbose)
 
-        if rank == 0:
+        # TODO - get this working
 
-            # ========
-            # Metadata
-            # ========
-
-            import sys
-            import yaml
-            import ensembler
-            import ensembler.version
-            import simtk.openmm.version
-            datestamp = ensembler.core.get_utcnow_formatted()
-
-            meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-            with open(meta_filepath) as meta_file:
-                metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
-
-            metadata['package_for_fah'] = {
-                'target_id': target.id,
-                'datestamp': datestamp,
-                'python_version': sys.version.split('|')[0].strip(),
-                'python_full_version': ensembler.core.literal_str(sys.version),
-                'ensembler_version': ensembler.version.short_version,
-                'ensembler_commit': ensembler.version.git_revision,
-                'biopython_version': Bio.__version__,
-                'openmm_version': simtk.openmm.version.short_version,
-                'openmm_commit': simtk.openmm.version.git_revision
-            }
-
-            meta_filepath = os.path.join(project_dir, 'meta.yaml')
-            metadata = ensembler.core.ProjectMetadata(metadata)
-            metadata.write(meta_filepath)
+        # if rank == 0:
+        #
+        #     # ========
+        #     # Metadata
+        #     # ========
+        #
+        #     import sys
+        #     import yaml
+        #     import ensembler.version
+        #     import simtk.openmm.version
+        #     datestamp = ensembler.core.get_utcnow_formatted()
+        #
+        #     meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
+        #     with open(meta_filepath) as meta_file:
+        #         metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
+        #
+        #     metadata['package_for_fah'] = {
+        #         'target_id': target.id,
+        #         'datestamp': datestamp,
+        #         'python_version': sys.version.split('|')[0].strip(),
+        #         'python_full_version': ensembler.core.literal_str(sys.version),
+        #         'ensembler_version': ensembler.version.short_version,
+        #         'ensembler_commit': ensembler.version.git_revision,
+        #         'biopython_version': Bio.__version__,
+        #         'openmm_version': simtk.openmm.version.short_version,
+        #         'openmm_commit': simtk.openmm.version.git_revision
+        #     }
+        #
+        #     meta_filepath = os.path.join(project_dir, 'meta.yaml')
+        #     metadata = ensembler.core.ProjectMetadata(metadata)
+        #     metadata.write(meta_filepath)
 
     comm.Barrier()
     if rank == 0:
