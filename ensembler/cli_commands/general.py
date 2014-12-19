@@ -14,7 +14,7 @@ Usage:
   ensembler refine_implicit [-h | --help] [--targets <target>...] [--targetsfile <targetsfile>] [--templates <template>...] [--gpupn <gpupn>] [--openmm_platform <platform>] [-v | --verbose]
   ensembler solvate [-h | --help] [--targets <target>...] [--templates <template>...] [-v | --verbose]
   ensembler refine_explicit [-h | --help] [--targets <target>...] [--templates <template>...] [--gpupn <gpupn>] [--openmm_platform <platform>] [-v | --verbose]
-  ensembler package_models [-h | --help] [--targets <target>...] [--package_for <choice>...] [--nFAHclones <n>] [--no-archiveFAHproject]
+  ensembler package_models [-h | --help] [--targets <target>...] [--package_for <choice>] [--nFAHclones <n>] [--no-archiveFAHproject]
 
 Commands:
   init                          Initialize a new Ensembler project
