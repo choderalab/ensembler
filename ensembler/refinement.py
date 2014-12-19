@@ -687,7 +687,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         else:
             if write_solvated_model:
                 # write solvated pdb file
-                with open('model-solvated.pdb', 'w') as pdb_outfile:
+                with open(os.path.join(model_dir, 'model-solvated.pdb'), 'w') as pdb_outfile:
                     app.PDBFile.writeHeader(topology, file=pdb_outfile)
                     app.PDBFile.writeFile(topology, positions, file=pdb_outfile)
                     app.PDBFile.writeFooter(topology, file=pdb_outfile)
