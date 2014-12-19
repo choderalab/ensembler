@@ -21,7 +21,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
     size = comm.size
 
     models_dir = os.path.abspath('models')
-    packaged_models_dir = os.path.abspath('packaged-models')
+    packaged_models_dir = os.path.abspath('packaged_models')
     projects_dir = os.path.join(packaged_models_dir, 'fah-projects')
     original_dir = os.getcwd()
     if rank == 0:
