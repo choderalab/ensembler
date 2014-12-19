@@ -422,8 +422,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         print 'Done.'
 
 
-def determine_nwaters(process_only_these_targets=None, process_only_these_templates=None, verbose=False):
-    '''Determine distribution of nwaters, and select the value at the 68th percentile.
+def determine_nwaters(process_only_these_targets=None, process_only_these_templates=None, verbose=False, select_at_percentile=0.68):
+    '''Determine distribution of nwaters, and select the value at the designated percentile.
     '''
     import os
     import numpy
@@ -473,9 +473,10 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
                     nwaters_list_file.write('%12d\n' % nwaters)
 
             # display statistics
+            index_selected = int((len(nwaters_array) - 1) * select_at_percentile)
             index68 = int((len(nwaters_array) - 1) * 0.68)
             index95 = int((len(nwaters_array) - 1) * 0.95)
-            print "min = %d, max = %d, mean = %.1f, 68%% = %.0f, 95%% = %.0f\n" % (nwaters_array.min(), nwaters_array.max(), nwaters_array.mean(), nwaters_array[index68], nwaters_array[index95])
+            print "min = %d, max = %d, mean = %.1f, 68%% = %.0f, 95%% = %.0f\n, chosen_percentile (%.2f) = %.0f" % (nwaters_array.min(), nwaters_array.max(), nwaters_array.mean(), nwaters_array[index68], nwaters_array[index95], select_at_percentile, nwaters_array[index_selected])
 
             filename = os.path.join(models_target_dir, 'nwaters-max.txt')
             with open(filename, 'w') as outfile:
@@ -484,7 +485,7 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
             # Use 68th percentile.
             filename = os.path.join(models_target_dir, 'nwaters-use.txt')
             with open(filename, 'w') as outfile:
-                outfile.write('%d\n' % nwaters_array[index68])
+                outfile.write('%d\n' % nwaters_array[index_selected])
 
             # TODO get this working
 

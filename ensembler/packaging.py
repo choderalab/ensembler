@@ -132,7 +132,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             context.setVelocities(state.getVelocities())
             box_vectors = state.getPeriodicBoxVectors()
             context.setPeriodicBoxVectors(*box_vectors)
-                
+
             # Create clones with different random initial velocities.
             for clone_index in range(nclones):
                 context.setVelocitiesToTemperature(temperature)
@@ -158,8 +158,6 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         run_dir = 'RUN%d' % run_index
         subprocess.call(['tar', 'zcf', archive_filename, run_dir])
         os.chdir(original_dir)
-
-
 
 
     for target in targets:
