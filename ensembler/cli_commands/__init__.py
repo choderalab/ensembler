@@ -4,7 +4,7 @@ command_list = [
     'gather_templates',
     'align',
     'build_models',
-    'sort_and_cluster',
+    'cluster',
     'refine_implicit',
     'solvate',
     'refine_explicit',
@@ -17,7 +17,7 @@ import gather_targets
 import gather_templates
 import align
 import build_models
-import sort_and_cluster
+import cluster
 import refine_implicit
 import solvate
 import refine_explicit
