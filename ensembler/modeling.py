@@ -47,12 +47,16 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
     for target in targets:
         if process_only_these_targets and target.id not in process_only_these_targets: continue
 
+        if mpistate.rank == 0:
+            logger.info('Working on target %s...' % target.id)
+
         models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
         ensembler.utils.create_dir(models_target_dir)
-        seq_identity_data = []
 
-        # for template_index in range(mpistate.rank, ntemplates, mpistate.size): TODO implement
-        for template_index in range(ntemplates):
+        seq_identity_data_sublist = []
+
+        for template_index in range(mpistate.rank, ntemplates, mpistate.size):
+        # for template_index in range(ntemplates):
             template = templates_resolved_seq[template_index]
             if process_only_these_templates and template.id not in process_only_these_templates: continue
 
@@ -61,13 +65,22 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
             aln = align_target_template(target, template)
             aln_filepath = os.path.join(model_dir, 'alignment.pir')
             write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
-            seq_identity_data.append({
+            seq_identity_data_sublist.append({
                 'templateid': template.id,
                 'seq_identity': calculate_seq_identity(aln),
             })
 
+        seq_identity_data_gathered = mpistate.comm.gather(seq_identity_data_sublist, root=0)
+
+        seq_identity_data = []
+        if mpistate.rank == 0:
+            seq_identity_data = [None] * ntemplates
+            for i in range(ntemplates):
+                seq_identity_data[i] = seq_identity_data_gathered[i % mpistate.size][i // mpistate.size]
+
+        seq_identity_data = mpistate.comm.bcast(seq_identity_data, root=0)
+
         seq_identity_data = sorted(seq_identity_data, key=lambda x: x['seq_identity'], reverse=True)
-        # print seq_identity_data
         write_sorted_seq_identities(target, seq_identity_data)
 
 
@@ -369,91 +382,6 @@ def write_build_models_metadata(target, target_setup_data, process_only_these_ta
                                          process_only_these_templates)
     project_metadata.add_data(metadata)
     project_metadata.write()
-
-
-@ensembler.utils.mpirank0only_and_end_with_barrier
-@ensembler.utils.notify_when_done
-def sort_by_sequence_identity(process_only_these_targets=None, loglevel=None):
-    '''Compile sorted list of templates by sequence identity.
-    Runs serially.
-    '''
-    # TODO refactor
-    ensembler.utils.loglevel_setter(logger, loglevel)
-    targets, templates = get_targets_and_templates()
-    for target in targets:
-
-        # Process only specified targets if directed.
-        if process_only_these_targets and (target.id not in process_only_these_targets): continue
-
-        models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
-        if not os.path.exists(models_target_dir): continue
-
-        logger.info(
-            "-------------------------------------------------------------------------\n"
-            "Compiling template sequence identities for target %s\n"
-            "-------------------------------------------------------------------------"
-            % (target.id)
-        )
-
-        # ========
-        # Build a list of valid models
-        # ========
-
-        logger.debug("Building list of valid models...")
-        valid_templates = list()
-        for template in templates:
-            model_filename = os.path.join(models_target_dir, template.id, 'model.pdb.gz')
-            if os.path.exists(model_filename):
-                valid_templates.append(template)
-
-        nvalid = len(valid_templates)
-        logger.debug("%d valid models found" % nvalid)
-
-        # ========
-        # Sort by sequence identity
-        # ========
-
-        logger.debug("Sorting models in order of decreasing sequence identity...")
-        seqids = np.zeros([nvalid], np.float32)
-        for (template_index, template) in enumerate(valid_templates):
-            model_seqid_filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
-            with open(model_seqid_filename, 'r') as model_seqid_file:
-                firstline = model_seqid_file.readline().strip()
-            seqid = float(firstline)
-            seqids[template_index] = seqid
-        sorted_seqids = np.argsort(-seqids)
-
-        # ========
-        # Write templates sorted by sequence identity
-        # ========
-
-        seq_ofilename = os.path.join(models_target_dir, 'sequence-identities.txt')
-        with open(seq_ofilename, 'w') as seq_ofile:
-            for index in sorted_seqids:
-                template = valid_templates[index]
-                identity = seqids[index]
-                seq_ofile.write('%-40s %6.1f\n' % (template.id, identity))
-
-        # ========
-        # Metadata
-        # ========
-
-        project_metadata = ensembler.core.ProjectMetadata(project_stage='sort_by_sequence_identity', target_id=target.id)
-
-        datestamp = ensembler.core.get_utcnow_formatted()
-
-        metadata = {
-            'target_id': target.id,
-            'datestamp': datestamp,
-            'python_version': sys.version.split('|')[0].strip(),
-            'python_full_version': ensembler.core.literal_str(sys.version),
-            'ensembler_version': ensembler.version.short_version,
-            'ensembler_commit': ensembler.version.git_revision,
-            'biopython_version': Bio.__version__
-        }
-
-        project_metadata.add_data(metadata)
-        project_metadata.write()
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
