@@ -678,7 +678,7 @@ def pdbfix_template(template, overwrite_structures=False):
         with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
             simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
         return fixer.missingResidues
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ImportError):
         raise
     except Exception as e:
         trbk = traceback.format_exc()
