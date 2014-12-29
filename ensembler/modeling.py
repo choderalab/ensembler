@@ -307,7 +307,7 @@ def init_build_model_logfile(modeling_log_filepath):
 
 
 def write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath='alignment.pir'):
-    contents = "Target-template alignment by clustal omega\n"
+    contents = "Target-template alignment\n"
     contents += ">P1;%s\n" % target.id
     contents += "sequence:%s:FIRST:@:LAST :@:::-1.00:-1.00\n" % target.id
     contents += aln[0][0] + '*\n'

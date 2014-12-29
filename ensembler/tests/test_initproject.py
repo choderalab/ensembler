@@ -1,12 +1,14 @@
 import os
+
+from lxml import etree
+from nose.plugins.attrib import attr
+
 import ensembler
 import ensembler.initproject
 import ensembler.tests
 import ensembler.core
 import ensembler.UniProt
 from ensembler.utils import enter_temp_dir
-from lxml import etree
-from nose.plugins.attrib import attr
 
 
 @attr('unit')
@@ -107,7 +109,7 @@ def test_log_unique_domain_names():
 
 @attr('integration')
 def test_command_gather_targets_from_uniprot():
-    with ensembler.tests.integration_test_utils.integration_test_context(set_up_project_stage='init'):
+    with tests.integration_test_utils.integration_test_context(set_up_project_stage='init'):
         ref_fasta = """\
 >EGFR_HUMAN_D0
 FKKIKVLGSGAFGTVYKGLWIPEGEKVKIPVAIKELREATSPKANKEILDEAYVMASVDN

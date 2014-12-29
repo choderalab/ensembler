@@ -1,19 +1,22 @@
 import os
 import shutil
+import datetime
+
+from mock import Mock
+from nose.plugins.attrib import attr
+
 import ensembler
 import ensembler.tests
 import ensembler.modeling
-import ensembler.integration_test_utils
+import tests.integration_test_utils
 import ensembler.cli_commands
-from mock import Mock
-import datetime
 from ensembler.utils import enter_temp_dir
-from nose.plugins.attrib import attr
 
 
 @attr('unit')
 def test_build_model():
     template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
+    aln_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template-alignment.pir'))
 
     with enter_temp_dir():
         target = Mock()
@@ -26,11 +29,13 @@ def test_build_model():
         target_setup_data.target_starttime = datetime.datetime.utcnow()
         target_setup_data.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
         os.mkdir(ensembler.core.default_project_dirnames.models)
+        model_dir = os.path.join(ensembler.core.default_project_dirnames.models, 'mock_target', 'mock_template')
+        os.makedirs(model_dir)
         os.mkdir(ensembler.core.default_project_dirnames.templates)
         os.mkdir(ensembler.core.default_project_dirnames.templates_structures_resolved)
-        os.mkdir(target_setup_data.models_target_dir)
 
         shutil.copy(template_filepath, ensembler.core.default_project_dirnames.templates_structures_resolved)
+        shutil.copy(aln_filepath, os.path.join(model_dir, 'alignment.pir'))
 
         ensembler.modeling.build_model(target, template, template, target_setup_data=target_setup_data)
 
@@ -51,7 +56,7 @@ def test_build_model():
 @attr('integration')
 def test_align_command():
     ref_resources_dirpath = os.path.abspath(os.path.join('tests', 'integration_test_resources'))
-    with ensembler.integration_test_utils.integration_test_context(set_up_project_stage='templates_modeled_loops'):
+    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_modeled_loops'):
         targets = ['KC1D_HUMAN_D0', 'EGFR_HUMAN_D0']
         args = {
             '--targets': targets,
@@ -78,7 +83,7 @@ def test_align_command():
 
 @attr('integration')
 def test_build_models_command():
-    with ensembler.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
+    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
         args = {
             '--targets': ['SRC_HUMAN_D0'],
             '--templates': ['KC1D_HUMAN_D0_3UZP_A', 'KC1D_HUMAN_D0_4KB8_D'],
