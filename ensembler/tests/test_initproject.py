@@ -10,6 +10,8 @@ import ensembler.core
 import ensembler.UniProt
 from ensembler.utils import enter_temp_dir
 
+from ensembler.tests.integration_test_utils import integration_test_context
+
 
 @attr('unit')
 def test_initproject():
@@ -109,7 +111,7 @@ def test_log_unique_domain_names():
 
 @attr('integration')
 def test_command_gather_targets_from_uniprot():
-    with tests.integration_test_utils.integration_test_context(set_up_project_stage='init'):
+    with integration_test_context(set_up_project_stage='init'):
         ref_fasta = """\
 >EGFR_HUMAN_D0
 FKKIKVLGSGAFGTVYKGLWIPEGEKVKIPVAIKELREATSPKANKEILDEAYVMASVDN
@@ -117,18 +119,18 @@ PHVCRLLGICLTSTVQLITQLMPFGCLLDYVREHKDNIGSQYLLNWCVQIAKGMNYLEDR
 RLVHRDLAARNVLVKTPQHVKITDFGLAKLLGAEEKEYHAEGGKVPIKWMALESILHRIY
 THQSDVWSYGVTVWELMTFGSKPYDGIPASEISSILEKGERLPQPPICTIDVYMIMVKCW
 MIDADSRPKFRELIIEFSKMARDPQRYL
->SRC_HUMAN_D0
-LRLEVKLGQGCFGEVWMGTWNGTTRVAIKTLKPGTMSPEAFLQEAQVMKKLRHEKLVQLY
-AVVSEEPIYIVTEYMSKGSLLDFLKGETGKYLRLPQLVDMAAQIASGMAYVERMNYVHRD
-LRAANILVGENLVCKVADFGLARLIEDNEYTARQGAKFPIKWTAPEAALYGRFTIKSDVW
-SFGILLTELTTKGRVPYPGMVNREVLDQVERGYRMPCPPECPESLHDLMCQCWRKEPEER
-PTFEYLQAFLEDYF
+>KC1D_HUMAN_D0
+YRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTI
+RWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRD
+VKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGI
+EQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEF
+ATYLNFCRSLRFDDKPDYSYLRQLFRNLF
 """
 
         args = {
             '--gather_from': 'uniprot',
-            '--query': 'accession:P00533 OR accession:P12931',
-            '--uniprot_domain_regex': '^Protein kinase(?!; truncated)(?!; active)',
+            '--query': 'mnemonic:EGFR_HUMAN OR mnemonic:KC1D_HUMAN',
+            '--uniprot_domain_regex': '^Protein kinase',
             '--help': False,
         }
         ensembler.cli_commands.gather_targets.dispatch(args)

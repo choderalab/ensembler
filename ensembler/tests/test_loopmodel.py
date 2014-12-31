@@ -1,13 +1,11 @@
 import gzip
 import os
-
 import yaml
 from mock import Mock
 from nose.plugins.attrib import attr
-
 import ensembler
 import ensembler.initproject
-import tests.integration_test_utils
+from ensembler.tests.integration_test_utils import integration_test_context
 
 
 @attr('unit')
@@ -108,7 +106,7 @@ def test_find_loopmodel_executable():
 
 @attr('integration')
 def test_loopmodel_KC1D_HUMAN_D0_4KB8_D():
-    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
+    with integration_test_context(set_up_project_stage='templates_resolved'):
         template = Mock()
         template.templateid = 'KC1D_HUMAN_D0_4KB8_D'
         template.chainid = 'D'
@@ -123,7 +121,7 @@ def test_loopmodel_KC1D_HUMAN_D0_4KB8_D():
 
 @attr('integration')
 def test_loopmodel_KC1D_HUMAN_D0_4HNF_A():
-    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
+    with integration_test_context(set_up_project_stage='templates_resolved'):
         template = Mock()
         template.templateid = 'KC1D_HUMAN_D0_4HNF_A'
         template.chainid = 'A'
@@ -141,7 +139,7 @@ def test_loopmodel_KC1D_HUMAN_D0_3UZP_A():
     """
     No missing residues
     """
-    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
+    with integration_test_context(set_up_project_stage='templates_resolved'):
         template = Mock()
         template.templateid = 'KC1D_HUMAN_D0_3UZP_A'
         template.chainid = 'A'
@@ -158,7 +156,7 @@ def test_loopmodel_KC1D_HUMAN_D0_3UZP_A():
 
 @attr('integration')
 def test_loopmodel_ZAP70_HUMAN_D0_1U59_A():
-    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
+    with integration_test_context(set_up_project_stage='templates_resolved'):
         template = Mock()
         template.templateid = 'ZAP70_HUMAN_D0_1U59_A'
         template.chainid = 'A'

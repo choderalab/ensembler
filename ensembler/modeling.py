@@ -18,7 +18,6 @@ import modeller
 import modeller.automodel
 from ensembler.core import get_targets_and_templates
 import subprocess
-import numpy as np
 from ensembler.core import mpistate
 
 logger = logging.getLogger('info')
@@ -44,6 +43,7 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
     ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
     ntemplates = len(templates_resolved_seq)
+    nselected_templates = len(process_only_these_templates) if process_only_these_templates else ntemplates
     for target in targets:
         if process_only_these_targets and target.id not in process_only_these_targets: continue
 
@@ -56,8 +56,10 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
         seq_identity_data_sublist = []
 
         for template_index in range(mpistate.rank, ntemplates, mpistate.size):
-        # for template_index in range(ntemplates):
-            template = templates_resolved_seq[template_index]
+            template = templates_full_seq[template_index]
+            if not os.path.exists(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.id + '.pdb')):
+                template = templates_resolved_seq[template_index]
+
             if process_only_these_templates and template.id not in process_only_these_templates: continue
 
             model_dir = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.models, target.id, template.id))
@@ -74,8 +76,8 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
 
         seq_identity_data = []
         if mpistate.rank == 0:
-            seq_identity_data = [None] * ntemplates
-            for i in range(ntemplates):
+            seq_identity_data = [None] * nselected_templates
+            for i in range(nselected_templates):
                 seq_identity_data[i] = seq_identity_data_gathered[i % mpistate.size][i // mpistate.size]
 
         seq_identity_data = mpistate.comm.bcast(seq_identity_data, root=0)
@@ -146,7 +148,8 @@ def build_model(target, template_resolved_seq, template_full_seq, target_setup_d
         template = template_resolved_seq
 
     model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
-    # ensembler.utils.create_dir(model_dir)
+    if not os.path.exists(model_dir):
+        ensembler.utils.create_dir(model_dir)
     model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))
     modeling_log_filepath = os.path.abspath(os.path.join(model_dir, 'modeling-log.yaml'))
 

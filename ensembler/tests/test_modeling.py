@@ -8,7 +8,7 @@ from nose.plugins.attrib import attr
 import ensembler
 import ensembler.tests
 import ensembler.modeling
-import tests.integration_test_utils
+from ensembler.tests.integration_test_utils import integration_test_context
 import ensembler.cli_commands
 from ensembler.utils import enter_temp_dir
 
@@ -56,12 +56,15 @@ def test_build_model():
 @attr('integration')
 def test_align_command():
     ref_resources_dirpath = os.path.abspath(os.path.join('tests', 'integration_test_resources'))
-    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_modeled_loops'):
+    with integration_test_context(set_up_project_stage='templates_modeled_loops'):
         targets = ['KC1D_HUMAN_D0', 'EGFR_HUMAN_D0']
+        templates = ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']
         args = {
             '--targets': targets,
+            '--templates': templates,
             '--verbose': False,
         }
+
         ensembler.cli_commands.align.dispatch(args)
         for target in targets:
             naln_files = 0
@@ -69,7 +72,7 @@ def test_align_command():
                 for file in files:
                     if file == 'alignment.pir':
                         naln_files += 1
-            assert naln_files == 67
+            assert naln_files == len(templates)
 
         for target in targets:
             seqid_filepath = os.path.join(ensembler.core.default_project_dirnames.models, target, 'sequence-identities.txt')
@@ -83,13 +86,13 @@ def test_align_command():
 
 @attr('integration')
 def test_build_models_command():
-    with tests.integration_test_utils.integration_test_context(set_up_project_stage='templates_resolved'):
+    with integration_test_context(set_up_project_stage='aligned'):
         args = {
-            '--targets': ['SRC_HUMAN_D0'],
-            '--templates': ['KC1D_HUMAN_D0_3UZP_A', 'KC1D_HUMAN_D0_4KB8_D'],
+            '--targets': ['EGFR_HUMAN_D0'],
+            '--templates': ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A'],
             '--verbose': False,
             '--help': False,
         }
         ensembler.cli_commands.build_models.dispatch(args)
-        assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'SRC_HUMAN_D0', 'KC1D_HUMAN_D0_3UZP_A', 'model.pdb'))
-        assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'SRC_HUMAN_D0', 'KC1D_HUMAN_D0_4KB8_D', 'model.pdb'))
+        assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4KB8_D', 'model.pdb'))
+        assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4HNF_A', 'model.pdb'))
