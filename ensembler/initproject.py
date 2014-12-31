@@ -655,10 +655,7 @@ def pdbfix_templates(selected_templates, overwrite_structures=False):
 
 def pdbfix_template(template, overwrite_structures=False):
     try:
-        log_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml')
-        if not overwrite_structures:
-            if os.path.exists(log_filepath):
-                return
+        template_pdbfixed_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixed.pdb')
         import pdbfixer
         import simtk.openmm.app
         template_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
@@ -670,11 +667,13 @@ def pdbfix_template(template, overwrite_structures=False):
         fixer.structure.sequences.append(seq_obj)
         fixer.findMissingResidues()
         remove_missing_residues_at_termini(fixer, len_full_seq=len(template.full_seq))
+        if not overwrite_structures:
+            if os.path.exists(template_pdbfixed_filepath):
+                return fixer.missingResidues
         fixer.findMissingAtoms()
         (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
         fixer.topology = newTopology
         fixer.positions = newPositions
-        template_pdbfixed_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixed.pdb')
         with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
             simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
         return fixer.missingResidues
@@ -686,7 +685,7 @@ def pdbfix_template(template, overwrite_structures=False):
         logfile = ensembler.core.LogFile(log_filepath)
         logfile.log({
             'templateid': str(template.templateid),
-            'exception': e,   # if Rosetta loopmodel fails, this field should include text sent to stdout and stderr
+            'exception': e,
             'traceback': ensembler.core.literal_str(trbk),
             'mpi_rank': mpistate.rank,
         })
