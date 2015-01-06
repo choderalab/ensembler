@@ -768,7 +768,9 @@ def write_loop_file(template, missing_residues):
         loop_file.write(loop_file_text)
 
 
-def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath=ensembler.core.find_loopmodel_executable(), nmodels_to_build=1):
+def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath=None, nmodels_to_build=1):
+    if loopmodel_executable_filepath is None:
+        loopmodel_executable_filepath = ensembler.core.find_loopmodel_executable()
     temp_dir = tempfile.mkdtemp()
     temp_template_filepath = os.path.join(temp_dir, 'template.pdb')
     temp_loop_filepath = os.path.join(temp_dir, 'template.loop')
