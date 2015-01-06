@@ -99,7 +99,7 @@ def calculate_seq_identity(aln):
 def write_sorted_seq_identities(target, seq_identity_data):
     seq_identity_file_str = ''
     for seq_identity_dict in seq_identity_data:
-        seq_identity_file_str += '%30s %.1f\n' % (seq_identity_dict['templateid'], seq_identity_dict['seq_identity'])
+        seq_identity_file_str += '%-30s %.1f\n' % (seq_identity_dict['templateid'], seq_identity_dict['seq_identity'])
     seq_identity_filepath = os.path.join(ensembler.core.default_project_dirnames.models, target.id, 'sequence-identities.txt')
     with open(seq_identity_filepath, 'w') as seq_identity_file:
         seq_identity_file.write(seq_identity_file_str)
