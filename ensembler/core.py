@@ -2,6 +2,7 @@ import os
 import logging
 import sys
 import re
+import warnings
 import Bio
 import Bio.SeqIO
 from collections import namedtuple
@@ -477,7 +478,7 @@ def find_loopmodel_executable():
         for filename in os.listdir(path):
             if len(filename) >= 10 and filename[0: 10] == 'loopmodel.':
                 if filename[-5:] == 'debug':
-                    logger.info('loopmodel debug version (%s) will be ignored - runs extremely slow' % filename)
+                    warnings.warn('loopmodel debug version (%s) will be ignored - runs extremely slow' % filename)
                     continue
                 return os.path.join(path, filename)
     raise Exception('Loopmodel executable not found in PATH')
