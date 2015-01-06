@@ -106,8 +106,8 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
                 with open(filename, 'w') as outfile:
                     outfile.write(contents)
 
-            system     = openmm.XmlSerializer.deserialize(readFileContents('explicit-system.xml'))
-            state      = openmm.XmlSerializer.deserialize(readFileContents('explicit-state.xml'))
+            system = openmm.XmlSerializer.deserialize(readFileContents('explicit-system.xml'))
+            state = openmm.XmlSerializer.deserialize(readFileContents('explicit-state.xml'))
 
             # Substitute default box vectors.
             box_vectors = state.getPeriodicBoxVectors()
