@@ -59,15 +59,24 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             integrator_filename = os.path.join(rundir, 'integrator.xml')
             protein_structure_filename = os.path.join(rundir, 'protein.pdb')
             system_structure_filename = os.path.join(rundir, 'system.pdb')
+            final_state_filename = os.path.join(rundir, 'state%d.xml' % (nclones - 1))
             protein_structure_filename_source = os.path.join(source_dir, 'implicit-refined.pdb')
             system_structure_filename_source = os.path.join(source_dir, 'explicit-refined.pdb')
 
             # Return if this directory has already been set up.
             if os.path.exists(rundir): 
-                if os.path.exists(template_filename) and os.path.exists(seqid_filename) and os.path.exists(system_filename) and os.path.exists(integrator_filename) and os.path.exists(protein_structure_filename) and os.path.exists(system_structure_filename): return
+                if os.path.exists(template_filename)\
+                        and os.path.exists(seqid_filename)\
+                        and os.path.exists(system_filename)\
+                        and os.path.exists(integrator_filename)\
+                        and os.path.exists(protein_structure_filename)\
+                        and os.path.exists(system_structure_filename)\
+                        and os.path.exists(final_state_filename):
+                    return
             else:
                 # Construct run directory if it does not exist.
-                os.makedirs(rundir)
+                if not os.path.exists(rundir):
+                    os.makedirs(rundir)
 
             # Write template information.
             [filepath, template_name] = os.path.split(source_dir)
@@ -135,9 +144,11 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
 
             # Create clones with different random initial velocities.
             for clone_index in range(nclones):
-                context.setVelocitiesToTemperature(temperature)
-                state = context.getState(getPositions=True, getVelocities=True, getForces=True, getEnergy=True, getParameters=True, enforcePeriodicBox=True)                                     
                 state_filename = os.path.join(rundir, 'state%d.xml' % clone_index)
+                if os.path.exists(state_filename):
+                    continue
+                context.setVelocitiesToTemperature(temperature)
+                state = context.getState(getPositions=True, getVelocities=True, getForces=True, getEnergy=True, getParameters=True, enforcePeriodicBox=True)
                 writeFileContents(state_filename, openmm.XmlSerializer.serialize(state))
 
             # Clean up.
