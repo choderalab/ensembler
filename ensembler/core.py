@@ -475,6 +475,9 @@ def find_loopmodel_executable():
             continue
         path = path.strip('"')
         for filename in os.listdir(path):
-            if filename[0: 10] == 'loopmodel.':
+            if len(filename) >= 10 and filename[0: 10] == 'loopmodel.':
+                if filename[-5:] == 'debug':
+                    logger.info('loopmodel debug version (%s) will be ignored - runs extremely slow' % filename)
+                    continue
                 return os.path.join(path, filename)
     raise Exception('Loopmodel executable not found in PATH')

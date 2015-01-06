@@ -69,7 +69,7 @@ class LoopmodelLogs:
     def add_nmissing_resis_data(self):
         nmissing_resis_df = []
         for templateid in self.df.templateid:
-            loopfile_path = os.path.join('templates/structures-modeled-loops', templateid + '.loop')
+            loopfile_path = os.path.join(self.project_dir, 'templates/structures-modeled-loops', templateid + '.loop')
             with open(loopfile_path) as loopfile:
                 lines = loopfile.readlines()
                 nmissing_resis = 0
