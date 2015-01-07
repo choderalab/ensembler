@@ -1,4 +1,9 @@
+import os
+import numpy as np
 import ensembler
+from ensembler.core import mpistate, logger
+import simtk.unit as unit
+import simtk.openmm as openmm
 
 
 def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, archive=True):
@@ -11,38 +16,25 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
     archive : Bool
         A .tgz compressed archive will be created for each individual RUN directory.
     '''
-    import os
-    import numpy
-    import mpi4py.MPI
-    import simtk.openmm as openmm
-    import simtk.unit as unit
-    comm = mpi4py.MPI.COMM_WORLD
-    rank = comm.rank
-    size = comm.size
-
     models_dir = os.path.abspath('models')
     packaged_models_dir = os.path.abspath('packaged_models')
     projects_dir = os.path.join(packaged_models_dir, 'fah-projects')
     original_dir = os.getcwd()
-    if rank == 0:
+    if mpistate.rank == 0:
         if not os.path.exists(projects_dir):
             os.mkdir(projects_dir)
-    comm.Barrier()
+    mpistate.comm.Barrier()
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
     templates = templates_resolved_seq
 
-    def generateRun(project_dir, source_dir, run, nclones, verbose=False):
+    def generateRun(run):
         """
         Build Folding@Home RUN and CLONE subdirectories from (possibly compressed) OpenMM serialized XML files.
 
         ARGUMENTS
 
-        project_dir (string) - base project directory to place RUN in
-        source_dir (string) - source directory for OpenMM serialized XML files
         run (int) - run index
-        nclones (int) - number of clones to generate
-
         """
 
         if verbose: print "Building RUN %d" % run
@@ -60,8 +52,8 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             protein_structure_filename = os.path.join(rundir, 'protein.pdb')
             system_structure_filename = os.path.join(rundir, 'system.pdb')
             final_state_filename = os.path.join(rundir, 'state%d.xml' % (nclones - 1))
-            protein_structure_filename_source = os.path.join(source_dir, 'implicit-refined.pdb')
-            system_structure_filename_source = os.path.join(source_dir, 'explicit-refined.pdb')
+            protein_structure_gz_filename_source = os.path.join(source_dir, 'implicit-refined.pdb.gz')
+            system_structure_gz_filename_source = os.path.join(source_dir, 'explicit-refined.pdb.gz')
 
             # Return if this directory has already been set up.
             if os.path.exists(rundir): 
@@ -83,9 +75,14 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             with open(template_filename, 'w') as outfile:
                 outfile.write(template_name + '\n')
 
-            # Copy the protein and system structure pdbs
-            shutil.copyfile(protein_structure_filename_source, protein_structure_filename)
-            shutil.copyfile(system_structure_filename_source, system_structure_filename)
+            # Write the protein and system structure pdbs
+            with gzip.open(protein_structure_gz_filename_source) as protein_structure_file_source:
+                with open(protein_structure_filename, 'w') as protein_structure_file:
+                    protein_structure_file.write(protein_structure_file_source.read())
+
+            with gzip.open(system_structure_gz_filename_source) as system_structure_file_source:
+                with open(system_structure_filename, 'w') as system_structure_file:
+                    system_structure_file.write(system_structure_file_source.read())
 
             # Read system, integrator, and state.
             def readFileContents(filename):
@@ -162,7 +159,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         return
 
 
-    def archiveRun(run_index, verbose=False):
+    def archiveRun():
         import subprocess
         os.chdir(project_dir)
         archive_filename = 'RUN%d.tgz' % run_index
@@ -177,12 +174,12 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
         models_target_dir = os.path.join(models_dir, target.id)
-        if rank == 0:
+        if mpistate.rank == 0:
             if not os.path.exists(models_target_dir): continue
 
-        comm.Barrier()
+        mpistate.comm.Barrier()
 
-        if rank == 0:
+        if mpistate.rank == 0:
             print "-------------------------------------------------------------------------"
             print "Building FAH OpenMM project for target %s" % target.id
             print "-------------------------------------------------------------------------"
@@ -220,14 +217,14 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         # ========
 
         if verbose: print "Sorting templates in order of decreasing sequence identity..."
-        sequence_identities = numpy.zeros([nvalid], numpy.float32)
+        sequence_identities = np.zeros([nvalid], np.float32)
         for (template_index, template) in enumerate(valid_templates):
             filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
             with open(filename, 'r') as infile:
                 contents = infile.readline().strip()
             sequence_identity = float(contents)
             sequence_identities[template_index] = sequence_identity
-        sorted_indices = numpy.argsort(-sequence_identities)
+        sorted_indices = np.argsort(-sequence_identities)
         valid_templates = [ valid_templates[index] for index in sorted_indices ]
         if verbose: 
             print "Sorted"
@@ -238,30 +235,30 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         # ========
 
         project_dir = os.path.join(projects_dir, target.id)
-        if rank == 0:
+        if mpistate.rank == 0:
             if not os.path.exists(project_dir):
                 os.makedirs(project_dir)
 
-        comm.Barrier()
+        mpistate.comm.Barrier()
 
         # ========
         # Build runs in parallel
         # ========
 
         if verbose: print "Building RUNs in parallel..."
-        for run_index in range(rank, len(valid_templates), size):
+        for run_index in range(mpistate.rank, len(valid_templates), mpistate.size):
             print "-------------------------------------------------------------------------"
             print "Building RUN for template %s" % valid_templates[run_index].id
             print "-------------------------------------------------------------------------"
 
             source_dir = os.path.join(models_target_dir, valid_templates[run_index].id)
-            generateRun(project_dir, source_dir, run_index, nclones, verbose)
+            generateRun(run_index)
             if archive:
-                archiveRun(run_index, verbose)
+                archiveRun()
 
         # TODO - get this working
 
-        # if rank == 0:
+        # if mpistate.rank == 0:
         #
         #     # ========
         #     # Metadata
@@ -293,8 +290,8 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
         #     metadata = ensembler.core.ProjectMetadata(metadata)
         #     metadata.write(meta_filepath)
 
-    comm.Barrier()
-    if rank == 0:
+    mpistate.comm.Barrier()
+    if mpistate.rank == 0:
         print 'Done.'
 
 

@@ -8,26 +8,46 @@ Options."""
 
 helpstring_unique_options = [
     """\
-  --package_for <choice>                Specify which packaging method to use.
+  --package_for <choice>                Specify which packaging method to use (required).
                                         - transfer: compress results into a single .tgz file
                                         - FAH: set-up the input files and directory structure necessary to start a Folding@Home project.""",
     """\
-  --nFAHclones <n>                      If packaging for Folding@Home, select the number of clones to use for each model [default: 10].""",
+  --nFAHclones <n>                      If packaging for Folding@Home, select the number of clones to use for each model [default: 1].""",
     """\
   --no-archiveFAHproject                If packaging for Folding@Home, choose whether to compress the results into a .tgz file.""",
 ]
 
 helpstring_nonunique_options = [
     """\
-  --targets <target>...           Define one or more target IDs to work on (e.g. "--targets ABL1_HUMAN_D0 --targets SRC_HUMAN_D0") (default: all targets)""",
+  --targetsfile <targetsfile>           File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
+    """\
+  --targets <target>                    Define one or more target IDs to work on (e.g. "--targets ABL1_HUMAN_D0 --targets SRC_HUMAN_D0") (default: all targets)""",
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
 docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 def dispatch(args):
-    if args['--package_for'] == 'transfer':
-        ensembler.packaging.package_for_transfer(process_only_these_targets=args['--targets'])
+    if args['--package_for']:
+        package_for = args['--package_for']
+    else:
+        raise KeyError('--package_for choice must be defined')
 
-    elif args['--package_for'] == 'FAH':
-        ensembler.packaging.package_for_fah(process_only_these_targets=args['--targets'], nclones=int(args['--nFAHclones']), archive=args['--no-archiveFAHproject'])
+    if args['--targetsfile']:
+        with open(args['--targetsfile'], 'r') as targetsfile:
+            targets = [line.strip() for line in targetsfile.readlines() if line[0] != '#']
+    elif args['--targets']:
+        targets = args['--targets'].split(',')
+    else:
+        targets = False
+
+    if args['--nFAHclones']:
+        n_fah_clones = int(args['--nFAHclones'])
+    else:
+        n_fah_clones = 1
+
+    if package_for.lower() == 'transfer':
+        ensembler.packaging.package_for_transfer(process_only_these_targets=targets)
+
+    elif package_for.lower() == 'fah':
+        ensembler.packaging.package_for_fah(process_only_these_targets=targets, nclones=n_fah_clones, archive=args['--no-archiveFAHproject'])

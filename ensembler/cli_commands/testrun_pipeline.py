@@ -84,3 +84,25 @@ def dispatch(args):
             '--verbose': False,
         }
     )
+
+    ensembler.cli_commands.refine_explicit.dispatch(
+        args={
+            '--targetsfile': False,
+            '--targets': False,
+            '--templates': 'AURKB_HUMAN_D0_4AF3_A',
+            '--verbose': False,
+            '--openmm_platform': False,
+            '--gpupn': False,
+            '--simlength': '1.0',
+        }
+    )
+
+    ensembler.cli_commands.package_models.dispatch(
+        args={
+            '--targetsfile': False,
+            '--targets': False,
+            '--templates': 'AURKB_HUMAN_D0_4AF3_A',
+            '--nFAHclones': False,
+            '--no-archiveFAHproject': False,
+        }
+    )

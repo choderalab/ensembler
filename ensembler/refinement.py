@@ -18,15 +18,16 @@ import simtk.openmm.version
 def refine_implicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
         process_only_these_templates=None, verbose=False, write_trajectory=False,
-        forcefields_to_use = None,                      # list of forcefields to use in parameterization
-        sim_length = 100.0 * unit.picoseconds,
-        timestep = 2.0 * unit.femtoseconds,             # timestep
-        temperature = 300.0 * unit.kelvin,              # simulation temperature
-        collision_rate = 20.0 / unit.picoseconds,       # Langevin collision rate
-        cutoff = None,                                  # nonbonded cutoff
-        minimization_tolerance = 10.0 * unit.kilojoules_per_mole / unit.nanometer,
-        minimization_steps = 20,
+        forcefields_to_use=None,                      # list of forcefields to use in parameterization
+        sim_length=100.0 * unit.picoseconds,
+        timestep=2.0 * unit.femtoseconds,             # timestep
+        temperature=300.0 * unit.kelvin,              # simulation temperature
+        collision_rate=20.0 / unit.picoseconds,       # Langevin collision rate
+        cutoff=None,                                  # nonbonded cutoff
+        minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
+        minimization_steps=20,
         pH=8.0):
+    # TODO - remove chdirs
     # TODO - refactor
     '''Run MD refinement in implicit solvent.
 
@@ -45,16 +46,15 @@ def refine_implicit_md(
 
     if forcefields_to_use is None:
         forcefields_to_use = ['amber99sbildn.xml', 'amber99_obc.xml'] # list of forcefields to use in parameterization
-
     forcefield = app.ForceField(*forcefields_to_use)
 
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
 
-    nsteps_per_iteration = 500                     # number of timesteps per iteration    print sim_length / timestep
-    niterations = int((sim_length / timestep) / nsteps_per_iteration)   # number of iterations
+    nsteps_per_iteration = 500
+    niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
-    def simulate_implicitMD(model_dir, variants=None, gpuid=0, verbose=False):
+    def simulate_implicitMD():
         os.chdir(model_dir)
 
         if verbose: print "Reading model..."
@@ -233,7 +233,7 @@ def refine_implicit_md(
 
             try:
                 start = datetime.datetime.utcnow()
-                simulate_implicitMD(model_dir, variants=variants, gpuid=gpuid, rank=mpistate.rank, verbose=verbose)
+                simulate_implicitMD()
                 end = datetime.datetime.utcnow()
                 timing = ensembler.core.strf_timedelta(end - start)
                 log_data = {
@@ -253,8 +253,6 @@ def refine_implicit_md(
             print 'Finished template loop: rank %d' % mpistate.rank
 
         mpistate.comm.Barrier()
-
-        # TODO get this working
 
         if mpistate.rank == 0:
             project_metadata = ensembler.core.ProjectMetadata(project_stage='refine_implicit_md', target_id=target.id)
@@ -403,6 +401,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             project_metadata.add_data(metadata)
             project_metadata.write()
 
+        mpistate.comm.Barrier()
+
     mpistate.comm.Barrier()
     if mpistate.rank == 0:
         print 'Done.'
@@ -472,8 +472,6 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
             with open(filename, 'w') as outfile:
                 outfile.write('%d\n' % nwaters_array[index_selected])
 
-            # TODO get this working
-
             if mpistate.rank == 0:
                 project_metadata = ensembler.core.ProjectMetadata(project_stage='determine_nwaters', target_id=target.id)
 
@@ -492,31 +490,31 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
                 project_metadata.add_data(metadata)
                 project_metadata.write()
 
+        mpistate.comm.Barrier()
+
     mpistate.comm.Barrier()
     if mpistate.rank == 0:
         print 'Done.'
 
 
-# ========
-# MD refinement with explicit solvent
-# ========
-
-def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_targets=None, process_only_these_templates=None, verbose=False, write_trajectory=False, write_solvated_model=False, careful_cleaning=True):
+def refine_explicitMD(
+        openmm_platform=None, gpupn=1, process_only_these_targets=None,
+        process_only_these_templates=None, verbose=False, write_trajectory=False,
+        forcefields_to_use=None,
+        sim_length=100.0 * unit.picoseconds,
+        timestep=2.0 * unit.femtoseconds, # timestep
+        temperature=300.0 * unit.kelvin, # simulation temperature
+        pressure=1.0 * unit.atmospheres, # simulation pressure
+        collision_rate=20.0 / unit.picoseconds, # Langevin collision rate
+        barostat_period=50,
+        minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
+        minimization_steps=20,
+        write_solvated_model=False, careful_cleaning=True):
     '''Run MD refinement in explicit solvent.
 
     MPI-enabled.
     '''
-    import os
-    import traceback
-    import gzip
-    import simtk.openmm as openmm
-    import simtk.unit as unit
-    import simtk.openmm.app as app
-    import mpi4py.MPI
-    comm = mpi4py.MPI.COMM_WORLD
-    rank = comm.rank
-    size = comm.size
-    gpuid = (rank % gpupn)
+    gpuid = mpistate.rank % gpupn
 
     models_dir = os.path.abspath("models")
     original_dir = os.getcwd()
@@ -524,32 +522,22 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
     templates = templates_resolved_seq
 
-    # ========
-    # Simulation parameters
-    # ========
+    if not openmm_platform:
+        openmm_platform = auto_select_openmm_platform()
 
-    forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml'] # list of forcefields to use in parameterization
-
-    timestep = 2.0 * unit.femtoseconds # timestep 
-    temperature = 300.0 * unit.kelvin # simulation temperature 
-    pressure = 1.0 * unit.atmospheres # simulation pressure 
-    collision_rate = 20.0 / unit.picoseconds # Langevin collision rate
-    barostat_period = 50
-    nsteps_per_iteration = 500 # number of timesteps per iteration
-    niterations = 1000 # number of iterations
+    if forcefields_to_use is None:
+        forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml'] # list of forcefields to use in parameterization
+    forcefield = app.ForceField(*forcefields_to_use)
 
     nonbondedMethod = app.PME
-
-    minimization_tolerance = 10.0 * unit.kilojoules_per_mole / unit.nanometer
-    minimization_steps = 20
 
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
 
-    forcefield = app.ForceField(*forcefields_to_use)
+    nsteps_per_iteration = 500
+    niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
-
-    def solvate_pdb(pdb, target_nwaters, model='tip3p', verbose=False):
+    def solvate_pdb(pdb, target_nwaters, model='tip3p'):
         """
         Solvate the contents of a PDB file, ensuring it has exactly 'target_nwaters' waters.
 
@@ -575,7 +563,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         TODO
 
-        There is no error checking to be sure that waters are not initially present in the system or the initially-present molecules are not deleted.
+        There is no error checking to be sure that waters are not initially present in the system or that initially-present molecules are not deleted.
 
         """
 
@@ -587,7 +575,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         # Solvate with zero padding to determine min number of waters and minimal unit cell dimensions.
         modeller = app.Modeller(pdb.topology, pdb.positions)
-        modeller.addSolvent(forcefield, model=model, padding=0.0*unit.angstroms)    
+        modeller.addSolvent(forcefield, model=model, padding=0.0*unit.angstroms)
         topology = modeller.getTopology()
         positions = modeller.getPositions()
         box_min = topology.getUnitCellDimensions()
@@ -603,7 +591,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         modeller = app.Modeller(pdb.topology, pdb.positions)
         topology = modeller.getTopology()
         topology.setUnitCellDimensions(box_min * scale)
-        modeller.addSolvent(forcefield, model=model)    
+        modeller.addSolvent(forcefield, model=model)
         positions = modeller.getPositions()
         box_enlarged = topology.getUnitCellDimensions()
         natoms_enlarged = len(positions) # minimal number of atoms
@@ -616,10 +604,10 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         over_target = False
         extra_nwaters = 100
         while not over_target:
-            delta_volume = (target_nwaters + extra_nwaters - nwaters_min) / density 
+            delta_volume = (target_nwaters + extra_nwaters - nwaters_min) / density
             scale = ((volume_min + delta_volume) / volume_min)**(1.0/3.0)
             if verbose: print "Final target of %d waters, so attempting box size %s to achieve %d waters..." % (target_nwaters, str(box_min * scale), target_nwaters + extra_nwaters)
-            delta_volume = (target_nwaters + extra_nwaters - nwaters_min) / density 
+            delta_volume = (target_nwaters + extra_nwaters - nwaters_min) / density
             modeller = app.Modeller(pdb.topology, pdb.positions)
             topology = modeller.getTopology()
             topology.setUnitCellDimensions(box_min * scale)
@@ -642,7 +630,6 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             nresidues = len(residues)
 
             # Select a random subset to delete.
-            import np.random
             indices = np.random.permutation(range(nresidues_min,nresidues))
             residues_to_delete = list()
             for index in indices[0:ndelete]:
@@ -671,8 +658,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         return [positions, topology]
 
 
-    def simulate_explicitMD(model_dir, gpuid=0, rank=0, verbose=False):
-        import gzip
+    def simulate_explicitMD():
         os.chdir(model_dir)
 
         # Choose platform.
@@ -747,7 +733,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
 
         energy_outfile.close()
 
-        state = context.getState(getPositions=True, enforcePeriodicBox=True)            
+        state = context.getState(getPositions=True, enforcePeriodicBox=True)
         with gzip.open(pdb_filename, 'w') as pdb_outfile:
             app.PDBFile.writeHeader(topology, file=pdb_outfile)
             app.PDBFile.writeFile(topology, state.getPositions(), file=pdb_outfile)
@@ -769,18 +755,18 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         with gzip.open(state_filename+'.gz', 'w') as state_file:
             state_file.write(openmm.XmlSerializer.serialize(state))
 
-        os.chdir(original_dir)    
+        os.chdir(original_dir)
 
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
-        if rank == 0:
+        if mpistate.rank == 0:
             import datetime
             target_starttime = datetime.datetime.utcnow()
             models_target_dir = os.path.join(models_dir, target.id)
             if not os.path.exists(models_target_dir): continue
 
-        comm.Barrier()
+        mpistate.comm.Barrier()
 
         # Determine number of waters to use.
         nwaters_filename = os.path.join(models_target_dir, 'nwaters-use.txt')
@@ -793,7 +779,7 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
         else:
             templates_to_process = [template.id for template in templates]
 
-        for template_index in range(rank, len(templates_to_process), size):
+        for template_index in range(mpistate.rank, len(templates_to_process), mpistate.size):
             template = templates_to_process[template_index]
 
             model_dir = os.path.join(models_target_dir, template)
@@ -812,11 +798,11 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
             system_filename = os.path.join(model_dir, 'explicit-system.xml')
             integrator_filename = os.path.join(model_dir, 'explicit-integrator.xml')
             state_filename = os.path.join(model_dir, 'explicit-state.xml')
-            if os.path.exists(pdb_filename) and (os.path.exists(system_filename) or os.path.exists(system_filename+'.gz')) and (os.path.exists(integrator_filename) or os.path.exists(integrator_filename+'.gz')) and (os.path.exists(state_filename) or os.path.exists(state_filename+'.gz')): 
+            if os.path.exists(pdb_filename) and (os.path.exists(system_filename) or os.path.exists(system_filename+'.gz')) and (os.path.exists(integrator_filename) or os.path.exists(integrator_filename+'.gz')) and (os.path.exists(state_filename) or os.path.exists(state_filename+'.gz')):
                 # If not using 'careful mode', just continue.
                 if not careful_cleaning:
                     continue
-                    
+
                 # Check if we can deserialize explicit solvent files.
                 try:
                     system     = openmm.XmlSerializer.deserialize(readFileContents(system_filename))
@@ -844,9 +830,9 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                     pdb = app.PDBFile(model_file)
 
                 if verbose: print "Solvating model to achieve target of %d waters..." % nwaters
-                [positions, topology] = solvate_pdb(pdb, nwaters, verbose=verbose)
+                [positions, topology] = solvate_pdb(pdb, nwaters)
 
-                simulate_explicitMD(model_dir, gpuid, rank, verbose=verbose)
+                simulate_explicitMD()
 
             except Exception as e:
                 reject_file_path = os.path.join(model_dir, 'explicit-rejected.txt')
@@ -856,46 +842,33 @@ def refine_explicitMD(openmm_platform='CUDA', gpupn=1, process_only_these_target
                     reject_file.write(exception_text + '\n')
                     reject_file.write(trbk + '\n')
 
-        # TODO get this working
+        if mpistate.rank == 0:
+            project_metadata = ensembler.core.ProjectMetadata(project_stage='refine_explicit_md', target_id=target.id)
+            datestamp = ensembler.core.get_utcnow_formatted()
+            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb.gz']).count('\n')
+            target_timedelta = datetime.datetime.utcnow() - target_starttime
 
-        # if rank == 0:
-        #
-        #     # ========
-        #     # Metadata
-        #     # ========
-        #     import sys
-        #     import yaml
-        #     import ensembler
-        #     import ensembler.version
-        #     import subprocess
-        #     import simtk.openmm.version
-        #     datestamp = ensembler.core.get_utcnow_formatted()
-        #     nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'explicit-refined.pdb.gz']).count('\n')
-        #     target_timedelta = datetime.datetime.utcnow() - target_starttime
-        #
-        #     meta_filepath = os.path.join(models_target_dir, 'meta.yaml')
-        #     with open(meta_filepath) as meta_file:
-        #         metadata = yaml.load(meta_file, Loader=ensembler.core.YamlLoader)
-        #
-        #     metadata['refine_explicit_md'] = {
-        #         'target_id': target.id,
-        #         'datestamp': datestamp,
-        #         'timing': ensembler.core.strf_timedelta(target_timedelta),
-        #         'nsuccessful_refinements': nsuccessful_refinements,
-        #         'python_version': sys.version.split('|')[0].strip(),
-        #         'python_full_version': ensembler.core.literal_str(sys.version),
-        #         'ensembler_version': ensembler.version.short_version,
-        #         'ensembler_commit': ensembler.version.git_revision,
-        #         'biopython_version': Bio.__version__,
-        #         'openmm_version': simtk.openmm.version.short_version,
-        #         'openmm_commit': simtk.openmm.version.git_revision
-        #     }
-        #
-        #     metadata = ensembler.core.ProjectMetadata(metadata)
-        #     metadata.write(meta_filepath)
+            metadata = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'timing': ensembler.core.strf_timedelta(target_timedelta),
+                'nsuccessful_refinements': nsuccessful_refinements,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': ensembler.core.literal_str(sys.version),
+                'ensembler_version': ensembler.version.short_version,
+                'ensembler_commit': ensembler.version.git_revision,
+                'biopython_version': Bio.__version__,
+                'openmm_version': simtk.openmm.version.short_version,
+                'openmm_commit': simtk.openmm.version.git_revision
+            }
 
-    comm.Barrier()
-    if rank == 0:
+            project_metadata.add_data(metadata)
+            project_metadata.write()
+
+        mpistate.comm.Barrier()
+
+    mpistate.comm.Barrier()
+    if mpistate.rank == 0:
         print 'Done.'
 
 
