@@ -11,10 +11,10 @@ Options:"""
 
 helpstring_unique_options = [
     """\
-  --targets <target>...       Define one or more target IDs to work on (e.g. "--targets ABL1_HUMAN_D0 --targets SRC_HUMAN_D0") (default: all targets)""",
+  --targets <target>       Define one or more comma-separated target IDs to work on (e.g. "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0") (default: all targets)""",
 
     """\
-  --templates <template>...   Define one or more template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
+  --templates <template>   Define one or more comma-separated template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
 
     """\
   -v --verbose                """,
@@ -29,4 +29,14 @@ def dispatch(args):
         loglevel = 'debug'
     else:
         loglevel = 'info'
-    ensembler.modeling.align_targets_and_templates(process_only_these_targets=args['--targets'], process_only_these_templates=args['--templates'], loglevel=loglevel)
+
+    if args['--targets']:
+        targets = args['--targets'].split(',')
+    else:
+        targets = False
+    if args['--templates']:
+        templates = args['--templates'].split(',')
+    else:
+        templates = False
+
+    ensembler.modeling.align_targets_and_templates(process_only_these_targets=targets, process_only_these_templates=templates, loglevel=loglevel)

@@ -10,7 +10,7 @@ from collections import namedtuple
 # ========
 # Global package variables
 # ========
-src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 
@@ -25,7 +25,6 @@ project_stages = [
     'gather_targets',
     'gather_templates',
     'build_models',
-    'sort_by_sequence_identity',
     'cluster_models',
     'refine_implicit_md',
     'solvate_models',
@@ -206,7 +205,7 @@ class TemplateManualOverrides:
 
 
 def gen_metadata_filename(ensembler_stage, metadata_file_index):
-    for modelling_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+    for modelling_stage in ['build_models', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
         if ensembler_stage == modelling_stage:
             return '%s-meta%d.yaml' % (ensembler_stage, metadata_file_index)
     return 'meta%d.yaml' % metadata_file_index
@@ -215,7 +214,6 @@ def gen_metadata_filename(ensembler_stage, metadata_file_index):
 class ProjectMetadata:
     # TODO - have metadata files output as follows
     # models/SRC_HUMAN_D0/build_models-meta.yaml
-    # models/SRC_HUMAN_D0/sort_by_sequence_identity-meta.yaml
     # models/SRC_HUMAN_D0/implicit_refinement-meta.yaml
     """
     Examples
@@ -262,11 +260,11 @@ class ProjectMetadata:
         }
         if project_stage in metadata_dir_dict:
             return metadata_dir_dict[project_stage]
-        elif project_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+        elif project_stage in ['build_models', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
             return os.path.join('models', target_id)
 
     def metadata_file_basename_mapper(self, project_stage):
-        if project_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+        if project_stage in ['build_models', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
             return '%s-meta' % project_stage
         else:
             return 'meta'
@@ -376,7 +374,7 @@ def metadata_file_mapper(ensembler_stage, target_id=None):
     }
     if ensembler_stage in metadata_file_dict:
         return metadata_file_dict[ensembler_stage]
-    elif ensembler_stage in ['build_models', 'sort_by_sequence_identity', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
+    elif ensembler_stage in ['build_models', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
         return os.path.join('models', target_id, 'meta.yaml')
 
 

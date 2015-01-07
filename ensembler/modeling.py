@@ -18,9 +18,8 @@ import modeller
 import modeller.automodel
 from ensembler.core import get_targets_and_templates
 import subprocess
-from ensembler.core import mpistate
+from ensembler.core import mpistate, logger
 
-logger = logging.getLogger('info')
 
 TargetSetupData = namedtuple(
     'TargetSetupData',
@@ -84,6 +83,19 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
 
         seq_identity_data = sorted(seq_identity_data, key=lambda x: x['seq_identity'], reverse=True)
         write_sorted_seq_identities(target, seq_identity_data)
+
+
+def align_target_template(target, template, gap_open=-10, gap_extend=-0.5):
+    """
+    :param target: BioPython SeqRecord
+    :param template: BioPython SeqRecord
+    :param gap_open: float or int
+    :param gap_extend: float or int
+    :return: alignment
+    """
+    matrix = Bio.SubsMat.MatrixInfo.gonnet
+    aln = Bio.pairwise2.align.globalds(str(target.seq), str(template.seq), matrix, gap_open, gap_extend)
+    return aln
 
 
 def calculate_seq_identity(aln):
@@ -283,19 +295,6 @@ def check_all_model_files_present(model_dir):
     files_to_check = [model_pdbfilepath, seqid_filepath, aln_filepath, restraint_filepath]
     files_present = [os.path.exists(filename) for filename in files_to_check]
     return all(files_present)
-
-
-def align_target_template(target, template, gap_open=-10, gap_extend=-0.5):
-    """
-    :param target: BioPython SeqRecord
-    :param template: BioPython SeqRecord
-    :param gap_open: float or int
-    :param gap_extend: float or int
-    :return: alignment
-    """
-    matrix = Bio.SubsMat.MatrixInfo.gonnet
-    aln = Bio.pairwise2.align.globalds(str(target.seq), str(template.seq), matrix, gap_open, gap_extend)
-    return aln
 
 
 def init_build_model_logfile(modeling_log_filepath):

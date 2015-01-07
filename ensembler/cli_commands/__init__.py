@@ -1,4 +1,5 @@
 command_list = [
+    'testrun_pipeline',
     'init',
     'gather_targets',
     'gather_templates',
@@ -12,6 +13,7 @@ command_list = [
 ]
 
 import general
+import testrun_pipeline
 import init
 import gather_targets
 import gather_templates
