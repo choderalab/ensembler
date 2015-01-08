@@ -4,6 +4,8 @@ from lxml import etree
 from nose.plugins.attrib import attr
 
 import ensembler
+import ensembler.cli
+import ensembler.cli_commands
 import ensembler.initproject
 import ensembler.tests
 import ensembler.core

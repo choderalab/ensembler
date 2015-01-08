@@ -60,8 +60,8 @@ def test_align_command():
         targets = ['KC1D_HUMAN_D0', 'EGFR_HUMAN_D0']
         templates = ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']
         args = {
-            '--targets': targets,
-            '--templates': templates,
+            '--targets': ','.join(targets),
+            '--templates': ','.join(templates),
             '--verbose': False,
         }
 
@@ -81,6 +81,8 @@ def test_align_command():
                 seqid_file_text = seqid_file.read()
             with open(ref_seqid_filepath) as ref_seqid_file:
                 ref_seqid_file_text = ref_seqid_file.read()
+            print seqid_file_text
+            print ref_seqid_file_text
             assert seqid_file_text == ref_seqid_file_text
 
 
@@ -88,8 +90,8 @@ def test_align_command():
 def test_build_models_command():
     with integration_test_context(set_up_project_stage='aligned'):
         args = {
-            '--targets': ['EGFR_HUMAN_D0'],
-            '--templates': ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A'],
+            '--targets': 'EGFR_HUMAN_D0',
+            '--templates': '\,'.join(['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']),
             '--verbose': False,
             '--help': False,
         }
