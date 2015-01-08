@@ -91,7 +91,7 @@ def test_build_models_command():
     with integration_test_context(set_up_project_stage='aligned'):
         args = {
             '--targets': 'EGFR_HUMAN_D0',
-            '--templates': '\,'.join(['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']),
+            '--templates': ','.join(['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']),
             '--verbose': False,
             '--help': False,
         }
