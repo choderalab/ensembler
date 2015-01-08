@@ -2,22 +2,18 @@ import gzip
 import json
 import sys
 import os
-import shutil
-import subprocess
-import traceback
-import tempfile
-import datetime
+
 from lxml import etree
-import yaml
 import Bio.SeqUtils
 import Bio.SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+import ensembler.version
+
 import ensembler
 import ensembler.TargetExplorer
 import ensembler.UniProt
 import ensembler.PDB
-import ensembler.version
 from ensembler.utils import file_exists_and_not_empty
 from ensembler.core import mpistate, logger
 
@@ -31,16 +27,6 @@ class TemplateData:
         self.resolved_pdbresnums = resolved_pdbresnums
         self.full_seq = full_seq
         self.full_pdbresnums = full_pdbresnums
-
-
-class LoopmodelOutput:
-    def __init__(self, output_text=None, loopmodel_exception=None, exception=None, trbk=None, successful=False, no_missing_residues=False):
-        self.output_text = output_text
-        self.exception = exception
-        self.loopmodel_exception = loopmodel_exception
-        self.traceback = trbk
-        self.successful = successful
-        self.no_missing_residues = no_missing_residues
 
 
 class InitProject(object):
@@ -269,7 +255,7 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
 
 
 @ensembler.utils.notify_when_done
-def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None, loopmodel=True, overwrite_structures=False):
+def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None):
     """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
@@ -289,15 +275,12 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
-    extract_template_structures_from_pdb_files(selected_templates, overwrite_structures=overwrite_structures)
-    if loopmodel:
-        missing_residues = pdbfix_templates(selected_templates, overwrite_structures=overwrite_structures)
-        loopmodel_templates(selected_templates, missing_residues, overwrite_structures=overwrite_structures)
-    write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs, loopmodel)
+    extract_template_structures_from_pdb_files(selected_templates)
+    write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, len(selected_templates), structure_dirs)
 
 
 @ensembler.utils.notify_when_done
-def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None, loopmodel=True, overwrite_structures=False):
+def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
     """# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures."""
     manual_overrides = ensembler.core.ManualOverrides()
@@ -316,11 +299,8 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
-    extract_template_structures_from_pdb_files(selected_templates, overwrite_structures=overwrite_structures)
-    if loopmodel:
-        missing_residues = pdbfix_templates(selected_templates, overwrite_structures=overwrite_structures)
-        loopmodel_templates(selected_templates, missing_residues, overwrite_structures=overwrite_structures)
-    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs, loopmodel)
+    extract_template_structures_from_pdb_files(selected_templates)
+    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
 
 
 def get_targetexplorer_templates_json(dbapi_uri, search_string):
@@ -482,12 +462,15 @@ def extract_pdb_template_seq(pdbchain):
         '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
     )
 
-    # now extract PDB residues with the correct PDB chain ID, are resolved, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
+    # now extract PDB residues which have the correct PDB chain ID, are resolved, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
     selected_resolved_residues = siftsxml.xpath(
         'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])]'
         '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])]'
         '[not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, domain_span[0], domain_span[1])
     )
+
+    # second stage of filtering to remove residues which conflict with the UniProt resname, but are not annotated as such
+    selected_resolved_residues = [r for r in selected_resolved_residues if Bio.SeqUtils.seq1(r.get('dbResName')) == r.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName')]
 
     # all_pdb_domain_residues = siftsxml.xpath(
     #     'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
@@ -530,45 +513,41 @@ def write_template_seqs_to_fasta_file(selected_templates):
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
-def extract_template_structures_from_pdb_files(selected_templates, overwrite_structures=False):
+def extract_template_structures_from_pdb_files(selected_templates):
     logger.info('Writing template structures...')
     for template in selected_templates:
         pdb_filename = os.path.join(ensembler.core.default_project_dirnames.structures_pdb, template.pdbid + '.pdb.gz')
         template_resolved_filename = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
-        if not overwrite_structures:
-            if os.path.exists(template_resolved_filename):
-                continue
         ensembler.PDB.extract_residues_by_resnum(template_resolved_filename, pdb_filename, template)
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
-def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs, loopmodel):
+def write_gather_templates_from_targetexplorer_metadata(search_string, dbapi_uri, ntemplates, structure_dirs):
     gather_templates_from_targetexplorer_metadata = gen_targetexplorer_metadata(dbapi_uri, search_string)
     gather_templates_from_targetexplorer_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, loopmodel=loopmodel, additional_metadata=gather_templates_from_targetexplorer_metadata)
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_targetexplorer_metadata)
     project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_templates')
     project_metadata.add_data(gather_templates_metadata)
     project_metadata.write()
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
-def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs, loopmodel):
+def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, ntemplates, structure_dirs):
     gather_templates_from_uniprot_metadata = gen_uniprot_metadata(uniprot_query_string, uniprot_domain_regex)
     gather_templates_from_uniprot_metadata['structure_dirs'] = structure_dirs
-    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, loopmodel=loopmodel, additional_metadata=gather_templates_from_uniprot_metadata)
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_uniprot_metadata)
     project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_templates')
     project_metadata.add_data(gather_templates_metadata)
     project_metadata.write()
 
 
-def gen_gather_templates_metadata(nselected_templates, loopmodel=False, additional_metadata=None):
+def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
     if additional_metadata is None:
         additional_metadata = {}
     datestamp = ensembler.core.get_utcnow_formatted()
     metadata = {
         'datestamp': datestamp,
         'ntemplates': str(nselected_templates),
-        'loopmodel': loopmodel,
         'python_version': sys.version.split('|')[0].strip(),
         'python_full_version': ensembler.core.literal_str(sys.version),
         'ensembler_version': ensembler.version.short_version,
@@ -632,198 +611,3 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
     return selected_pdbchains
 
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
-
-
-def pdbfix_templates(selected_templates, overwrite_structures=False):
-    missing_residues_sublist = []
-    ntemplates = len(selected_templates)
-    for template_index in range(mpistate.rank, ntemplates, mpistate.size):
-        missing_residues_sublist.append(pdbfix_template(selected_templates[template_index], overwrite_structures=overwrite_structures))
-
-    missing_residues_gathered = mpistate.comm.gather(missing_residues_sublist, root=0)
-
-    missing_residues_list = []
-    if mpistate.rank == 0:
-        missing_residues_list = [None] * ntemplates
-        for template_index in range(ntemplates):
-            missing_residues_list[template_index] = missing_residues_gathered[template_index % mpistate.size][template_index // mpistate.size]
-
-    missing_residues_list = mpistate.comm.bcast(missing_residues_list, root=0)
-
-    return missing_residues_list
-
-
-def pdbfix_template(template, overwrite_structures=False):
-    try:
-        template_pdbfixed_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixed.pdb')
-        import pdbfixer
-        import simtk.openmm.app
-        template_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
-        fixer = pdbfixer.PDBFixer(filename=template_filepath)
-        seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(template.chainid)
-        for r in template.full_seq:
-            resi3 = Bio.SeqUtils.seq3(r).upper()
-            seq_obj.residues.append(resi3)
-        fixer.structure.sequences.append(seq_obj)
-        fixer.findMissingResidues()
-        remove_missing_residues_at_termini(fixer, len_full_seq=len(template.full_seq))
-        if not overwrite_structures:
-            if os.path.exists(template_pdbfixed_filepath):
-                return fixer.missingResidues
-        fixer.findMissingAtoms()
-        (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
-        fixer.topology = newTopology
-        fixer.positions = newPositions
-        with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
-            simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
-        return fixer.missingResidues
-    except (KeyboardInterrupt, ImportError):
-        raise
-    except Exception as e:
-        trbk = traceback.format_exc()
-        log_filepath = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixer-log.yaml'))
-        logfile = ensembler.core.LogFile(log_filepath)
-        logfile.log({
-            'templateid': str(template.templateid),
-            'exception': e,
-            'traceback': ensembler.core.literal_str(trbk),
-            'mpi_rank': mpistate.rank,
-        })
-        logger.error('MPI rank %d pdbfixer error for template %s - see logfile' % (mpistate.rank, template.templateid))
-
-
-def remove_missing_residues_at_termini(fixer, len_full_seq):
-    # remove C-terminal missing residues
-    if len(fixer.missingResidues) == 0:
-        return None
-    sorted_missing_residues_keys = sorted(fixer.missingResidues, key=lambda x: x[1])
-    last_missing_residues_key = sorted_missing_residues_keys[-1]
-    last_missing_residues_start_index = last_missing_residues_key[1]
-    last_missing_residues = fixer.missingResidues[last_missing_residues_key]
-    nmissing_residues_up_to_last = sum([len(fixer.missingResidues[key]) for key in sorted_missing_residues_keys[:-1]])
-
-    if last_missing_residues_start_index + nmissing_residues_up_to_last + len(last_missing_residues) == len_full_seq:
-        fixer.missingResidues.pop(last_missing_residues_key)
-
-    # remove N-terminal missing residues
-    fixer.missingResidues.pop((0, 0), None)
-
-
-def loopmodel_templates(selected_templates, missing_residues, overwrite_structures=False):
-    for template_index in range(mpistate.rank, len(selected_templates), mpistate.size):
-        template = selected_templates[template_index]
-        if mpistate.size > 1:
-            logger.info('MPI rank %d modeling missing loops for template %s' % (mpistate.rank, template.templateid))
-        else:
-            logger.info('Modeling missing loops for template %s' % template.templateid)
-        loopmodel_template(template, missing_residues[template_index], overwrite_structures=overwrite_structures)
-
-
-def loopmodel_template(template, missing_residues, overwrite_structures=False):
-    template_filepath = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-pdbfixed.pdb'))
-    output_pdb_filepath = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb'))
-    loop_filepath = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.loop'))
-    output_score_filepath = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-score.sc'))
-    log_filepath = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml'))
-    if not overwrite_structures:
-        if os.path.exists(log_filepath):
-            return
-    logfile = ensembler.core.LogFile(log_filepath)
-    write_loop_file(template, missing_residues)
-    starttime = datetime.datetime.utcnow()
-    if len(missing_residues) == 0:
-        loopmodel_output = LoopmodelOutput(successful=True, no_missing_residues=True)
-    else:
-        loopmodel_output = run_loopmodel(template_filepath, loop_filepath, output_pdb_filepath, output_score_filepath)
-    if not loopmodel_output.successful:
-        logger.error('MPI rank %d Loopmodel error for template %s - see logfile' % (mpistate.rank, template.templateid))
-    timedelta = datetime.datetime.utcnow() - starttime
-    logfile.log({
-        'templateid': str(template.templateid),
-        'no_missing_residues': loopmodel_output.no_missing_residues,
-        'loopmodel_output': loopmodel_output.output_text,
-        'mpi_rank': mpistate.rank,
-        'successful': loopmodel_output.successful,
-        'exception': loopmodel_output.exception,
-        'loopmodel_exception': loopmodel_output.loopmodel_exception,
-        'traceback': loopmodel_output.traceback,
-        'timing': ensembler.core.strf_timedelta(timedelta),
-        })
-
-
-def write_loop_file(template, missing_residues):
-    loop_file_text = ''
-    loop_residues_added = 0
-    loop_residues_data = [(key[1], len(residues)) for key, residues in missing_residues.iteritems()]
-    loop_residues_data = sorted(loop_residues_data, key=lambda x: x[0])
-    for loop_residue_data in loop_residues_data:
-        residue_number, nresidues = loop_residue_data
-        loop_begin = residue_number + loop_residues_added   # 1-based, one residue before the loop
-        loop_end = residue_number + nresidues + loop_residues_added + 1   # 1-based, one residue after the loop
-        loop_residues_added += nresidues
-        # Note that missing residues at termini (which cannot be modeled by Rosetta loopmodel) have already been removed from the PDBFixer.missingResidues dictionary
-        loop_file_text += 'LOOP%4d%4d - - 1\n' % (loop_begin, loop_end)
-    loop_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.loop')
-    with open(loop_filepath, 'w') as loop_file:
-        loop_file.write(loop_file_text)
-
-
-def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath=None, nmodels_to_build=1):
-    if loopmodel_executable_filepath is None:
-        loopmodel_executable_filepath = ensembler.core.find_loopmodel_executable()
-    temp_dir = tempfile.mkdtemp()
-    temp_template_filepath = os.path.join(temp_dir, 'template.pdb')
-    temp_loop_filepath = os.path.join(temp_dir, 'template.loop')
-    temp_output_model_filepath = os.path.join(temp_dir, 'template_0001.pdb')
-    temp_output_score_filepath = os.path.join(temp_dir, 'score.sc')
-    minirosetta_database_path = os.environ.get('MINIROSETTA_DATABASE')
-    shutil.copy(input_template_pdb_filepath, temp_template_filepath)
-    shutil.copy(loop_filepath, temp_loop_filepath)
-    try:
-        output_text = subprocess.check_output(
-            [
-                loopmodel_executable_filepath,
-                '-database', minirosetta_database_path,
-                '-in::file::s', temp_template_filepath,
-                '-loops:loop_file', temp_loop_filepath,
-                '-out:path:all', temp_dir,
-                '-loops:remodel', 'perturb_kic',
-                '-loops:refine', 'refine_kic',
-                '-ex1',
-                '-ex2',
-                '-nstruct', '%d' % nmodels_to_build,
-                '-loops:max_kic_build_attempts', '100',
-                '-in:file:fullatom',
-                '-overwrite',
-                ],
-            stderr=subprocess.STDOUT
-        )
-        if os.path.exists(temp_output_model_filepath):
-            shutil.copy(temp_output_model_filepath, output_pdb_filepath)
-            shutil.copy(temp_output_score_filepath, output_score_filepath)
-            shutil.rmtree(temp_dir)
-            return LoopmodelOutput(output_text=output_text, successful=True)
-        else:
-            shutil.rmtree(temp_dir)
-            return LoopmodelOutput(output_text=output_text, successful=False)
-    except KeyboardInterrupt:
-        shutil.rmtree(temp_dir)
-        raise
-    except subprocess.CalledProcessError as e:
-        shutil.rmtree(temp_dir)
-        return LoopmodelOutput(loopmodel_exception=e.output, trbk=traceback.format_exc(), successful=False)
-    except Exception as e:
-        shutil.rmtree(temp_dir)
-        return LoopmodelOutput(output_text=output_text, exception=e, trbk=traceback.format_exc(), successful=False)
-
-
-def check_loopmodel_complete_and_successful(template):
-    output_pdb_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '.pdb')
-    log_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.templateid + '-loopmodel-log.yaml')
-    if os.path.exists(log_filepath) and os.path.exists(output_pdb_filepath):
-        with open(log_filepath) as log_file:
-            log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
-            if log_data.get('successful') == True:
-                return True
-    else:
-        return False

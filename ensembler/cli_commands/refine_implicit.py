@@ -13,12 +13,12 @@ helpstring_unique_options = [
     """\
   --gpupn <gpupn>                 If using GPUs, specify how many are available per node [default: 1].""",
     """\
-  --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
-    """\
   --simlength <simlength>         Simulation length (ps) [default: 100.0].""",
 ]
 
 helpstring_nonunique_options = [
+    """\
+  --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
     """\
   --targets <target>              Define one or more target IDs to work on (e.g. "--targets ABL1_HUMAN_D0 --targets SRC_HUMAN_D0") (default: all targets)""",
     """\

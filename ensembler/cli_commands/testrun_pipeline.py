@@ -36,13 +36,20 @@ def dispatch(args):
             '--query': 'mnemonic:AURKB_HUMAN',
             '--uniprot_domain_regex': '^Protein kinase',
             '--structure_paths': structure_paths,
-            '--no-loopmodel': True,
-            '--overwrite_structures': False,
         }
     )
 
+    # ensembler.cli_commands.loopmodel.dispatch(
+    #     args={
+    #         '--templates': 'AURKB_HUMAN_D0_4AF3_A',
+    #         '--overwrite_structures': True,
+    #         '--verbose': False,
+    #     }
+    # )
+
     ensembler.cli_commands.align.dispatch(
         args={
+            '--targetsfile': False,
             '--targets': False,
             '--templates': 'AURKB_HUMAN_D0_4AF3_A',
             '--verbose': False,
@@ -51,6 +58,7 @@ def dispatch(args):
 
     ensembler.cli_commands.build_models.dispatch(
         args={
+            '--targetsfile': False,
             '--targets': False,
             '--templates': 'AURKB_HUMAN_D0_4AF3_A',
             '--verbose': False,
@@ -59,6 +67,7 @@ def dispatch(args):
 
     ensembler.cli_commands.cluster.dispatch(
         args={
+            '--targetsfile': False,
             '--targets': False,
             '--verbose': False,
         }

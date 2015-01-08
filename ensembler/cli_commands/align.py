@@ -1,6 +1,3 @@
-# import sys
-# sys.path.pop(0)
-# sys.path.pop(0)
 import ensembler
 import ensembler.modeling
 
@@ -11,8 +8,13 @@ Options:"""
 
 helpstring_unique_options = [
     """\
-  --targets <target>       Define one or more comma-separated target IDs to work on (e.g. "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0") (default: all targets)""",
+  --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
 
+    """\
+  --targets <target>       Define one or more comma-separated target IDs to work on (e.g. "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0") (default: all targets)""",
+]
+
+helpstring_nonunique_options = [
     """\
   --templates <template>   Define one or more comma-separated template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
 
@@ -20,7 +22,7 @@ helpstring_unique_options = [
   -v --verbose                """,
 ]
 
-helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options)])
+helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
 docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 
@@ -30,10 +32,14 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    if args['--targets']:
+    if args['--targetsfile']:
+        with open(args['--targetsfile'], 'r') as targetsfile:
+            targets = [line.strip() for line in targetsfile.readlines() if line[0] != '#']
+    elif args['--targets']:
         targets = args['--targets'].split(',')
     else:
         targets = False
+
     if args['--templates']:
         templates = args['--templates'].split(',')
     else:

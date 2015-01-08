@@ -3,6 +3,7 @@ command_list = [
     'init',
     'gather_targets',
     'gather_templates',
+    'loopmodel',
     'align',
     'build_models',
     'cluster',
@@ -17,6 +18,7 @@ import testrun_pipeline
 import init
 import gather_targets
 import gather_templates
+import loopmodel
 import align
 import build_models
 import cluster
