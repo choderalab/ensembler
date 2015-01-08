@@ -14,7 +14,7 @@ helpstring_unique_options = [
     """\
   --nFAHclones <n>                      If packaging for Folding@Home, select the number of clones to use for each model [default: 1].""",
     """\
-  --no-archiveFAHproject                If packaging for Folding@Home, choose whether to compress the results into a .tgz file.""",
+  --archiveFAHproject                If packaging for Folding@Home, choose whether to compress the results into a .tgz file.""",
 ]
 
 helpstring_nonunique_options = [
@@ -46,8 +46,13 @@ def dispatch(args):
     else:
         n_fah_clones = 1
 
+    if args['--archiveFAHproject']:
+        archive = True
+    else:
+        archive = False
+
     if package_for.lower() == 'transfer':
         ensembler.packaging.package_for_transfer(process_only_these_targets=targets)
 
     elif package_for.lower() == 'fah':
-        ensembler.packaging.package_for_fah(process_only_these_targets=targets, nclones=n_fah_clones, archive=args['--no-archiveFAHproject'])
+        ensembler.packaging.package_for_fah(process_only_these_targets=targets, nclones=n_fah_clones, archive=archive)

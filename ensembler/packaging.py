@@ -1,4 +1,5 @@
 import os
+import subprocess
 import numpy as np
 import ensembler
 from ensembler.core import mpistate, logger
@@ -6,7 +7,7 @@ import simtk.unit as unit
 import simtk.openmm as openmm
 
 
-def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, archive=True):
+def package_for_fah(process_only_these_targets=None, verbose=False, nclones=1, archive=False):
     '''Create the input files and directory structure necessary to start a Folding@Home project.
 
     MPI-enabled.
@@ -16,10 +17,9 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
     archive : Bool
         A .tgz compressed archive will be created for each individual RUN directory.
     '''
-    models_dir = os.path.abspath('models')
-    packaged_models_dir = os.path.abspath('packaged_models')
+    models_dir = ensembler.core.default_project_dirnames.models
+    packaged_models_dir = ensembler.core.default_project_dirnames.packaged_models
     projects_dir = os.path.join(packaged_models_dir, 'fah-projects')
-    original_dir = os.getcwd()
     if mpistate.rank == 0:
         if not os.path.exists(projects_dir):
             os.mkdir(projects_dir)
@@ -93,14 +93,15 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
                 elif os.path.exists(fullpath+'.gz'):
                     infile = gzip.open(fullpath+'.gz', 'r')
                 else:
+                    import ipdb; ipdb.set_trace()
                     raise IOError('File %s not found' % filename)
 
                 contents = infile.read()
                 infile.close()
                 return contents
 
-            def writeFileContents(filename, contents):
-                with open(filename, 'w') as outfile:
+            def writeFileContents(filepath, contents):
+                with open(filepath, 'w') as outfile:
                     outfile.write(contents)
 
             system = openmm.XmlSerializer.deserialize(readFileContents('explicit-system.xml'))
@@ -111,7 +112,7 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
             system.setDefaultPeriodicBoxVectors(*box_vectors)
 
             # Write sequence identity.
-            contents = readFileContents(os.path.join(source_dir, 'sequence-identity.txt'))
+            contents = readFileContents('sequence-identity.txt')
             writeFileContents(seqid_filename, contents)
 
             # Integrator settings.
@@ -160,12 +161,9 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=10, 
 
 
     def archiveRun():
-        import subprocess
-        os.chdir(project_dir)
-        archive_filename = 'RUN%d.tgz' % run_index
-        run_dir = 'RUN%d' % run_index
+        archive_filename = os.path.join(project_dir, 'RUN%d.tgz' % run_index)
+        run_dir = os.path.join(project_dir, 'RUN%d' % run_index)
         subprocess.call(['tar', 'zcf', archive_filename, run_dir])
-        os.chdir(original_dir)
 
 
     for target in targets:

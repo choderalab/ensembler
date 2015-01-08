@@ -4,7 +4,7 @@ import ensembler.cli_commands
 
 helpstring = """\
 Conduct a testrun of the entire ensembler pipeline in the current directory,
-using the target proteins EGFR_HUMAN and KC1D_HUMAN, and one template structure from AURKB_HUMAN.
+using the target protein EGFR_HUMAN, and one template structure from AURKB_HUMAN.
 """
 docopt_helpstring = ''
 
@@ -20,7 +20,7 @@ def dispatch(args):
     ensembler.cli_commands.gather_targets.dispatch(
     args={
     '--gather_from': 'uniprot',
-        '--query': 'mnemonic:EGFR_HUMAN or mnemonic:KC1D_HUMAN',
+        '--query': 'mnemonic:EGFR_HUMAN',
         '--uniprot_domain_regex': '^Protein kinase',
     }
     )
@@ -103,6 +103,6 @@ def dispatch(args):
             '--targets': False,
             '--templates': 'AURKB_HUMAN_D0_4AF3_A',
             '--nFAHclones': False,
-            '--no-archiveFAHproject': False,
+            '--archiveFAHproject': False,
         }
     )

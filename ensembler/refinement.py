@@ -27,7 +27,6 @@ def refine_implicit_md(
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
         pH=8.0):
-    # TODO - remove chdirs
     # TODO - refactor
     '''Run MD refinement in implicit solvent.
 
@@ -35,8 +34,7 @@ def refine_implicit_md(
     '''
     gpuid = mpistate.rank % gpupn
 
-    models_dir = os.path.abspath("models")
-    original_dir = os.getcwd()
+    models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
     templates = templates_resolved_seq
@@ -55,7 +53,6 @@ def refine_implicit_md(
     niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
     def simulate_implicitMD():
-        os.chdir(model_dir)
 
         if verbose: print "Reading model..."
         with gzip.open(model_filename) as model_file:
@@ -142,7 +139,6 @@ def refine_implicit_md(
         app.PDBFile.writeFooter(topology, file=pdb_outfile)
         pdb_outfile.close()
 
-        os.chdir(original_dir)
 
 
 
@@ -302,8 +298,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
     MPI-enabled.
     '''
-    models_dir = os.path.abspath("models")
-    original_dir = os.getcwd()
+    models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
     templates = templates_resolved_seq
@@ -345,8 +340,6 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             nwaters_filename = os.path.join(model_dir, 'nwaters.txt')
             if os.path.exists(nwaters_filename): continue
 
-            os.chdir(model_dir)
-
             try:
                 if verbose: print "Reading model..."
                 with gzip.open(model_filename) as model_file:
@@ -370,8 +363,6 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                 # Record waters.
                 with open(nwaters_filename, 'w') as nwaters_file:
                     nwaters_file.write('%d\n' % nwaters)
-
-                os.chdir(original_dir)    
 
             except Exception as e:
                 reject_file_path = os.path.join(model_dir, 'solvation-rejected.txt')
@@ -414,7 +405,7 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
 
     # Run serially
     if mpistate.rank == 0:
-        models_dir = os.path.abspath("models")
+        models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
         targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
         templates = templates_resolved_seq
@@ -516,8 +507,7 @@ def refine_explicitMD(
     '''
     gpuid = mpistate.rank % gpupn
 
-    models_dir = os.path.abspath("models")
-    original_dir = os.getcwd()
+    models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
     templates = templates_resolved_seq
@@ -659,8 +649,6 @@ def refine_explicitMD(
 
 
     def simulate_explicitMD():
-        os.chdir(model_dir)
-
         # Choose platform.
         platform = openmm.Platform.getPlatformByName(openmm_platform)
 
@@ -754,8 +742,6 @@ def refine_explicitMD(
         state = context.getState(getPositions=True, getVelocities=True, getForces=True, getEnergy=True, getParameters=True, enforcePeriodicBox=True)
         with gzip.open(state_filename+'.gz', 'w') as state_file:
             state_file.write(openmm.XmlSerializer.serialize(state))
-
-        os.chdir(original_dir)
 
 
     for target in targets:

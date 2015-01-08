@@ -14,7 +14,7 @@ Usage:
   ensembler refine_implicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>] [-v | --verbose]
   ensembler solvate [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [-v | --verbose]
   ensembler refine_explicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>] [-v | --verbose]
-  ensembler package_models [-h | --help] [--package_for <choice>] [--targets <target>] [--targetsfile <targetsfile>] [--nFAHclones <n>] [--no-archiveFAHproject]
+  ensembler package_models [-h | --help] [--package_for <choice>] [--targets <target>] [--targetsfile <targetsfile>] [--nFAHclones <n>] [--archiveFAHproject]
   ensembler testrun_pipeline [-h | --help]
 
 Commands:
