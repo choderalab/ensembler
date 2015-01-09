@@ -325,6 +325,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         # Process all templates.
         for template_index in range(mpistate.rank, len(templates), mpistate.size):
             template = templates[template_index]
+            if process_only_these_templates and template.id not in process_only_these_templates:
+                continue
 
             model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
@@ -400,7 +402,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
 
 def determine_nwaters(process_only_these_targets=None, process_only_these_templates=None, verbose=False, select_at_percentile=None):
-    '''Determine distribution of nwaters, and select the value at the designated percentile.
+    '''Determine distribution of nwaters, and select the value at a certain percentile.
+    If not user-specified, the percentile is set to 100 if there are less than 10 templates, otherwise it is set to 68.
     '''
 
     # Run serially
@@ -410,9 +413,9 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
         targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
         templates = templates_resolved_seq
 
-        nselected_targets = len(process_only_these_targets) if process_only_these_targets else len(targets)
+        nselected_templates = len(process_only_these_templates) if process_only_these_templates else len(templates)
         if not select_at_percentile:
-            select_at_percentile = 100 if nselected_targets < 10 else 68
+            select_at_percentile = 100 if nselected_templates < 10 else 68
 
         for target in targets:
 
@@ -426,6 +429,8 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
 
             nwaters_list = []
             for template in templates:
+                if process_only_these_templates and template.id not in process_only_these_templates:
+                    continue
 
                 model_dir = os.path.join(models_target_dir, template.id)
                 if not os.path.exists(model_dir): continue
