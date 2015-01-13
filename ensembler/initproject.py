@@ -303,6 +303,23 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
     write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
 
 
+@ensembler.utils.notify_when_done
+def gather_templates_from_pdb(pdbids, chainids=None, uniprot_domain_regex=None, structure_dirs=None):
+    # TODO - MPI enable
+    manual_overrides = ensembler.core.ManualOverrides()
+    for pdbid in pdbids:
+        get_pdb_and_sifts_files(pdbid, structure_dirs)
+    # TODO From sifts files, get UniProt entries (for the matching chain if specified; otherwise all)
+    uniprot_acs = extract_uniprot_acs_from_sifts_files(pdbids)
+    uniprot_query_string = build_uniprot_query_string_from_acs(uniprot_acs)
+    uniprotxml = ensembler.UniProt.get_uniprot_xml(uniprot_query_string)
+    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=pdbids)
+    selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
+    write_template_seqs_to_fasta_file(selected_templates)
+    extract_template_structures_from_pdb_files(selected_templates)
+    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
+
+
 def get_targetexplorer_templates_json(dbapi_uri, search_string):
     """
     :param dbapi_uri: str
@@ -557,7 +574,7 @@ def gen_gather_templates_metadata(nselected_templates, additional_metadata=None)
     return metadata
 
 
-def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides):
+def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=None):
     selected_pdbchains = []
     all_uniprot_entries = uniprotxml.findall('entry')
     for entry in all_uniprot_entries:

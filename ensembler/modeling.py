@@ -20,14 +20,21 @@ import Bio.SubsMat.MatrixInfo
 import modeller
 import modeller.automodel
 from ensembler.core import get_targets_and_templates
-import subprocess
 from ensembler.core import mpistate, logger
+try:
+    import subprocess32 as subprocess
+    loopmodel_subprocess_kwargs = {'timeout': 10800}   # 3 hour timeout - used for loopmodel call
+except:
+    import subprocess
+    loopmodel_subprocess_kwargs = {}
+
 
 
 TargetSetupData = namedtuple(
     'TargetSetupData',
     ['target_starttime', 'models_target_dir']
 )
+
 
 
 class LoopmodelOutput:
@@ -219,6 +226,7 @@ def write_loop_file(template, missing_residues):
 def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepath, output_score_filepath, loopmodel_executable_filepath=None, nmodels_to_build=1):
     if loopmodel_executable_filepath is None:
         loopmodel_executable_filepath = ensembler.core.find_loopmodel_executable()
+
     temp_dir = tempfile.mkdtemp()
     temp_template_filepath = os.path.join(temp_dir, 'template.pdb')
     temp_loop_filepath = os.path.join(temp_dir, 'template.loop')
@@ -244,8 +252,9 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
                 '-in:file:fullatom',
                 '-overwrite',
                 ],
-            stderr=subprocess.STDOUT
-        )
+            stderr=subprocess.STDOUT,
+            **loopmodel_subprocess_kwargs
+            )
         if os.path.exists(temp_output_model_filepath):
             shutil.copy(temp_output_model_filepath, output_pdb_filepath)
             shutil.copy(temp_output_score_filepath, output_score_filepath)
@@ -260,6 +269,9 @@ def run_loopmodel(input_template_pdb_filepath, loop_filepath, output_pdb_filepat
     except subprocess.CalledProcessError as e:
         shutil.rmtree(temp_dir)
         return LoopmodelOutput(loopmodel_exception=e.output, trbk=traceback.format_exc(), successful=False)
+    except subprocess.TimeoutExpired as e:
+        shutil.rmtree(temp_dir)
+        return LoopmodelOutput(output_text=e.output, exception=e, trbk=traceback.format_exc(), successful=False)
     except Exception as e:
         shutil.rmtree(temp_dir)
         return LoopmodelOutput(output_text=output_text, exception=e, trbk=traceback.format_exc(), successful=False)
@@ -374,6 +386,11 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
 
     MPI-enabled.
     """
+    # Note that this code uses an os.chdir call to switch into a temp directory before running Modeller.
+    # This is because Modeller writes various output files in the current directory, and there is NO WAY
+    # to define where these files are written, other than to chdir beforehand. If running this routine
+    # in parallel, it is likely that occasional exceptions will occur, due to concurrent processes
+    # making os.chdir calls.
     ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
     ntemplates = len(templates_resolved_seq)

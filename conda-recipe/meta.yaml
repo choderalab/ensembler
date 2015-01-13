@@ -7,14 +7,7 @@ source:
 
 build:
   entry_points:
-    - EnsemblerInit = ensembler.scripts.EnsemblerInit:main
-    - EnsemblerGatherTargets = ensembler.scripts.EnsemblerGatherTargets:main
-    - EnsemblerGatherTemplates = ensembler.scripts.EnsemblerGatherTemplates:main
-    - EnsemblerBuildModels = ensembler.scripts.EnsemblerBuildModels:main
-    - EnsemblerRefineImplicitMD = ensembler.scripts.EnsemblerRefineImplicitMD:main
-    - EnsemblerSolvate = ensembler.scripts.EnsemblerSolvate:main
-    - EnsemblerRefineExplicitMD = ensembler.scripts.EnsemblerRefineExplicitMD:main
-    - EnsemblerPackage = ensembler.scripts.EnsemblerPackage:main
+    - ensembler = ensembler.cli:main
 
 requirements:
   build:
@@ -30,6 +23,7 @@ requirements:
     - numpy
     - lxml
     - pyyaml
+    - subprocess32
 
 about:
   home: https://github.com/choderalab/ensembler
