@@ -23,6 +23,7 @@ kinase_family_uniprot_similarity_text = {
 'RIO-type Ser/Thr kinase family' : 'RIO-type'
 }
 
+
 def query_uniprot(search_string, maxreadlength=100000000):
     '''
     Searches the UniProt database given a search string, and retrieves an XML
@@ -41,6 +42,11 @@ def query_uniprot(search_string, maxreadlength=100000000):
     page = response.read(maxreadlength)
     page = remove_uniprot_xmlns(page)
     return page
+
+
+def build_uniprot_query_string_from_acs(acs):
+    ac_query_string = ' OR '.join(['acc:%s' % ac for ac in acs])
+    return ac_query_string
 
 
 def get_uniprot_xml(uniprot_query_string):

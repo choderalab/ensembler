@@ -138,3 +138,27 @@ ATYLNFCRSLRFDDKPDYSYLRQLFRNLF
         ensembler.cli_commands.gather_targets.dispatch(args)
         test_fasta = open(os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')).read()
         assert test_fasta == ref_fasta
+
+
+@attr('integration')
+def test_gather_templates_from_pdb():
+    ref_templates_resolved_seq = """\
+>KC1D_HUMAN_D0_4KB8_A
+YRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTI
+RWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRD
+VKPDNFLMGLGKKGNLVYIIDFGLAKKYGTARYASINTHLGIEQSRRDDLESLGYVLMYF
+NLGSLPWQGLKERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFR
+NLF
+>KC1D_HUMAN_D0_4KB8_D
+YRLGRKIGDIYLGTDIAAGEEVAIKLECPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYN
+VMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGL
+GKKGNLVYIIDFGLAKKYRDAQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGY
+VLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFD
+DKPDYSYLRQLFRNLF
+"""
+    with integration_test_context(set_up_project_stage='targets'):
+        pdbids = ['4KB8']
+        chainids = {'4KB8': ['A', 'D']}
+        uniprot_domain_regex = '^Protein kinase'
+        ensembler.initproject.gather_templates_from_pdb(pdbids, uniprot_domain_regex, chainids=chainids)
+        assert open(os.path.join(ensembler.core.default_project_dirnames.templates, 'templates-resolved-seq.fa')).read() == ref_templates_resolved_seq

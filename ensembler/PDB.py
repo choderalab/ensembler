@@ -103,3 +103,8 @@ def retrieve_pdb(pdb_id,compressed='no'):
     pdb_file = response.read(10000000) # Max 10MB
     return pdb_file
 
+
+def extract_uniprot_acs_from_sifts_xml(siftsxml):
+    uniprot_crossrefs = siftsxml.findall('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"]')
+    uniprot_acs = list(set([uniprot_crossref.get('dbAccessionId') for uniprot_crossref in uniprot_crossrefs]))
+    return uniprot_acs

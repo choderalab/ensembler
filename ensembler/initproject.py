@@ -220,6 +220,18 @@ def gen_uniprot_metadata(uniprot_query_string, uniprot_domain_regex):
     return metadata
 
 
+def gen_pdb_metadata(pdbids, uniprot_domain_regex, chainids):
+    metadata = {
+        'method': 'PDB',
+        'gather_from_pdb': {
+            'pdbids': pdbids,
+            'uniprot_domain_regex': uniprot_domain_regex,
+            'chainids': chainids,
+        }
+    }
+    return metadata
+
+
 def log_unique_domain_names(uniprot_query_string, uniprotxml):
     if 'domain:' in uniprot_query_string:
         # First extract the domain selection
@@ -304,20 +316,30 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
 
 
 @ensembler.utils.notify_when_done
-def gather_templates_from_pdb(pdbids, chainids=None, uniprot_domain_regex=None, structure_dirs=None):
-    # TODO - MPI enable
+def gather_templates_from_pdb(pdbids, uniprot_domain_regex, chainids=None, structure_dirs=None):
+    """
+    :param pdbids: list of str
+    :param uniprot_domain_regex: str
+    :param chainids: dict {pdbid (str): chainid (str)}
+    :param structure_dirs: list of str
+    :return:
+    """
     manual_overrides = ensembler.core.ManualOverrides()
-    for pdbid in pdbids:
-        get_pdb_and_sifts_files(pdbid, structure_dirs)
-    # TODO From sifts files, get UniProt entries (for the matching chain if specified; otherwise all)
-    uniprot_acs = extract_uniprot_acs_from_sifts_files(pdbids)
-    uniprot_query_string = build_uniprot_query_string_from_acs(uniprot_acs)
-    uniprotxml = ensembler.UniProt.get_uniprot_xml(uniprot_query_string)
-    selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=pdbids)
+    selected_pdbchains = None
+    if mpistate.rank == 0:
+        for pdbid in pdbids:
+            get_pdb_and_sifts_files(pdbid, structure_dirs)
+        uniprot_acs = extract_uniprot_acs_from_sifts_files(pdbids)
+        uniprot_ac_query_string = ensembler.UniProt.build_uniprot_query_string_from_acs(uniprot_acs)
+        uniprotxml = ensembler.UniProt.get_uniprot_xml(uniprot_ac_query_string)
+        selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=pdbids, specified_chainids=chainids)
+
+    selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
+
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
     extract_template_structures_from_pdb_files(selected_templates)
-    write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_domain_regex, len(selected_templates), structure_dirs)
+    write_gather_templates_from_pdb_metadata(pdbids, uniprot_domain_regex, len(selected_templates), chainids, structure_dirs)
 
 
 def get_targetexplorer_templates_json(dbapi_uri, search_string):
@@ -558,6 +580,16 @@ def write_gather_templates_from_uniprot_metadata(uniprot_query_string, uniprot_d
     project_metadata.write()
 
 
+@ensembler.utils.mpirank0only_and_end_with_barrier
+def write_gather_templates_from_pdb_metadata(pdbids, uniprot_domain_regex, ntemplates, chainids, structure_dirs):
+    gather_templates_from_pdb_metadata = gen_pdb_metadata(pdbids, uniprot_domain_regex, chainids)
+    gather_templates_from_pdb_metadata['structure_dirs'] = structure_dirs
+    gather_templates_metadata = gen_gather_templates_metadata(ntemplates, additional_metadata=gather_templates_from_pdb_metadata)
+    project_metadata = ensembler.core.ProjectMetadata(project_stage='gather_templates')
+    project_metadata.add_data(gather_templates_metadata)
+    project_metadata.write()
+
+
 def gen_gather_templates_metadata(nselected_templates, additional_metadata=None):
     if additional_metadata is None:
         additional_metadata = {}
@@ -574,7 +606,7 @@ def gen_gather_templates_metadata(nselected_templates, additional_metadata=None)
     return metadata
 
 
-def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=None):
+def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=None, specified_chainids=None):
     selected_pdbchains = []
     all_uniprot_entries = uniprotxml.findall('entry')
     for entry in all_uniprot_entries:
@@ -607,6 +639,8 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
                 pdbid = pdb.get('id')
                 if pdbid in manual_overrides.template.skip_pdbs:
                     continue
+                if specified_pdbids and pdbid not in specified_pdbids:
+                    continue
                 pdb_chain_span_nodes = pdb.findall('property[@type="chains"]')
 
                 for PDB_chain_span_node in pdb_chain_span_nodes:
@@ -614,6 +648,8 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
                     chain_spans = ensembler.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
 
                     for chainid in chain_spans.keys():
+                        if specified_chainids and chainid not in specified_chainids[pdbid]:
+                            continue
                         span = chain_spans[chainid]
                         if (span[0] < domain_span[0] + 30) & (span[1] > domain_span[1] - 30):
                             templateid = '%s_%s_%s' % (domain_id, pdbid, chainid)
@@ -628,3 +664,13 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
     return selected_pdbchains
 
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
+
+
+def extract_uniprot_acs_from_sifts_files(pdbids):
+    uniprot_acs = []
+    for pdbid in pdbids:
+        sifts_filepath = os.path.join(ensembler.core.default_project_dirnames.structures_sifts, pdbid + '.xml.gz')
+        parser = etree.XMLParser(huge_tree=True)
+        siftsxml = etree.parse(sifts_filepath, parser).getroot()
+        uniprot_acs += ensembler.PDB.extract_uniprot_acs_from_sifts_xml(siftsxml)
+    return list(set(uniprot_acs))
