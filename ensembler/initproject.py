@@ -320,7 +320,7 @@ def gather_templates_from_pdb(pdbids, uniprot_domain_regex, chainids=None, struc
     """
     :param pdbids: list of str
     :param uniprot_domain_regex: str
-    :param chainids: dict {pdbid (str): chainid (str)}
+    :param chainids: dict {pdbid (str): [chainid (str)]}
     :param structure_dirs: list of str
     :return:
     """
