@@ -29,12 +29,10 @@ except:
     loopmodel_subprocess_kwargs = {}
 
 
-
 TargetSetupData = namedtuple(
     'TargetSetupData',
     ['target_starttime', 'models_target_dir']
 )
-
 
 
 class LoopmodelOutput:
