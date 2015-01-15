@@ -12,18 +12,17 @@ class QuickParentClass(object):
 
 
 class QuickModel(QuickParentClass):
-    def __init__(self, targetids, templateids=None, template_seqid_cutoff=None, loopmodel=False, package_for_fah=False, nfahclones=None):
+    def __init__(self, targetid, templateids=None, template_seqid_cutoff=None, loopmodel=False, package_for_fah=False, nfahclones=None):
         """
         Run this after having set up targets and templates with the appropriate ensembler commands.
 
-        :param targetids: list of str
-        :param templateids: list of list of str (one list of templateids for each target)
+        :param targetid: str
+        :param templateids: list of str
         :param template_seqid_cutoff:
         :param package_for_fah:
         :param nfahclones:
         """
-        self.targetids = targetids
-        self.loopmodel = loopmodel
+        self.targetid = targetid
         if templateids:
             self.templateids = templateids
         elif template_seqid_cutoff:
@@ -33,28 +32,25 @@ class QuickModel(QuickParentClass):
             self.align_all_templates()
             self.templateids = self.select_templates_based_on_seqid_cutoff()
 
-        print self.templateids # TODO
-        self.model(package_for_fah=package_for_fah, nfahclones=nfahclones) # TODO
+        self.model(loopmodel=loopmodel, package_for_fah=package_for_fah, nfahclones=nfahclones)
 
-    def model(self, package_for_fah=False, nfahclones=None):
-        # ensembler.initproject.GatherTargetsFromUniProt()
-        for t in range(len(self.targetids)):
-            if self.loopmodel:
-                ensembler.modeling.model_template_loops(process_only_these_templates=self.templateids[t])
-            ensembler.modeling.align_targets_and_templates(process_only_these_targets=self.targetids, process_only_these_templates=self.templateids[t])
-            ensembler.modeling.build_models(process_only_these_targets=self.targetids, process_only_these_templates=self.templateids[t])
-            ensembler.modeling.cluster_models(process_only_these_targets=self.targetids)
-            ensembler.refinement.refine_implicit_md(process_only_these_targets=self.targetids, process_only_these_templates=self.templateids[t])
-            ensembler.refinement.solvate_models(process_only_these_targets=self.targetids, process_only_these_templates=self.templateids[t])
-            ensembler.refinement.determine_nwaters(process_only_these_targets=self.targetids, process_only_these_templates=self.templateids[t])
-            ensembler.refinement.refine_explicitMD(process_only_these_targets=self.targetids, process_only_these_templates=self.templateids[t])
-            if package_for_fah:
-                if not nfahclones:
-                    nfahclones = 1
-                ensembler.packaging.package_for_fah(process_only_these_targets=self.targetids, nclones=nfahclones)
+    def model(self, loopmodel=False, package_for_fah=False, nfahclones=None):
+        if loopmodel:
+            ensembler.modeling.model_template_loops(process_only_these_templates=self.templateids)
+        ensembler.modeling.align_targets_and_templates(process_only_these_targets=[self.targetid], process_only_these_templates=self.templateids)
+        ensembler.modeling.build_models(process_only_these_targets=[self.targetid], process_only_these_templates=self.templateids)
+        ensembler.modeling.cluster_models(process_only_these_targets=[self.targetid])
+        ensembler.refinement.refine_implicit_md(process_only_these_targets=[self.targetid], process_only_these_templates=self.templateids)
+        ensembler.refinement.solvate_models(process_only_these_targets=[self.targetid], process_only_these_templates=self.templateids)
+        ensembler.refinement.determine_nwaters(process_only_these_targets=[self.targetid], process_only_these_templates=self.templateids)
+        ensembler.refinement.refine_explicitMD(process_only_these_targets=[self.targetid], process_only_these_templates=self.templateids)
+        if package_for_fah:
+            if not nfahclones:
+                nfahclones = 1
+            ensembler.packaging.package_for_fah(process_only_these_targets=[self.targetid], nclones=nfahclones)
 
     def align_all_templates(self):
-        ensembler.modeling.align_targets_and_templates(process_only_these_targets=self.targetids)
+        ensembler.modeling.align_targets_and_templates(process_only_these_targets=[self.targetid])
 
     def select_templates_based_on_seqid_cutoff(self, seqid_cutoff=None):
         """
@@ -62,35 +58,34 @@ class QuickModel(QuickParentClass):
         :param seqid_cutoff:
         :return:
         """
-        for targetid in self.targetids:
-            seqid_filepath = os.path.join(ensembler.core.default_project_dirnames.models, targetid, 'sequence-identities.txt')
-            with open(seqid_filepath) as seqid_file:
-                seqids_list = [line.split() for line in seqid_file.readlines()]
-                templateids = [i[0] for i in seqids_list]
-                seqids = [float(i[1]) for i in seqids_list]
-            df = pd.DataFrame({
-                'templateids': templateids,
-                'seqids': seqids,
-                })
-            if seqid_cutoff:
-                selected_templates = df[df.seqids > seqid_cutoff]
-                templateids = list(selected_templates.templateids)
-            else:
-                for cutoff in range(0, 101, 10):
-                    ntemplates = len(df[df.seqids > cutoff])
-                    print 'Number of templates with seqid > %d: %d' % (cutoff, ntemplates)
-                seqid_cutoff_chosen = False
+        seqid_filepath = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid, 'sequence-identities.txt')
+        with open(seqid_filepath) as seqid_file:
+            seqids_list = [line.split() for line in seqid_file.readlines()]
+            templateids = [i[0] for i in seqids_list]
+            seqids = [float(i[1]) for i in seqids_list]
+        df = pd.DataFrame({
+            'templateids': templateids,
+            'seqids': seqids,
+            })
+        if seqid_cutoff:
+            selected_templates = df[df.seqids > seqid_cutoff]
+            templateids = list(selected_templates.templateids)
+        else:
+            for cutoff in range(0, 101, 10):
+                ntemplates = len(df[df.seqids > cutoff])
+                print 'Number of templates with seqid > %d: %d' % (cutoff, ntemplates)
+            seqid_cutoff_chosen = False
 
-                while not seqid_cutoff_chosen:
-                    seqid_cutoff = float(raw_input('Choose a sequence identity cutoff (confirm at next step): '))
-                    ntemplates = len(df[df.seqids > seqid_cutoff])
-                    print 'Number of templates chosen by sequence identity cutoff (%.1f): %d' % (seqid_cutoff, ntemplates)
-                    confirm_seqid_cutoff = raw_input('Use this sequence identity cutoff? (y|N): ')
-                    if confirm_seqid_cutoff.lower() in ['y', 'yes']:
-                        seqid_cutoff_chosen = True
+            while not seqid_cutoff_chosen:
+                seqid_cutoff = float(raw_input('Choose a sequence identity cutoff (confirm at next step): '))
+                ntemplates = len(df[df.seqids > seqid_cutoff])
+                print 'Number of templates chosen by sequence identity cutoff (%.1f): %d' % (seqid_cutoff, ntemplates)
+                confirm_seqid_cutoff = raw_input('Use this sequence identity cutoff? (y|N): ')
+                if confirm_seqid_cutoff.lower() in ['y', 'yes']:
+                    seqid_cutoff_chosen = True
 
-                selected_templates = df[df.seqids > seqid_cutoff]
-                templateids = list(selected_templates.templateids)
+            selected_templates = df[df.seqids > seqid_cutoff]
+            templateids = list(selected_templates.templateids)
 
         return templateids
 
