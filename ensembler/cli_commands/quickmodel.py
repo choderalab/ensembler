@@ -2,6 +2,8 @@ from ensembler.tools.quick_model import QuickModel
 
 helpstring_header = """\
 Model a single target with multiple templates. Various options for specifying target and templates.
+Example command:
+ensembler quickmodel --target_uniprot_entry_name EGFR_HUMAN --template_pdbids 4KB8 --template_chainids A --no-loopmodel --uniprot_domain_regex '^Protein kinase'
 
 Options:"""
 
