@@ -28,7 +28,7 @@ def main():
                 command = getattr(ensembler.cli_commands, command_str)
                 print command.helpstring
             else:
-                if not args['init'] and not args['testrun_pipeline']:
+                if not args['init'] and not args['testrun_pipeline'] and not args['quickmodel']:
                     ensembler.core.check_project_toplevel_dir()
                 command = getattr(ensembler.cli_commands, command_str)
                 command.dispatch(args)
