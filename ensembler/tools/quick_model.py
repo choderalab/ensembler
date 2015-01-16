@@ -8,10 +8,69 @@ import ensembler.refinement
 import ensembler.packaging
 
 
-class QuickParentClass(object):
-    # def __init__(self, targetids=None, templateids=None):
-    #     self.targetids = targetids
-    #     self.templateids = templateids
+class QuickModel(object):
+    def __init__(self, targetid=None, templateids=None, target_uniprot_entry_name=None, uniprot_domain_regex=None, pdbids=None, chainids=None, template_uniprot_query=None, template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None, structure_dirs=None):
+        """
+        Run this after having set up targets and templates with the appropriate ensembler commands.
+
+        :param targetid: str
+        :param templateids: list of str
+        :param template_seqid_cutoff:
+        :param package_for_fah:
+        :param nfahclones:
+        """
+        self.targetid = targetid
+        self.templateids = templateids
+        self.target_uniprot_entry_name = target_uniprot_entry_name
+        self.uniprot_domain_regex = uniprot_domain_regex
+        self.pdbids = pdbids
+        self.chainids = chainids
+        self.template_uniprot_query = template_uniprot_query
+        self.template_seqid_cutoff = template_seqid_cutoff
+        self.loopmodel = loopmodel
+        self.package_for_fah = package_for_fah
+        self.nfahclones = nfahclones
+        self.structure_dirs = structure_dirs
+
+        if (not self.targetid and not self.target_uniprot_entry_name) or (self.targetid and self.target_uniprot_entry_name):
+            raise Exception('Must specify either targetid or target_uniprot_entry_name.')
+
+        if not self.targetid:
+            if not self.target_uniprot_entry_name or not self.uniprot_domain_regex:
+                raise Exception('If no targetid is passed, must specify target_uniprot_entry_name and uniprot_domain_regex.')
+            uniprot_query_string = 'mnemonic:%s' % self.target_uniprot_entry_name
+            gather_targets_obj = ensembler.initproject.GatherTargetsFromUniProt(uniprot_query_string, uniprot_domain_regex=self.uniprot_domain_regex)
+            self.targetid = gather_targets_obj.targets[0].id
+
+        existing_templates = False
+        if os.path.exists(os.path.join(ensembler.core.default_project_dirnames.templates, 'templates-resolved-seq.fa')):
+            all_templates_resolved_seq, all_templates_full_seq = ensembler.core.get_templates()
+            if len(all_templates_resolved_seq) > 0:
+                existing_templates = True
+
+        if self.templateids:
+            if not existing_templates:
+                raise Exception('No existing templates found.')
+        elif self.pdbids:
+            ensembler.initproject.gather_templates_from_pdb(self.pdbids, self.uniprot_domain_regex, chainids=self.chainids, structure_dirs=self.structure_dirs)
+            templates_resolved_seq, templates_full_seq = ensembler.core.get_templates()
+            self.templateids = [t.id for t in templates_resolved_seq]
+        elif self.template_uniprot_query:
+            ensembler.initproject.gather_templates_from_uniprot(self.template_uniprot_query, self.uniprot_domain_regex, structure_dirs=self.structure_dirs)
+            self._align_all_templates(self.targetid)
+            self.templateids = self._select_templates_based_on_seqid_cutoff(self.targetid, seqid_cutoff=self.template_seqid_cutoff)
+        else:
+            if not existing_templates:
+                raise Exception('No existing templates found.')
+            self._align_all_templates(self.targetid)
+            self.templateids = self._select_templates_based_on_seqid_cutoff(self.targetid, seqid_cutoff=self.template_seqid_cutoff)
+
+        if not self.templateids or len(self.templateids) == 0:
+            warnings.warn('No templates found. Exiting.')
+            return
+
+        self._model(self.targetid, self.templateids, loopmodel=self.loopmodel, package_for_fah=self.package_for_fah, nfahclones=self.nfahclones)
+
     def _model(self, targetid, templateids, loopmodel=True, package_for_fah=False, nfahclones=None):
         if loopmodel:
             ensembler.modeling.model_template_loops(process_only_these_templates=templateids)
@@ -47,7 +106,7 @@ class QuickParentClass(object):
             'seqids': seqids,
             })
 
-        if not seqid_cutoff:
+        if seqid_cutoff is None:
             for cutoff in range(0, 101, 10):
                 ntemplates = len(df[df.seqids > cutoff])
                 print 'Number of templates with seqid > %d: %d' % (cutoff, ntemplates)
@@ -65,68 +124,3 @@ class QuickParentClass(object):
         templateids = list(selected_templates.templateids)
 
         return templateids
-
-
-class QuickModel(QuickParentClass):
-    def __init__(self, targetid, templateids=None, template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None):
-        """
-        Run this after having set up targets and templates with the appropriate ensembler commands.
-
-        :param targetid: str
-        :param templateids: list of str
-        :param template_seqid_cutoff:
-        :param package_for_fah:
-        :param nfahclones:
-        """
-        # super(QuickModel, self).__init__()
-
-        all_templates_resolved_seq, all_templates_full_seq = ensembler.core.get_templates()
-        if len(all_templates_resolved_seq) == 0:
-            warnings.warn('No templates found. Exiting.')
-            return
-
-        if not templateids:
-            self._align_all_templates(targetid)
-            templateids = self._select_templates_based_on_seqid_cutoff(targetid, seqid_cutoff=template_seqid_cutoff)
-
-        if len(templateids) == 0:
-            warnings.warn('No templates selected. Exiting.')
-            return
-
-        self._model(targetid, templateids, loopmodel=loopmodel, package_for_fah=package_for_fah, nfahclones=nfahclones)
-
-
-class QuickEnsemble(QuickParentClass):
-    def __init__(self, target_uniprot_entry_name, uniprot_domain_regex, pdbids=None, chainids=None, template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None, project_dir=None, structure_dirs=None):
-        """
-        Includes target and template retrieval.
-
-        :param target_uniprot_entry_name: str
-        :param uniprot_domain_regex: str
-        :param pdbids: list of str [pdbid, pdbid]
-        :param chainids: dict of list of str {'pdbid': ['chainid', 'chainid'], 'pdbid': []}
-        :param template_seqid_cutoff:
-        :param package_for_fah:
-        :param nfahclones:
-        """
-        # super(QuickEnsemble, self).__init__()
-        if project_dir:
-            os.chdir(project_dir)
-        ensembler.initproject.InitProject('.')
-
-        uniprot_query_string = 'mnemonic:%s' % target_uniprot_entry_name
-        gather_targets_obj = ensembler.initproject.GatherTargetsFromUniProt(uniprot_query_string, uniprot_domain_regex=uniprot_domain_regex)
-        targetids = [target.id for target in gather_targets_obj.targets]
-
-        for targetid in targetids:
-            if pdbids:
-                ensembler.initproject.gather_templates_from_pdb(pdbids, uniprot_domain_regex, chainids=chainids, structure_dirs=structure_dirs)
-                templates_resolved_seq, templates_full_seq = ensembler.core.get_templates()
-                templateids = [t.id for t in templates_resolved_seq]
-            else:
-                template_uniprot_query_string = 'domain:"%s" AND reviewed:yes' % uniprot_domain_regex
-                ensembler.initproject.gather_templates_from_uniprot(template_uniprot_query_string, uniprot_domain_regex, structure_dirs=structure_dirs)
-                self._align_all_templates(targetid)
-                templateids = self._select_templates_based_on_seqid_cutoff(targetid, seqid_cutoff=template_seqid_cutoff)
-
-            self._model(targetid, templateids, loopmodel=loopmodel, package_for_fah=package_for_fah, nfahclones=nfahclones)

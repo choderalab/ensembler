@@ -14,7 +14,6 @@ src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 
-project_metadata_filename = 'project-data.yaml'
 manual_overrides_filename = 'manual-overrides.yaml'
 
 template_acceptable_ratio_resolved_residues = 0.7
