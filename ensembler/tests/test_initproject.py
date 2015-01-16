@@ -32,6 +32,14 @@ def test_initproject():
 
 
 @attr('unit')
+def test_check_project_toplevel_dir():
+    with enter_temp_dir():
+        assert ensembler.core.check_project_toplevel_dir(raise_exception=False) == False
+        ensembler.initproject.InitProject('.')
+        assert ensembler.core.check_project_toplevel_dir(raise_exception=False) == True
+
+
+@attr('unit')
 def test_gen_init_metadata():
     initproject_obj = ensembler.initproject.InitProject('.', run_main=False)
     metadata = initproject_obj._gen_init_metadata()

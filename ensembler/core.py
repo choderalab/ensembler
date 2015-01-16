@@ -32,10 +32,18 @@ project_stages = [
     'package_for_fah',
 ]
 
-ProjectDirNames = namedtuple(
-    'ProjectDirNames',
-    ['targets', 'templates', 'structures', 'models', 'packaged_models', 'structures_pdb', 'structures_sifts', 'templates_structures_resolved', 'templates_structures_modeled_loops']
-)
+project_dirtypes = [
+    'targets',
+    'templates',
+    'structures', 'models',
+    'packaged_models',
+    'structures_pdb',
+    'structures_sifts',
+    'templates_structures_resolved',
+    'templates_structures_modeled_loops',
+]
+
+ProjectDirNames = namedtuple('ProjectDirNames',  project_dirtypes)
 
 default_project_dirnames = ProjectDirNames(
     targets='targets',
@@ -118,11 +126,16 @@ def strf_timedelta(delta_t):
     minutes, seconds = divmod(remainder, 60)
     return '%d:%d:%d' % (hours, minutes, seconds)
 
-def check_project_toplevel_dir():
+def check_project_toplevel_dir(raise_exception=True):
     import os
-    for dirpath in ['structures', 'templates', 'targets', 'models']:
+    for dirtype in project_dirtypes:
+        dirpath = getattr(default_project_dirnames, dirtype)
         if not os.path.exists(dirpath):
-            raise Exception, 'This is not the top-level directory of an Ensembler project.'
+            if raise_exception:
+                raise Exception('This is not the top-level directory of an Ensembler project.')
+            else:
+                return False
+    return True
 
 class LogFile:
     def __init__(self, log_filepath):

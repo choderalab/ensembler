@@ -39,6 +39,9 @@ class QuickModel(object):
         self.nfahclones = nfahclones
         self.structure_dirs = structure_dirs
 
+        if not ensembler.core.check_project_toplevel_dir(raise_exception=False):
+            ensembler.initproject.InitProject('.')
+
         if (not self.targetid and not self.target_uniprot_entry_name) or (self.targetid and self.target_uniprot_entry_name):
             raise Exception('Must specify either targetid or target_uniprot_entry_name.')
 
