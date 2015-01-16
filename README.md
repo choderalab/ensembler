@@ -2,6 +2,7 @@ Ensembler
 =========
 
 [![Binstar Badge](https://binstar.org/dannyparton/ensembler/badges/version.svg)](https://binstar.org/dannyparton/ensembler)
+[![Documentation Status](https://readthedocs.org/projects/ensembler/badge/?version=latest)](https://readthedocs.org/projects/ensembler/?badge=latest)
 
 Software pipeline used to generate diverse protein structural ensembles, for
 the purpose of seeding multiple parallel molecular dynamics simulations, and

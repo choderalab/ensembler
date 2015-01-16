@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Ensembler'
-copyright = u'2015, Daniel L. Parton and John D. Chodera'
+copyright = u'2015, Daniel L. Parton, John D. Chodera'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -199,7 +199,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'Ensembler.tex', u'Ensembler Documentation',
-   u'Daniel L. Parton and John D. Chodera', 'manual'),
+   u'Daniel L. Parton, John D. Chodera', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -229,7 +229,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'ensembler', u'Ensembler Documentation',
-     [u'Daniel L. Parton and John D. Chodera'], 1)
+     [u'Daniel L. Parton, John D. Chodera'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -243,7 +243,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'Ensembler', u'Ensembler Documentation',
-   u'Daniel L. Parton and John D. Chodera', 'Ensembler', 'One line description of project.',
+   u'Daniel L. Parton, John D. Chodera', 'Ensembler', 'One line description of project.',
    'Miscellaneous'),
 ]
 
