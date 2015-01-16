@@ -15,9 +15,16 @@ class QuickModel(object):
 
         :param targetid: str
         :param templateids: list of str
-        :param template_seqid_cutoff:
-        :param package_for_fah:
-        :param nfahclones:
+        :param target_uniprot_entry_name: str
+        :param uniprot_domain_regex: str
+        :param pdbids: list of str
+        :param chainids: dict {pdbid (str): [chainid (str)]}
+        :param template_uniprot_query: str
+        :param template_seqid_cutoff: float
+        :param loopmodel: boolean
+        :param package_for_fah: boolean
+        :param nfahclones: int
+        :param structure_dirs: list of str
         """
         self.targetid = targetid
         self.templateids = templateids
@@ -71,21 +78,6 @@ class QuickModel(object):
 
         self._model(self.targetid, self.templateids, loopmodel=self.loopmodel, package_for_fah=self.package_for_fah, nfahclones=self.nfahclones)
 
-    def _model(self, targetid, templateids, loopmodel=True, package_for_fah=False, nfahclones=None):
-        if loopmodel:
-            ensembler.modeling.model_template_loops(process_only_these_templates=templateids)
-        ensembler.modeling.align_targets_and_templates(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        ensembler.modeling.build_models(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        ensembler.modeling.cluster_models(process_only_these_targets=targetid)
-        ensembler.refinement.refine_implicit_md(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        ensembler.refinement.solvate_models(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        ensembler.refinement.determine_nwaters(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        ensembler.refinement.refine_explicitMD(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        if package_for_fah:
-            if not nfahclones:
-                nfahclones = 1
-            ensembler.packaging.package_for_fah(process_only_these_targets=targetid, nclones=nfahclones)
-
     def _align_all_templates(self, targetid):
         ensembler.modeling.align_targets_and_templates(process_only_these_targets=targetid)
 
@@ -124,3 +116,18 @@ class QuickModel(object):
         templateids = list(selected_templates.templateids)
 
         return templateids
+
+    def _model(self, targetid, templateids, loopmodel=True, package_for_fah=False, nfahclones=None):
+        if loopmodel:
+            ensembler.modeling.model_template_loops(process_only_these_templates=templateids)
+        ensembler.modeling.align_targets_and_templates(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        ensembler.modeling.build_models(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        ensembler.modeling.cluster_models(process_only_these_targets=targetid)
+        ensembler.refinement.refine_implicit_md(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        ensembler.refinement.solvate_models(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        ensembler.refinement.determine_nwaters(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        ensembler.refinement.refine_explicitMD(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        if package_for_fah:
+            if not nfahclones:
+                nfahclones = 1
+            ensembler.packaging.package_for_fah(process_only_these_targets=targetid, nclones=nfahclones)

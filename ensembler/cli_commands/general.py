@@ -15,9 +15,9 @@ Usage:
   ensembler refine_implicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>] [-v | --verbose]
   ensembler solvate [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [-v | --verbose]
   ensembler refine_explicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>] [-v | --verbose]
-  ensembler package_models [-h | --help] [--package_for <choice>] [--targets <target>] [--targetsfile <targetsfile>] [--nFAHclones <n>] [--archiveFAHproject]
+  ensembler package_models [-h | --help] [--package_for <choice>] [--targets <target>] [--targetsfile <targetsfile>] [--nfahclones <n>] [--archivefahproject]
   ensembler testrun_pipeline [-h | --help]
-  ensembler quickmodel [-h | --help] [--targetid <id>] [--templateids <ids>] [--target_uniprot_entry_name <entry_name>] [--uniprot_domain_regex <regex>] [--template_pdbids <pdbids>] [--template_chainids <chainids>] [--template_seqid_cutoff <cutoff>] [--no-loopmodel] [--package_for_fah] [--nfahclones <nfahclones>]
+  ensembler quickmodel [-h | --help] [--targetid <id>] [--templateids <ids>] [--target_uniprot_entry_name <entry_name>] [--uniprot_domain_regex <regex>] [--template_pdbids <pdbids>] [--template_chainids <chainids>] [--template_uniprot_query <query>] [--template_seqid_cutoff <cutoff>] [--no-loopmodel] [--package_for_fah] [--nfahclones <nfahclones>] [--structure_dirs <structure_dirs>]
 
 Commands:
   init                          Initialize a new Ensembler project

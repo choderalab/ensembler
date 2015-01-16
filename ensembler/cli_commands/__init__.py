@@ -11,6 +11,7 @@ command_list = [
     'solvate',
     'refine_explicit',
     'package_models',
+    'quickmodel',
 ]
 
 import general
@@ -26,3 +27,4 @@ import refine_implicit
 import solvate
 import refine_explicit
 import package_models
+import quickmodel

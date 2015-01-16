@@ -648,7 +648,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
                     chain_spans = ensembler.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
 
                     for chainid in chain_spans.keys():
-                        if specified_chainids and chainid not in specified_chainids[pdbid]:
+                        if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
                             continue
                         span = chain_spans[chainid]
                         if (span[0] < domain_span[0] + 30) & (span[1] > domain_span[1] - 30):

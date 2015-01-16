@@ -12,9 +12,9 @@ helpstring_unique_options = [
                                         - transfer: compress results into a single .tgz file
                                         - FAH: set-up the input files and directory structure necessary to start a Folding@Home project.""",
     """\
-  --nFAHclones <n>                      If packaging for Folding@Home, select the number of clones to use for each model [default: 1].""",
+  --nfahclones <n>                      If packaging for Folding@Home, select the number of clones to use for each model [default: 1].""",
     """\
-  --archiveFAHproject                If packaging for Folding@Home, choose whether to compress the results into a .tgz file.""",
+  --archivefahproject                If packaging for Folding@Home, choose whether to compress the results into a .tgz file.""",
 ]
 
 helpstring_nonunique_options = [
@@ -41,12 +41,12 @@ def dispatch(args):
     else:
         targets = False
 
-    if args['--nFAHclones']:
-        n_fah_clones = int(args['--nFAHclones'])
+    if args['--nfahclones']:
+        n_fah_clones = int(args['--nfahclones'])
     else:
         n_fah_clones = 1
 
-    if args['--archiveFAHproject']:
+    if args['--archivefahproject']:
         archive = True
     else:
         archive = False
