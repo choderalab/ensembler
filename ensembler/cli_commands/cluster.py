@@ -3,6 +3,7 @@ import ensembler.modeling
 
 helpstring_header = """\
 Performs clustering to filter out non-unique models.
+Runs serially.
 
 Options."""
 
