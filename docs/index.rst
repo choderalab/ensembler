@@ -6,9 +6,18 @@
 Ensembler
 =====================================
 
-*Software pipeline for generating diverse set of comparative models useful for seeding Markov state models.*
+*Software pipeline for generating diverse protein configurational ensembles
+from genomic and structural data, suitable for seeding highly parallel
+molecular simulations.*
 
-Contents:
+
+License
+-------
+Ensembler is licensed under the GNU General Public License (GPL) v2.0.
+
+.. raw:: html
+
+   <div style="display:none">
 
 .. toctree::
    :maxdepth: 2
@@ -16,11 +25,7 @@ Contents:
    getting_started
 
 
+.. raw:: html
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   </div>
 
