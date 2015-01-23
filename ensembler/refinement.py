@@ -4,6 +4,7 @@ import traceback
 import gzip
 import sys
 import subprocess
+import yaml
 import numpy as np
 import Bio
 import ensembler
@@ -26,7 +27,8 @@ def refine_implicit_md(
         cutoff=None,                                  # nonbonded cutoff
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
-        pH=8.0):
+        pH=8.0,
+        retry_failed_runs=False):
     # TODO - refactor
     '''Run MD refinement in implicit solvent.
 
@@ -202,8 +204,12 @@ def refine_implicit_md(
             if not unique_by_clustering: continue
 
             # Pass if this simulation has already been run.
-            pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
-            if os.path.exists(pdb_filename): continue
+            log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
+            if os.path.exists(log_filepath):
+                with open(log_filepath) as log_file:
+                    log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
+                    if log_data.get('finished') is True and (retry_failed_runs is False and log_data.get('successful') is False):
+                        continue
 
             # Check to make sure the initial model file is present.
             model_filename = os.path.join(model_dir, 'model.pdb.gz')
@@ -221,9 +227,8 @@ def refine_implicit_md(
                 'gpuid': gpuid,
                 'openmm_platform': openmm_platform,
                 'sim_length': '%s' % sim_length,
-                'complete': False,
+                'finished': False,
                 }
-            log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
             log_file = ensembler.core.LogFile(log_filepath)
             log_file.log(new_log_data=log_data)
 
@@ -233,8 +238,9 @@ def refine_implicit_md(
                 end = datetime.datetime.utcnow()
                 timing = ensembler.core.strf_timedelta(end - start)
                 log_data = {
-                    'complete': True,
+                    'finished': True,
                     'timing': timing,
+                    'successful': True,
                     }
                 log_file.log(new_log_data=log_data)
             except Exception as e:
@@ -242,6 +248,8 @@ def refine_implicit_md(
                 log_data = {
                     'exception': e,
                     'traceback': ensembler.core.literal_str(trbk),
+                    'finished': True,
+                    'successful': False,
                     }
                 log_file.log(new_log_data=log_data)
 
