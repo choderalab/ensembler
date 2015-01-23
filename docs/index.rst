@@ -24,6 +24,9 @@ Ensembler is licensed under the GNU General Public License (GPL) v2.0.
 
    getting_started
 
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
 
 .. raw:: html
 
