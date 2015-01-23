@@ -37,3 +37,13 @@ init
 
 This sets up an Ensembler project in the current working directory. It creates
 a number of directories and a metadata file (meta0.yaml).
+
+gather_templates
+================
+
+::
+
+  $ ensembler gather_targets
+
+.. TODO ideally would generate this from docstrings
+.. For now, could just give a brief overview of each command, and suggest people use the "-h" flag for further details
