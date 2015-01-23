@@ -155,7 +155,7 @@ run the unit tests with: ::
 
 There is also a suite of integration tests, which test interoperation of
 Ensembler with software dependencies such as Modeller and Rosetta loopmodel, or
-external databases such as UniProt. Many of these tests run much more slowly
+external databases such as UniProt. Note that many of these tests run much more slowly
 than the unit tests. To run them: ::
 
   $ nosetests -a integration
