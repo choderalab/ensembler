@@ -1,4 +1,4 @@
-ng-started:
+.. _getting-started:
 
 ************
 Installation
