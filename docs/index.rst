@@ -6,12 +6,14 @@
 Ensembler
 =====================================
 
-Software pipeline for generating diverse set of comparative models useful for seeding Markov state models.
+*Software pipeline for generating diverse set of comparative models useful for seeding Markov state models.*
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
+
+   getting_started
 
 
 
