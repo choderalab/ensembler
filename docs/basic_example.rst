@@ -1,8 +1,8 @@
 .. _basic_example:
 
-*************
-Basic Example
-*************
+*******************
+Basic Usage Example
+*******************
 
 ::
 
