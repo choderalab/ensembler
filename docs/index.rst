@@ -35,6 +35,8 @@ Ensembler is licensed under the GNU General Public License (GPL) v2.0.
    :maxdepth: 2
 
    getting_started
+   usage
+   examples
 
 .. * :ref:`genindex`
 .. * :ref:`modindex`

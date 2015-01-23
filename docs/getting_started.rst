@@ -18,7 +18,7 @@ Install with Conda
 ------------------
 .. _install-with-conda:
 
-`conda <http://www.continuum.io/blog/conda>`_ is a python package manager built for scientific python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows. If you're a ``conda`` user, you can install Ensembler by adding the relevant channel. If you're not a conda user, you should look into it. ::
+`conda <http://www.continuum.io/blog/conda>`_ is a python package manager built for scientific python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows. If you're a ``conda`` user, you can install Ensembler by adding the relevant channel. If you're not a conda user, you should look into it.
 
 To install Ensembler with conda, use the following commands ::
 
@@ -30,7 +30,7 @@ To install Ensembler with conda, use the following commands ::
 
 Install from Source
 -------------------
-Clone the source code repository from github::
+Clone the source code repository from github ::
 
   $ git clone git://github.com/choderalab/ensembler.git
 
@@ -62,7 +62,7 @@ To use Ensembler, the following libraries and software will need to be installed
 
     `BioPython <http://biopython.org/wiki/Main_Page>`_
         Collection of Python tools for computational biology and
-    bioinformatics.
+        bioinformatics.
 
     `NumPy <http://numpy.scipy.org/>`_
         Numpy is the base package for numerical computing in python.
@@ -83,17 +83,17 @@ Optional packages:
 
     `Rosetta <https://www.rosettacommons.org/software>`_
         Protein modeling suite. The ``loopmodel`` function is optionally used
-    by Ensembler to reconstruct missing loops in template structures.
+        by Ensembler to reconstruct missing loops in template structures.
 
     `subprocess32 <https://pypi.python.org/pypi/subprocess32/>`_
         Backport of the Python 3 subprocess module for Python 2. Used to run
-    command-line programs such as Rosetta loopmodel. Includes timeout
-    functionality which is particularly useful for the template loop
-    reconstruction routine.
+        command-line programs such as Rosetta loopmodel. Includes timeout
+        functionality which is particularly useful for the template loop
+        reconstruction routine.
 
     `Pandas <http://pandas.pydata.org>`_
         Some functionality, including the ``quickmodel`` and ``inspect``
-    functions, requires pandas.
+        functions, requires pandas.
 
 Avoid Hassles with Anaconda or Canopy
 -------------------------------------
@@ -122,7 +122,7 @@ If you're on ubuntu and have root, you can install most dependencies through you
 
 Mac
 +++
-If you're on mac and want a package manager, you should be using `homebrew <http://mxcl.github.io/homebrew/>`_ and ``brews``'s python (see `this page <https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python>`_ for details). For example, numpy can be installed with ``brew`` as follows:
+If you're on mac and want a package manager, you should be using `homebrew <http://mxcl.github.io/homebrew/>`_ and ``brews``'s python (see `this page <https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python>`_ for details). For example, numpy can be installed with ``brew`` as follows: ::
 
   $ brew tap Homebrew/python
   $ brew install python
@@ -148,14 +148,14 @@ pick up via ``conda`` or ``pip`` if you don't already have it. ::
 
 Currently, the best way to run the tests is to go to the Ensembler installation
 directory (e.g.
-~/anaconda/lib/python2.7/site-packages/ensembler-0.2-py2.7.egg/ensembler) and
-run the unit tests with:
+``~/anaconda/lib/python2.7/site-packages/ensembler-0.2-py2.7.egg/ensembler``) and
+run the unit tests with: ::
 
   $ nosetests -a unit
 
 There is also a suite of integration tests, which test interoperation of
 Ensembler with software dependencies such as Modeller and Rosetta loopmodel, or
 external databases such as UniProt. Many of these tests run much more slowly
-than the unit tests. To run them:
+than the unit tests. To run them: ::
 
   $ nosetests -a integration
