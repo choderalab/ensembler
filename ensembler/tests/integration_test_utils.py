@@ -57,3 +57,19 @@ class SetUpProjectStageMethods:
                     os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, template, 'alignment.pir'),
                     os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target, template, 'alignment.pir')
                 )
+
+    def modeled(self):
+        self.aligned()
+        for target in self.targets_list:
+            for template in self.templates_list:
+                for filename in [
+                    'model.pdb',
+                    'model.pdb.gz',
+                    'modeling-log.yaml',
+                    'restraints.rsr.gz',
+                    'sequence-identity.txt',
+                ]:
+                    shutil.copy(
+                        os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, template, filename),
+                        os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target, template, filename)
+                    )
