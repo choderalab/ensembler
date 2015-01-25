@@ -150,7 +150,8 @@ def refine_implicit_md(
         models_target_dir = os.path.join(models_dir, target.id)
         if mpistate.rank == 0:
             target_starttime = datetime.datetime.utcnow()
-            if not os.path.exists(models_target_dir): continue
+            if not os.path.exists(models_target_dir):
+                continue
 
         mpistate.comm.Barrier()
 
@@ -764,12 +765,13 @@ def refine_explicitMD(
 
 
     for target in targets:
-        if process_only_these_targets and (target.id not in process_only_these_targets): continue
+        if process_only_these_targets and (target.id not in process_only_these_targets):
+            continue
+        models_target_dir = os.path.join(models_dir, target.id)
         if mpistate.rank == 0:
-            import datetime
             target_starttime = datetime.datetime.utcnow()
-            models_target_dir = os.path.join(models_dir, target.id)
-            if not os.path.exists(models_target_dir): continue
+            if not os.path.exists(models_target_dir):
+                continue
 
         mpistate.comm.Barrier()
 
