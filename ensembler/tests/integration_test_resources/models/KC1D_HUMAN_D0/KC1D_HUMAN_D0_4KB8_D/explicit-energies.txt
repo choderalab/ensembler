@@ -1,0 +1,2 @@
+# iteration | simulation time (ps) | potential_energy (kT) | kinetic_energy (kT) | volume (nm^3) | ns per day
+         0      1.0 -211073.658 44994.917 495.302 31.776
