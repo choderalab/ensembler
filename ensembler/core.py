@@ -129,6 +129,8 @@ def strf_timedelta(delta_t):
 def check_project_toplevel_dir(raise_exception=True):
     import os
     for dirtype in project_dirtypes:
+        if dirtype == 'packaged_models':
+            continue
         dirpath = getattr(default_project_dirnames, dirtype)
         if not os.path.exists(dirpath):
             warnings.warn('Directory %s not found' % dirpath)
