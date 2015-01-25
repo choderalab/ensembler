@@ -131,6 +131,7 @@ def check_project_toplevel_dir(raise_exception=True):
     for dirtype in project_dirtypes:
         dirpath = getattr(default_project_dirnames, dirtype)
         if not os.path.exists(dirpath):
+            warnings.warn('Directory %s not found' % dirpath)
             if raise_exception:
                 raise Exception('This is not the top-level directory of an Ensembler project.')
             else:
