@@ -4,6 +4,7 @@ import traceback
 import gzip
 import sys
 import subprocess
+import yaml
 import numpy as np
 import Bio
 import ensembler
@@ -26,7 +27,8 @@ def refine_implicit_md(
         cutoff=None,                                  # nonbonded cutoff
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
-        pH=8.0):
+        pH=8.0,
+        retry_failed_runs=False):
     # TODO - refactor
     '''Run MD refinement in implicit solvent.
 
@@ -202,14 +204,22 @@ def refine_implicit_md(
             if not unique_by_clustering: continue
 
             # Pass if this simulation has already been run.
-            pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
-            if os.path.exists(pdb_filename): continue
+            log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
+            if os.path.exists(log_filepath):
+                with open(log_filepath) as log_file:
+                    log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
+                    if log_data.get('successful') is True:
+                        continue
+                    if log_data.get('finished') is True and (retry_failed_runs is False and log_data.get('successful') is False):
+                        continue
 
             # Check to make sure the initial model file is present.
             model_filename = os.path.join(model_dir, 'model.pdb.gz')
             if not os.path.exists(model_filename):
                 if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template, mpistate.rank, gpuid)
                 continue
+
+            pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
 
             print "-------------------------------------------------------------------------"
             print "Simulating %s => %s in implicit solvent for %.1f ps (MPI rank: %d, GPU ID: %d)" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds, mpistate.rank, gpuid)
@@ -221,27 +231,30 @@ def refine_implicit_md(
                 'gpuid': gpuid,
                 'openmm_platform': openmm_platform,
                 'sim_length': '%s' % sim_length,
-                'complete': False,
+                'finished': False,
                 }
-            log_filepath = os.path.join(model_dir, 'implicit-log.yaml')
             log_file = ensembler.core.LogFile(log_filepath)
             log_file.log(new_log_data=log_data)
 
             try:
                 start = datetime.datetime.utcnow()
                 simulate_implicitMD()
-                end = datetime.datetime.utcnow()
-                timing = ensembler.core.strf_timedelta(end - start)
+                timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
-                    'complete': True,
+                    'finished': True,
                     'timing': timing,
+                    'successful': True,
                     }
                 log_file.log(new_log_data=log_data)
             except Exception as e:
                 trbk = traceback.format_exc()
+                timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
                     'exception': e,
                     'traceback': ensembler.core.literal_str(trbk),
+                    'timing': timing,
+                    'finished': True,
+                    'successful': False,
                     }
                 log_file.log(new_log_data=log_data)
 
@@ -505,7 +518,8 @@ def refine_explicitMD(
         barostat_period=50,
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
-        write_solvated_model=False, careful_cleaning=True):
+        write_solvated_model=False, careful_cleaning=True,
+        retry_failed_runs=False):
     '''Run MD refinement in explicit solvent.
 
     MPI-enabled.
@@ -780,58 +794,75 @@ def refine_explicitMD(
             unique_by_clustering = os.path.exists(os.path.join(model_dir, 'unique_by_clustering'))
             if not unique_by_clustering: continue
 
+            # Pass if this simulation has already been run.
+            log_filepath = os.path.join(model_dir, 'explicit-log.yaml')
+            if os.path.exists(log_filepath):
+                with open(log_filepath) as log_file:
+                    log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
+                    if log_data.get('successful') is True:
+                        continue
+                    if log_data.get('finished') is True and (retry_failed_runs is False and log_data.get('successful') is False):
+                        continue
+
             # Check to make sure the initial model file is present.
             model_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
-            if not os.path.exists(model_filename): continue
+            if not os.path.exists(model_filename):
+                if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template, mpistate.rank, gpuid)
+                continue
 
-            # Check if explicit solvent results are already available and usable.
             pdb_filename = os.path.join(model_dir, 'explicit-refined.pdb.gz')
             system_filename = os.path.join(model_dir, 'explicit-system.xml')
             integrator_filename = os.path.join(model_dir, 'explicit-integrator.xml')
             state_filename = os.path.join(model_dir, 'explicit-state.xml')
-            if os.path.exists(pdb_filename) and (os.path.exists(system_filename) or os.path.exists(system_filename+'.gz')) and (os.path.exists(integrator_filename) or os.path.exists(integrator_filename+'.gz')) and (os.path.exists(state_filename) or os.path.exists(state_filename+'.gz')):
-                # If not using 'careful mode', just continue.
-                if not careful_cleaning:
-                    continue
-
-                # Check if we can deserialize explicit solvent files.
-                try:
-                    system     = openmm.XmlSerializer.deserialize(readFileContents(system_filename))
-                    state      = openmm.XmlSerializer.deserialize(readFileContents(state_filename))
-                    # Serialized objects are OK---skip.
-                    continue
-                except Exception as e:
-                    print e
-                    # Attempt to delete the problematic files.
-                    for filename in [system_filename, state_filename]:
-                        try:
-                            os.remove(filename)
-                        except:
-                            print e
-                    # Now try to solvate and simulate model.
-                    pass
 
             print "-------------------------------------------------------------------------"
             print "Simulating %s => %s in explicit solvent for %.1f ps" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
             print "-------------------------------------------------------------------------"
 
+            # Open log file
+            log_data = {
+                'mpi_rank': mpistate.rank,
+                'gpuid': gpuid,
+                'openmm_platform': openmm_platform,
+                'sim_length': '%s' % sim_length,
+                'finished': False,
+                }
+            log_file = ensembler.core.LogFile(log_filepath)
+            log_file.log(new_log_data=log_data)
+
             try:
-                if verbose: print "Reading model..."
+                start = datetime.datetime.utcnow()
+
                 with gzip.open(model_filename) as model_file:
                     pdb = app.PDBFile(model_file)
-
-                if verbose: print "Solvating model to achieve target of %d waters..." % nwaters
                 [positions, topology] = solvate_pdb(pdb, nwaters)
 
                 simulate_explicitMD()
 
+                timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
+                log_data = {
+                    'finished': True,
+                    'timing': timing,
+                    'successful': True,
+                    }
+                log_file.log(new_log_data=log_data)
+
             except Exception as e:
-                reject_file_path = os.path.join(model_dir, 'explicit-rejected.txt')
-                exception_text = '%r' % e
                 trbk = traceback.format_exc()
-                with open(reject_file_path, 'w') as reject_file:
-                    reject_file.write(exception_text + '\n')
-                    reject_file.write(trbk + '\n')
+                timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
+                log_data = {
+                    'exception': e,
+                    'traceback': ensembler.core.literal_str(trbk),
+                    'timing': timing,
+                    'finished': True,
+                    'successful': False,
+                    }
+                log_file.log(new_log_data=log_data)
+
+        if verbose:
+            print 'Finished template loop: rank %d' % mpistate.rank
+
+        mpistate.comm.Barrier()
 
         if mpistate.rank == 0:
             project_metadata = ensembler.core.ProjectMetadata(project_stage='refine_explicit_md', target_id=target.id)
