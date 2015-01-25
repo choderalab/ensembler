@@ -21,6 +21,8 @@ helpstring_nonunique_options = [
     """\
   --simlength <simlength>         Simulation length (ps) [default: 100.0].""",
     """\
+  --retry_failed_runs             """,
+    """\
   -v --verbose                    """,
 ]
 
@@ -56,4 +58,4 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.refinement.refine_explicitMD(openmm_platform=args['--openmm_platform'], gpupn=gpupn, sim_length=sim_length, process_only_these_targets=targets, process_only_these_templates=templates, verbose=args['--verbose'])
+    ensembler.refinement.refine_explicitMD(openmm_platform=args['--openmm_platform'], gpupn=gpupn, sim_length=sim_length, process_only_these_targets=targets, process_only_these_templates=templates, retry_failed_runs=args['--retry_failed_runs'], verbose=args['--verbose'])
