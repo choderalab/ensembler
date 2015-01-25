@@ -12,7 +12,7 @@ Usage:
   ensembler align [-h | --help] [--targets <targets>] [--targetsfile <targetsfile>] [--templates <templates>] [-v | --verbose]
   ensembler build_models [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [-v | --verbose]
   ensembler cluster [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [-v | --verbose]
-  ensembler refine_implicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>] [-v | --verbose]
+  ensembler refine_implicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>] [--retry_failed_runs] [-v | --verbose]
   ensembler solvate [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [-v | --verbose]
   ensembler refine_explicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>] [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>] [-v | --verbose]
   ensembler package_models [-h | --help] [--package_for <choice>] [--targets <target>] [--targetsfile <targetsfile>] [--nfahclones <n>] [--archivefahproject]

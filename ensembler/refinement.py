@@ -208,6 +208,8 @@ def refine_implicit_md(
             if os.path.exists(log_filepath):
                 with open(log_filepath) as log_file:
                     log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
+                    if log_data.get('successful') is True:
+                        continue
                     if log_data.get('finished') is True and (retry_failed_runs is False and log_data.get('successful') is False):
                         continue
 
@@ -216,6 +218,8 @@ def refine_implicit_md(
             if not os.path.exists(model_filename):
                 if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template, mpistate.rank, gpuid)
                 continue
+
+            pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
 
             print "-------------------------------------------------------------------------"
             print "Simulating %s => %s in implicit solvent for %.1f ps (MPI rank: %d, GPU ID: %d)" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds, mpistate.rank, gpuid)
@@ -235,8 +239,7 @@ def refine_implicit_md(
             try:
                 start = datetime.datetime.utcnow()
                 simulate_implicitMD()
-                end = datetime.datetime.utcnow()
-                timing = ensembler.core.strf_timedelta(end - start)
+                timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
                     'finished': True,
                     'timing': timing,
@@ -245,9 +248,11 @@ def refine_implicit_md(
                 log_file.log(new_log_data=log_data)
             except Exception as e:
                 trbk = traceback.format_exc()
+                timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
                     'exception': e,
                     'traceback': ensembler.core.literal_str(trbk),
+                    'timing': timing,
                     'finished': True,
                     'successful': False,
                     }
