@@ -165,17 +165,26 @@ def refine_implicit_md(
             print 'ERROR: sequence-identities.txt file not found at path %s' % seqids_filepath
             continue
         with open(seqids_filepath, 'r') as seqids_file:
-            contents = seqids_file.readline() # first line is highest sequence identity
-        [reference_template, reference_identity] = contents.split()
-        if verbose: print "Using %s as highest identity model (%s%%)" % (reference_template, reference_identity)
+            seqids_data = [line.split() for line in seqids_file.readlines()]
 
-        # Read PDB for reference model.
-        reference_pdb_filepath = os.path.join(models_target_dir, reference_template, 'model.pdb.gz')
-        if not os.path.exists(reference_pdb_filepath):
-            print 'ERROR: reference PDB model not found at path %s' % reference_pdb_filepath
-            continue
-        with gzip.open(reference_pdb_filepath) as reference_pdb_file:
-            reference_pdb = app.PDBFile(reference_pdb_file)
+        reference_pdb_found = False
+        for seqid_data in seqids_data:
+            reference_template, reference_identity = seqid_data
+            reference_pdb_filepath = os.path.join(models_target_dir, reference_template, 'model.pdb.gz')
+            if not os.path.exists(reference_pdb_filepath):
+                continue
+
+            with gzip.open(reference_pdb_filepath) as reference_pdb_file:
+                reference_pdb = app.PDBFile(reference_pdb_file)
+
+            if verbose:
+                print "Using %s as highest identity model (%s%%)" % (reference_template, reference_identity)
+
+            reference_pdb_found = True
+            break
+
+        if not reference_pdb_found:
+            print 'ERROR: reference PDB model not found at path'
 
         # Add missing protons.
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
