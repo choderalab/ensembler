@@ -49,16 +49,16 @@ License
 -------
 Ensembler is licensed under the GNU General Public License (GPL) v2.0.
 
+.. raw:: html
+
+   <div style="display:none">
+
 .. toctree::
    :maxdepth: 2
 
    installation
    basic_example
    cli_usage
-
-.. raw:: html
-
-   <div style="display:none">
 
 .. raw:: html
 
