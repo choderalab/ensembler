@@ -1,8 +1,8 @@
 .. _cli_usage:
 
-**********************
-Command-Line Interface
-**********************
+************************************
+Command-Line Interface Documentation
+************************************
 
 Overview
 ========

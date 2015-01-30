@@ -13,7 +13,7 @@ Ensembler
 configurational ensembles suitable for seeding highly parallel molecular
 simulations.*
 
-Ensembler:
+Ensembler maps a set of target sequences onto a set of template structures, and shepherds the resulting models through a series of successive refinement and filtering stages. This:
 
  - Automates the time-consuming process of setting up protein systems for molecular simulation
  - Exploits the entire variety of available genomic and structural data to provide diverse arrays of configurational models
@@ -37,14 +37,14 @@ Ensembler can be run on a single computer or on a parallel compute cluster, and 
 Overview of the Ensembler Pipeline
 ----------------------------------
 
-1. Gather protein target sequences and template structures
-2. (*optional*) Reconstruct missing template loops, using ``Rosetta loopmodel``
-3. Build models by mapping each target sequence onto each available template structure, using ``Modeller``
+1. Retrieval of protein target sequences and template structures, e.g. from `UniProt <http://www.uniprot.org/>`_ and the `PDB <http://www.pdb.org>`_
+2. (*optional*) Reconstruction of missing template loops
+3. Model generation - each target sequence is mapped onto each available template structure
 4. Culling of models based on close structural similarity
-5. Refinement with implicit solvent molecular dynamics simulation, using ``OpenMM``
-6. Solvate models
-7. (*optional*) Refinement with explicit solvent molecular dynamics simulation, using ``OpenMM``
-8. (*optional*) Package models, ready for transfer or set-up on other platforms such as ``Folding@Home``
+5. Refinement with implicit solvent molecular dynamics simulation
+6. Solvation of models with explicit water
+7. (*optional*) Refinement with explicit solvent molecular dynamics simulation
+8. (*optional*) Packaging of models, ready for transfer or set-up on production simulation platforms such as ``Folding@Home``
 
 
 License
@@ -59,7 +59,7 @@ Ensembler is licensed under the GNU General Public License (GPL) v2.0.
    :maxdepth: 2
 
    installation
-   basic_example
+   examples
    cli_usage
 
 .. raw:: html

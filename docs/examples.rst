@@ -1,8 +1,8 @@
-.. _basic_example:
+.. _examples:
 
-***************************
-Two Examples of Basic Usage
-***************************
+**************
+Usage Examples
+**************
 
 Example using the quickmodel function
 =====================================
