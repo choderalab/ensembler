@@ -1,4 +1,4 @@
-.. _cli_usage:
+.. _cli_docs
 
 ************************************
 Command-Line Interface Documentation

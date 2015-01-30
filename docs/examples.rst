@@ -4,6 +4,16 @@
 Usage Examples
 **************
 
+There are two main ways to use the Ensembler command-line interface. The
+``quickmodel`` function performs the entire modeling pipeline in one go, and is
+designed to work with only a few targets and templates. For generating larger
+numbers of models (such as entire protein families), the main pipeline
+functions should be used. These perform each stage of the modeling process
+individually, and the most computationally intensive stages can be run in
+parallel to increase performance.
+
+For further details on their usage, see the main :ref:`command-line interface documentation <cli_docs>`.
+
 Example using the quickmodel function
 =====================================
 

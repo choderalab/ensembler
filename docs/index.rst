@@ -26,7 +26,7 @@ beneficial when used in conjunction with recent techniques for constructing
 kinetic models, such as Markov state models, which can generate insight from
 multiple independent simulation trajectories.
 
-Ensembler can be run on a single computer or on a parallel compute cluster, and makes use of a number of external packages:
+Ensembler can be used *via* the command-line application (``ensembler``) or scripted *via* the API, can be run on a single computer or on a parallel compute cluster, and makes use of a number of external packages:
 
  - `Modeller <https://salilab.org/modeller>`_ for comparative modeling of target sequences onto template structures
  - `Rosetta <https://www.rosettacommons.org/software>`_ loopmodel for reconstruction of missing template loops
@@ -60,7 +60,7 @@ Ensembler is licensed under the GNU General Public License (GPL) v2.0.
 
    installation
    examples
-   cli_usage
+   cli_docs
 
 .. raw:: html
 
