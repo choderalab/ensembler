@@ -14,6 +14,7 @@ configurational ensembles suitable for seeding highly parallel molecular
 simulations.*
 
 Ensembler:
+
  - Automates the time-consuming process of setting up protein systems for molecular simulation
  - Exploits the entire variety of available genomic and structural data to provide diverse arrays of configurational models
  - Allows the study of proteins across entire (super)families
@@ -26,6 +27,7 @@ kinetic models, such as Markov state models, which can generate insight from
 multiple independent simulation trajectories.
 
 Ensembler can be run on a single computer or on a parallel compute cluster, and makes use of a number of external packages:
+
  - `Modeller <https://salilab.org/modeller>`_ for comparative modeling of target sequences onto template structures
  - `Rosetta <https://www.rosettacommons.org/software>`_ loopmodel for reconstruction of missing template loops
  - `OpenMM <https://simtk.org/home/openmm>`_ for model refinement with highly efficient, GPU-acclerated, molecular dynamics simulation
