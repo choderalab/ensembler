@@ -7,17 +7,22 @@ Runs serially.
 
 Options."""
 
+helpstring_unique_options = [
+    """\
+  --cutoff <cutoff>               Minimum distance cutoff for RMSD-based clustering (nm) (default: 0.06)""",
+]
+
 helpstring_nonunique_options = [
     """\
   --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
     """\
-  --targets <target>       Define one or more comma-separated target IDs to work on (e.g. "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0") (default: all targets)""",
+  --targets <target>              Define one or more comma-separated target IDs to work on (e.g. "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0") (default: all targets)""",
     """\
   -v --verbose                """,
 ]
 
-helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_nonunique_options)])
-docopt_helpstring = ''
+helpstring = '\n\n'.join([helpstring_header,  '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
+docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 def dispatch(args):
     if args['--targetsfile']:

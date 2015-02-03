@@ -652,9 +652,15 @@ def write_build_models_metadata(target, target_setup_data, process_only_these_ta
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
 @ensembler.utils.notify_when_done
-def cluster_models(process_only_these_targets=None, verbose=False):
+def cluster_models(process_only_these_targets=None, verbose=False, cutoff=0.06):
     '''Cluster models based on RMSD, and filter out non-unique models as
     determined by a given cutoff.
+
+    Parameters
+    ----------
+
+    cutoff : float
+        Minimum distance cutoff for RMSD clustering (nm)
 
     Runs serially.
     '''
@@ -662,7 +668,7 @@ def cluster_models(process_only_these_targets=None, verbose=False):
     import mdtraj
     targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
     templates = templates_resolved_seq
-    cutoff = 0.06 # Cutoff for RMSD clustering (nm)
+    cutoff = 0.06   # Cutoff for RMSD clustering (nm)
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
@@ -716,13 +722,15 @@ def cluster_models(process_only_these_targets=None, verbose=False):
             # Add the first template to the list of uniques
             if t==0:
                 uniques.append(templateID)
-                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
+                with open(os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file:
+                    pass
                 continue
 
             # Cluster using CA atoms
             CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
             rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
-            min_rmsd.append( min(rmsds) )
+            import ipdb; ipdb.set_trace()
+            min_rmsd.append(min(rmsds))
 
             if min_rmsd[-1] < cutoff:
                 continue

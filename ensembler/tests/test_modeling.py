@@ -98,3 +98,9 @@ def test_build_models_command():
         ensembler.cli_commands.build_models.dispatch(args)
         assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4KB8_D', 'model.pdb'))
         assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4HNF_A', 'model.pdb'))
+
+
+@attr('unit')
+def test_cluster_models():
+    with integration_test_context(set_up_project_stage='modeled'):
+        ensembler.modeling.cluster_models()
