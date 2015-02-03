@@ -1,3 +1,5 @@
+.. _index
+
 .. Ensembler documentation master file, created by
    sphinx-quickstart on Fri Jan 16 17:34:52 2015.
    You can adapt this file completely to your liking, but it should at least
@@ -61,6 +63,7 @@ Ensembler is licensed under the GNU General Public License (GPL) v2.0.
 .. toctree::
    :maxdepth: 2
 
+   index
    installation
    examples
    cli_docs
