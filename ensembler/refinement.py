@@ -316,11 +316,13 @@ def auto_select_openmm_platform():
     raise Exception('No OpenMM platform found')
 
 
-def solvate_models(process_only_these_targets=None, process_only_these_templates=None, verbose=False):
+def solvate_models(process_only_these_targets=None, process_only_these_templates=None, verbose=False, padding=None):
     '''Solvate models which have been through MD refinement with implict solvent.
 
     MPI-enabled.
     '''
+    if padding is None:
+        padding = 10.0 * unit.angstroms
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
@@ -333,7 +335,6 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
     #box_width = 90.0 * unit.angstroms
     #boxsize = box_width * openmm.Vec3(1,1,1)
-    padding = 10.0 * unit.angstroms
 
     forcefield = app.ForceField(*forcefields_to_use)
 

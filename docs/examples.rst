@@ -73,3 +73,17 @@ Creates models by mapping each target sequence onto each template structure, usi
 ::
 
   $ ensembler cluster
+
+Filters out non-unique models by clustering on RMSD. A default cutoff of 0.06 nm is used. Unique models are given an empty file ``unique_by_clustering`` in their model directory.
+
+::
+
+  $ ensembler refine_implicit
+
+Refines models by performing an energy minimization followed by a short molecular dynamics simulation (default: 100 ps) with implicit solvent (Generalized Born surface area), using ``OpenMM``. The final structure is written to the compressed PDB file ``implicit-refined.pdb.gz``.
+
+::
+
+  $ ensembler solvate
+
+Solvates each model in a box of explicit water molecules. Each model is solvated individually with a given padding distance (default: 1 nm). 
