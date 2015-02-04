@@ -3,7 +3,8 @@ import ensembler
 import ensembler.initproject
 
 helpstring_header = """\
-Gather template protein data - IDs, sequences and structures.
+Gather template protein data from a specified resource, such as UniProt or a TargetExplorer
+database.
 
 Options:"""
 
@@ -11,54 +12,66 @@ gather_from_options = ['targetexplorer', 'uniprot', 'pdb']
 
 helpstring_nonunique_options = [
     """\
-  --gather_from <method>            Choose a source from which to gather data. {targetexplorer|uniprot} [default: targetexplorer]
-                                      - "targetexplorer": An existing TargetExplorer database, specified via the --dbapi_uri argument.
-                                      - "uniprot": UniProt (www.uniprot.org). Requires a user-defined query
-                                      - "pdb": PDB (www.pdb.org). Requires a user-defined query
-                                      string, plus an optional regex string for further filtering.""",
+  --gather_from <method>         Choose a source from which to gather data.
+                                 {targetexplorer|uniprot|pdb} [default: targetexplorer]
+                                   - "uniprot": UniProt (www.uniprot.org). Requires a query string
+                                     defined by the --query flag, plus an optional regular
+                                     expression for selecting domains (--uniprot_domain_regex).
+                                   - "targetexplorer": a TargetExplorer database
+                                     (https://github.com/choderalab/targetexplorer). Requires a
+                                     query string defined by the --query flag, and a URI specified
+                                     by the --dbapi_uri flag.
+                                   - "pdb": PDB (www.pdb.org). Requires a query string defined by
+                                   the --query falg, plus an optional regular expression for
+                                   selecting domains (--uniprot_domain_regex).""",
 
     """\
-  --query <query>                   Query string
-                                      if --gather_from="uniprot":
-                                        Specify a UniProt search string, using the same syntax as on the UniProt
-                                        site (note: not all syntax may be supported, but most basic searches will
-                                        work). *All* domains contained within the returned UniProt entries will be
-                                        selected as templates, unless the --uniprot_domain_regex option is used to
-                                        select a subset. The script will print some information on the set of unique
-                                        domain names returned by the initial UniProt search, which can help with
-                                        constructing a suitable string for --uniprot_domain_regex.
+  --query <query>                Query string for selecting templates
+                                   if --gather_from="uniprot":
+                                     Use the same syntax as used on the UniProt website. Note that
+                                     *all* domains contained within the returned UniProt entries
+                                     will be selected as templates, unless the
+                                     --uniprot_domain_regex option is used to select a subset. The
+                                     script will print some information on the set of unique domain
+                                     names returned by the initial UniProt search, which can help
+                                     with constructing a suitable regex.
 
-                                        Example: 'domain:"Protein kinase" AND taxonomy:9606 AND reviewed:yes' - this
-                                        will return reviewed UniProt entries for human (taxonomy ID: 9606) proteins
-                                        containing "Protein kinase" domain annotations. Note that all domains contained
-                                        with those entries (including domains which are not "Protein kinase") will be
-                                        selected as templates, unless the --uniprot_domain_regex flag is also set.
-                                      if --gather_from="targetexplorer":
-                                        Specify a query string for TargetExplorer.
-                                      if --gather_from="pdb":
-                                        List of comma-separated PDB IDs.""",
+                                     Example: 'domain:"Protein kinase" AND taxonomy:9606 AND
+                                     reviewed:yes' - this will return reviewed UniProt entries for
+                                     human (taxonomy ID: 9606) proteins containing "Protein kinase"
+                                     domain annotations.
 
-    """\
-  --dbapi_uri <uri>                 TargetExplorer database API URI, e.g. "http://plfah2.mskcc.org/kinomeDBAPI\"""",
+                                   if --gather_from="targetexplorer":
+                                     Use syntax as described in the TargetExplorer documentation.
+                                   if --gather_from="pdb":
+                                     List of comma-separated PDB IDs.""",
 
     """\
-  --uniprot_domain_regex <regex>    Optional regular expression for subselecting domains from within UniProt
-                                    entries (case-sensitive). If not provided, all domains contained within
-                                    returned UniProt entries will be selected as templates (this will often not be
-                                    the desired behavior).
+  --dbapi_uri <uri>              TargetExplorer database API URI, e.g.
+                                 "http://plfah2.mskcc.org/kinomeDBAPI\"""",
 
-                                    Example: '^Protein kinase(?!; truncated)(?!; inactive)' - matches "Protein
-                                    kinase" as well as "Protein kinase; 1" and "Protein kinase; 2\"""",
+    """\
+  --uniprot_domain_regex <regex> Optional regular expression (case-sensitive) for selecting domains
+                                 contained within UniProt entries. If not provided, all domains
+                                 contained within returned UniProt entries will be selected as
+                                 templates.
+
+                                 Example: '^Protein kinase(?!; truncated)(?!; inactive)' - matches
+                                 "Protein kinase", "Protein kinase; 1" and "Protein kinase; 2",
+                                 and excludes "Protein kinase; truncated" and "Protein kinase;
+                                 inactive\"""",
 ]
 
 helpstring_unique_options = [
     """\
-  --structure_paths <path>          Local directories within which to search for PDB and SIFTS files (comma-separated)""",
+  --structure_paths <path>       Local directories within which to search for PDB and SIFTS files
+                                 (comma-separated)""",
 
     """\
-  --chainids <chainids>             if --gather_from="pdb":
-                                      Optionally specify which PDB chain IDs to parse. This is structured as a list of
-                                      lists (one list for each PDB ID), e.g. '[["A", "D"], ["A", "B", "C"]]'""",
+  --chainids <chainids>          if --gather_from="pdb":
+                                   Optionally specify which PDB chain IDs to parse. Use a Python
+                                   list of lists syntax (one list for each PDB ID), e.g.
+                                   '[["A", "D"], ["A", "B", "C"]]'""",
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_nonunique_options), '\n\n'.join(helpstring_unique_options)])

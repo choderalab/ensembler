@@ -102,7 +102,6 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
         import simtk.openmm.app
         template_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, template_full_seq.id + '.pdb')
         fixer = pdbfixer.PDBFixer(filename=template_filepath)
-        # import ipdb; ipdb.set_trace()
         chainid = fixer.structureChains[0].chain_id
         seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(chainid)
         for r in template_full_seq.seq:
@@ -110,7 +109,6 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
             seq_obj.residues.append(resi3)
         fixer.structure.sequences.append(seq_obj)
         tmp = fixer.findMissingResidues()
-        # import ipdb; ipdb.set_trace()
         remove_missing_residues_at_termini(fixer, len_full_seq=len(template_full_seq.seq))
         if not overwrite_structures:
             if os.path.exists(template_pdbfixed_filepath):
@@ -119,7 +117,6 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
         (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
         fixer.topology = newTopology
         fixer.positions = newPositions
-        # import ipdb; ipdb.set_trace()
         with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
             simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
         return fixer.missingResidues
@@ -729,7 +726,6 @@ def cluster_models(process_only_these_targets=None, verbose=False, cutoff=0.06):
             # Cluster using CA atoms
             CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
             rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
-            import ipdb; ipdb.set_trace()
             min_rmsd.append(min(rmsds))
 
             if min_rmsd[-1] < cutoff:

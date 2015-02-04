@@ -93,3 +93,9 @@ def debug_method(fn):
             print traceback.format_exc()
             import ipdb; ipdb.set_trace()
     return wrapper
+
+
+def set_arg_with_default(arg, default_arg):
+    if arg is None:
+        arg = default_arg
+    return arg
