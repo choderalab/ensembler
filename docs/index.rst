@@ -89,7 +89,6 @@ Ensembler is licensed under the GNU General Public License (GPL) v2.0.
 .. toctree::
    :maxdepth: 2
 
-   index
    installation
    examples
    cli_docs

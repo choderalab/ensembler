@@ -25,28 +25,8 @@ The ``ensembler`` tool is operated via a number of subcommands: ::
   ensembler refine_implicit
   ensembler package_models
 
-Furthermore, the ``ensembler quickmodel`` command allows the entire modeling
+Furthermore, the ``ensembler quickmodel`` subcommand allows the entire modeling
 pipeline to be run in one go for a single target and a small number of
 templates. Note that this command will not work with MPI.
 
 To print helpstrings for each subcommand, pass the ``-h`` flag.
-
-init
-====
-
-::
-
-  $ ensembler init
-
-This sets up an Ensembler project in the current working directory. It creates
-a number of directories and a metadata file (meta0.yaml).
-
-gather_templates
-================
-
-::
-
-  $ ensembler gather_targets
-
-.. TODO ideally would generate this from docstrings
-.. For now, could just give a brief overview of each command, and suggest people use the "-h" flag for further details
