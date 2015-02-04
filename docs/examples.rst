@@ -86,4 +86,16 @@ Refines models by performing an energy minimization followed by a short molecula
 
   $ ensembler solvate
 
-Solvates each model in a box of explicit water molecules. Each model is solvated individually with a given padding distance (default: 1 nm). 
+Determines the number of waters to add when solvating models with explicit water molecules. The models for each target are given the same number of waters. The function proceeds by first solvating each model individually, given a padding distance (default: 1 nm). A list of the number of waters added for each model is written to a file ``nwaters.txt`` in the ``models/[target_id]`` directory. A percentile value from the distribution of the number of waters is selected as the number to use for all models, and this number is written to the file ``nwaters-use.txt``.
+
+::
+
+  $ ensembler refine_explicit
+
+Solvates models using the number of waters determined in the previous step, then performs a short molecular dynamics simulation (default: 100 ps), using ``OpenMM``. The final structure is written to the compressed PDB file: ``explicit-refined.pdb.gz``, as well as serialized versions of the OpenMM system, state and integrator objects..
+
+::
+
+  $ ensembler package_models --package_for FAH --nfahclones 3
+
+Packages models in the necessary directory and file structure to be run as Folding@Home projects. Files are written in the directory tree ``packaged_models/fah-projects/[target_id]``.
