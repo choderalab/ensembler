@@ -2,21 +2,28 @@ import ensembler
 import ensembler.modeling
 
 helpstring_header = """\
-Models a set of target sequences onto a set of template structures using Modeller.
+Generate models by mapping target sequences onto template structures, using Modeller
+(salilab.org/modeller).
+
+MPI-enabled.
 
 Options:"""
 
 helpstring_nonunique_options = [
     """\
-  --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
-    """\
-  --targets <target>       Define one or more comma-separated target IDs to work on (e.g. "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0") (default: all targets)""",
+  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
+                               Comment targets out with "#".""",
 
     """\
-  --templates <template>   Define one or more comma-separated template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
+  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
+                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 
     """\
-  -v --verbose                """,
+  --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
+                               "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+
+    """\
+  -v --verbose                 """,
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_nonunique_options)])

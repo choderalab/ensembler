@@ -2,13 +2,18 @@ import ensembler
 import ensembler.modeling
 
 helpstring_header = """\
-Use Rosetta loopmodel to model missing loops in template structures.
+Use Rosetta loopmodel to reconstruct missing loops in template structures.
+
+Reconstructed template structures are written to "templates/structures-modeled-loops".
+
+MPI-enabled.
 
 Options:"""
 
 helpstring_unique_options = [
     """\
-  --templates <template>       Define one or more comma-separated template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
+  --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
+                               "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
   --overwrite_structures       Overwrite structure files""",

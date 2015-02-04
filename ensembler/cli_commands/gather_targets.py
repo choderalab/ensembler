@@ -6,12 +6,14 @@ Gather target protein data from a specified resource, such as UniProt or a Targe
 
 Sequences are written to "targets/targets.fa".
 
-Targets are given IDs of the form [uniprot_mnemonic]_D[domain_id], which consist of the UniProt
+Targets are given IDs of the form [UniProt mnemonic]_D[domain id], which consist of the UniProt
 name for the target and an identifier for the domain (since a single target protein contain
 multiple domains of interest). Example: EGFR_HUMAN_D0.
 
 If the specified resource is UniProt, it is recommended to use the --uniprot_domain_regex flag to
 specify exactly which domains will be selected.
+
+Runs serially.
 
 Options:"""
 

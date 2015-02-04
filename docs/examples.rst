@@ -6,11 +6,11 @@ Usage Examples
 
 There are two main ways to use the Ensembler command-line interface. The
 ``quickmodel`` function performs the entire modeling pipeline in one go, and is
-designed to work with only a few targets and templates. For generating larger
-numbers of models (such as entire protein families), the main pipeline
-functions should be used. These perform each stage of the modeling process
-individually, and the most computationally intensive stages can be run in
-parallel to increase performance.
+designed to work with a single target and a small number of templates. For
+generating larger numbers of models (such as entire protein families), the main
+pipeline functions should be used. These perform each stage of the modeling
+process individually, and the most computationally intensive stages can be run
+in parallel to increase performance.
 
 For further details on their usage, see the main `command-line interface documentation <cli_docs.html>`_.
 
@@ -60,7 +60,7 @@ Reconstruct template loops which were not resolved in the original PDB structure
 
   $ ensembler align
 
-Conducts pairwise alignments of target sequences against template sequences. These alignments are used to guide the subsequent modeling step, and are stored in directories of the form ``models/[target ID]/[template ID]/alignment.pir``. The ``.pir`` alignment format is an ascii-based format required by ``Modeller``.
+Conducts pairwise alignments of target sequences against template sequences. These alignments are used to guide the subsequent modeling step, and are stored in directories of the form ``models/[target id]/[template id]/alignment.pir``. The ``.pir`` alignment format is an ascii-based format required by ``Modeller``.
 
 If the ``loopmodel`` function was used previously, then templates which have been successfully remodeled will be selected for this alignment and the subsequent modeling steps. Otherwise, Ensembler defaults to using the template structures which contain only resolved residues.
 
@@ -92,10 +92,10 @@ Determines the number of waters to add when solvating models with explicit water
 
   $ ensembler refine_explicit
 
-Solvates models using the number of waters determined in the previous step, then performs a short molecular dynamics simulation (default: 100 ps), using ``OpenMM``. The final structure is written to the compressed PDB file: ``explicit-refined.pdb.gz``, as well as serialized versions of the OpenMM system, state and integrator objects..
+Solvates models using the number of waters determined in the previous step, then performs a short molecular dynamics simulation (default: 100 ps), using ``OpenMM``. The final structure is written to the compressed PDB file: ``explicit-refined.pdb.gz``, as well as serialized versions of the OpenMM System, State and Integrator objects.
 
 ::
 
   $ ensembler package_models --package_for FAH --nfahclones 3
 
-Packages models in the necessary directory and file structure to be run as Folding@Home projects. Files are written in the directory tree ``packaged_models/fah-projects/[target_id]``.
+Packages models in the necessary directory and file structure to be run as Folding@Home projects. Files are written in the directory tree ``packaged_models/fah-projects/[target id]``.

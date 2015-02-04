@@ -2,23 +2,44 @@ import ensembler
 import ensembler.refinement
 
 helpstring_header = """\
-Solvates models.
+Determines the number of waters to add when solvating models with explicit water molecules.
 
-Options."""
+The models for each target are to be given the same number of waters.
+
+The function proceeds by first solvating each model individually, given a padding distance
+(default: 1 nm). A list of the number of waters added for each model is written to a file
+"nwaters.txt" in the "models/[target_id]" directory. A percentile value from the distribution of
+the number of waters is selected as the number to use for all models, and this number is written to
+the file nwaters-use.txt.
+
+MPI-enabled
+
+Options:"""
+
+helpstring_unique_options = [
+    """\
+  --padding <padding>          Padding distance for solvation (Angstroms) (default: 10 Angstroms).""",
+]
 
 helpstring_nonunique_options = [
     """\
-  --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
+  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
+                               Comment targets out with "#".""",
+
     """\
-  --targets <target>              Define one or more target IDs to work on (e.g. "--targets ABL1_HUMAN_D0 --targets SRC_HUMAN_D0") (default: all targets)""",
+  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
+                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
+
     """\
-  --templates <template>          Define one or more template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
+  --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
+                               "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+
     """\
-  -v --verbose                    """,
+  -v --verbose                 """,
 ]
 
-helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_nonunique_options)])
-docopt_helpstring = ''
+helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
+docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 def dispatch(args):
     if args['--targetsfile']:
@@ -34,10 +55,12 @@ def dispatch(args):
     else:
         templates = False
 
+    padding = ensembler.utils.set_arg_with_default(args['--padding'], default_arg=10.0)
+
     if args['--verbose']:
         loglevel = 'debug'
     else:
         loglevel = 'info'
 
-    ensembler.refinement.solvate_models(process_only_these_targets=targets, process_only_these_templates=templates, verbose=args['--verbose'])
+    ensembler.refinement.solvate_models(process_only_these_targets=targets, process_only_these_templates=templates, verbose=args['--verbose'], padding=padding)
     ensembler.refinement.determine_nwaters(process_only_these_targets=targets, process_only_these_templates=templates, verbose=args['--verbose'])

@@ -3,27 +3,46 @@ import ensembler.refinement
 import simtk.unit as unit
 
 helpstring_header = """\
-Conducts explicit-solvent MD refinement on a set of models.
+Refine models by molecular dynamics simulation with explicit solvent, using OpenMM.
 
-Options."""
+Models are first solvated with the number of waters determined in the previous step (see solvate
+function). The final refined structure is written as "explicit-refined.pdb.gz" in the model
+directory, as well as serialized versions of the OpenMM System, State and Integrator objects.
+
+MPI-enabled.
+
+Options:"""
 
 helpstring_nonunique_options = [
     """\
-  --openmm_platform <platform>    Choose the OpenMM Platform to use (choices: CUDA, OpenCL, CPU, Reference) [default: CUDA].""",
+  --openmm_platform <platform>    Specify the OpenMM Platform to use {CUDA|OpenCL|CPU|Reference}
+                                  (default is to auto-select the fastest platform availble).""",
+
     """\
-  --gpupn <gpupn>                 If using GPUs, specify how many are available per node [default: 1].""",
-    """\
-  --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
-    """\
-  --targets <target>              Define one or more target IDs to work on (e.g. "--targets ABL1_HUMAN_D0 --targets SRC_HUMAN_D0") (default: all targets)""",
-    """\
-  --templates <template>          Define one or more template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
+  --gpupn <gpupn>                 If using GPUs, specify how many are available per node
+                                  [default: 1].""",
+
     """\
   --simlength <simlength>         Simulation length (ps) [default: 100.0].""",
+
     """\
-  --retry_failed_runs             """,
+  --retry_failed_runs             Retry simulation runs which previously failed, e.g. due to bad
+                                  inter-atom contacts.""",
+
     """\
-  -v --verbose                    """,
+  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
+                               Comment targets out with "#".""",
+
+    """\
+  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
+                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
+
+    """\
+  --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
+                               "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+
+    """\
+  -v --verbose                 """,
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_nonunique_options)])

@@ -1,50 +1,66 @@
 from ensembler.tools.quick_model import QuickModel
 
 helpstring_header = """\
-Model a single target with multiple templates. Various options for specifying target and templates.
+Model a single target with a small number of templates. This performs the entire Ensembler pipeline
+in one go.
+
+Various options for specifying target and templates.
+
 Example command:
-ensembler quickmodel --target_uniprot_entry_name EGFR_HUMAN --template_pdbids 4KB8 --template_chainids A --no-loopmodel --uniprot_domain_regex '^Protein kinase'
+ensembler quickmodel --target_uniprot_entry_name EGFR_HUMAN --template_pdbids 4KB8
+--template_chainids A --no-loopmodel --uniprot_domain_regex '^Protein kinase'
+
+For generating larger numbers of models (such as entire protein families), the main pipeline
+functions should be used.
+
+Runs serially.
 
 Options:"""
 
 helpstring_unique_options = [
     """\
-  --targetid <targetid>                             e.g. "--targetid EGFR_HUMAN_D0\"""",
+  --targetid <targetid>                    e.g. "EGFR_HUMAN_D0\"""",
 
     """\
-  --templateids <templateids>                       Define one or more comma-separated template IDs to work on (e.g. "--templateids KC1D_HUMAN_D0_4KB8_D,KC1D_HUMAN_D0_4AF3_A")""",
+  --templateids <templateids>              Define one or more template IDs to work on
+                                           (comma-separated), e.g.
+                                           "--templates ABL1_HUMAN_D0_1OPL_A"
+                                           (default: all templates)""",
 
     """\
-  --target_uniprot_entry_name <entry_name>          e.g. "--target_uniprot_entry_name EGFR_HUMAN\"""",
+  --target_uniprot_entry_name <entry_name> e.g. "EGFR_HUMAN\"""",
 
     """\
-  --template_pdbids <pdbids>                        e.g. "--template_pdbids 4KB8,4AF3\"""",
+  --template_pdbids <pdbids>               e.g. "4KB8,4AF3\"""",
 
     """\
-  --template_chainids <chainids>                    e.g. "--chainids AD,,A\"""",
+  --template_chainids <chainids>           e.g. "AD,,A\"""",
 
     """\
-  --template_uniprot_query <query>                  e.g. "--template_uniprot_query 'domain:"Protein kinase" AND reviewed:yes'\"""",
+  --template_uniprot_query <query>         e.g. "'domain:"Protein kinase" AND reviewed:yes'\"""",
 
     """\
-  --template_seqid_cutoff <cutoff>                  e.g. "--template_seqid_cutoff 80\"""",
+  --template_seqid_cutoff <cutoff>         e.g. "80\"""",
 
     """\
-  --no-loopmodel                                    """,
+  --no-loopmodel                           """,
 
     """\
-  --package_for_fah                                 """,
+  --package_for_fah                        """,
 ]
 
 helpstring_nonunique_options = [
     """\
-  --uniprot_domain_regex <regex>                    e.g. "--uniprot_domain_regex '^Protein kinase(?!; inactive)(?!; truncated)'\"""",
+  --uniprot_domain_regex <regex>           e.g. "'^Protein kinase(?!;
+                                           inactive)(?!; truncated)'\"""",
 
     """\
-  --nfahclones <nfahclones>                         e.g. "--nfahclones 3\"""",
+  --nfahclones <nfahclones>                e.g. "3\"""",
 
     """\
-  --structure_paths <structure_paths>                 e.g. "--structure_paths  /Users/partond/tmp/kinome-MSMSeeder/structures/pdb,/Users/partond/tmp/kinome-MSMSeeder/structures/sifts\"""",
+  --structure_paths <structure_paths>      e.g.
+                                           "/Users/partond/tmp/kinome-MSMSeeder/structures/pdb,
+                                           /Users/partond/tmp/kinome-MSMSeeder/structures/sifts\"""",
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])

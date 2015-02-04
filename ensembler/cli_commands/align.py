@@ -4,22 +4,35 @@ import ensembler.modeling
 helpstring_header = """\
 Pairwise alignment of target sequences onto template sequences.
 
+These alignments are used to guide the subsequent modeling step, and are stored as follows:
+"models/[target id]/[template id]/alignment.pir"
+The ".pir" alignment format is an ascii-based format required by Modeller.
+
+If the loopmodel function was used previously, then templates which have been successfully remodeled
+will be selected for this alignment and the subsequent modeling and refinement steps. Otherwise,
+Ensembler defaults to using the template structures which contain only resolved residues.
+
+MPI-enabled.
+
 Options:"""
 
 helpstring_unique_options = [
     """\
-  --targetsfile <targetsfile>     File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
+  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
+                               Comment targets out with "#".""",
 
     """\
-  --targets <target>       Define one or more comma-separated target IDs to work on (e.g. "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0") (default: all targets)""",
+  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
+                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 ]
 
 helpstring_nonunique_options = [
     """\
-  --templates <template>   Define one or more comma-separated template IDs to work on (e.g. "--templates ABL1_HUMAN_D0_1OPL_A") (default: all templates)""",
+  --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
+                               "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
-  -v --verbose                """,
+  -v --verbose                 """,
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])

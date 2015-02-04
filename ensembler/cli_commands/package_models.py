@@ -2,7 +2,11 @@ import ensembler
 import ensembler.packaging
 
 helpstring_header = """\
-Packages models for transfer or for set-up as a Folding@Home project. Packaged models are stored in the packaged-models/ directory.
+Package models for transfer or for set-up as a Folding@Home project.
+
+Packaged models are written in directories of the form "packaged_models/fah-projects/[target id]".
+
+MPI-enabled.
 
 Options."""
 
@@ -10,18 +14,26 @@ helpstring_unique_options = [
     """\
   --package_for <choice>                Specify which packaging method to use (required).
                                         - transfer: compress results into a single .tgz file
-                                        - FAH: set-up the input files and directory structure necessary to start a Folding@Home project.""",
+                                        - FAH: set up the input files and directory structure
+                                          necessary to start a Folding@Home project.""",
+
     """\
-  --nfahclones <n>                      If packaging for Folding@Home, select the number of clones to use for each model [default: 1].""",
+  --nfahclones <n>                      If packaging for Folding@Home, select the number of clones
+                                        to use for each model [default: 1].""",
+
     """\
-  --archivefahproject                If packaging for Folding@Home, choose whether to compress the results into a .tgz file.""",
+  --archivefahproject                   If packaging for Folding@Home, choose whether to compress
+                                        the results into a .tgz file.""",
 ]
 
 helpstring_nonunique_options = [
     """\
-  --targetsfile <targetsfile>           File containing a list of newline-separated target IDs to work on. Comment targets out with "#".""",
+  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
+                               Comment targets out with "#".""",
+
     """\
-  --targets <target>                    Define one or more target IDs to work on (e.g. "--targets ABL1_HUMAN_D0 --targets SRC_HUMAN_D0") (default: all targets)""",
+  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
+                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])

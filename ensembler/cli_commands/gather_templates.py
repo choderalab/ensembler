@@ -6,6 +6,18 @@ helpstring_header = """\
 Gather template protein data from a specified resource, such as UniProt or a TargetExplorer
 database.
 
+Template sequences are written in two forms, to "templates/templates-resolved-seq.fa" and
+"templates/templates-full-seq.fa". The former contains only residues resolved in the structure; the
+latter contains the complete UniProt sequence contained within the span of the structure, including
+unresolved residues. Template structures (containing only resolved residues) are written to
+"templates/structures-resolved". Template structures containing the full sequences can optionally be
+generated with a subsequent step - the loopmodel function.
+
+Templates are given IDs of the form [UniProt mnemonic]_D[domain id]_[PDB id]_[chain id], where the
+final two elements represent the PBD ID and chain identifier. Example: EGFR_HUMAN_D0_2GS7_B.
+
+MPI-enabled.
+
 Options:"""
 
 gather_from_options = ['targetexplorer', 'uniprot', 'pdb']

@@ -26,7 +26,7 @@ The ``ensembler`` tool is operated via a number of subcommands: ::
   ensembler package_models
 
 Furthermore, the ``ensembler quickmodel`` command allows the entire modeling
-pipeline to be run in one go, ideally on a small number of targets and
+pipeline to be run in one go for a single target and a small number of
 templates. Note that this command will not work with MPI.
 
 To print helpstrings for each subcommand, pass the ``-h`` flag.
