@@ -323,6 +323,11 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     '''
     if padding is None:
         padding = 10.0 * unit.angstroms
+    elif type(padding) is float:
+        padding = padding * unit.angstroms
+    else:
+        raise Exception('padding must be passed as a float (in Angstroms)')
+
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
