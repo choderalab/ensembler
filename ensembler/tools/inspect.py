@@ -3,9 +3,10 @@ import ensembler
 import os
 import pandas as pd
 import yaml
+import mdtraj
 
 
-class LoopmodelLogs:
+class LoopmodelLogs(object):
     def __init__(self, project_dir='.'):
         self.project_dir = project_dir
         self.df = self.parse_loopmodel_logs()
@@ -91,3 +92,39 @@ class LoopmodelLogs:
 
     def to_pickle(self, ofilepath):
         self.df.to_pickle(ofilepath)
+
+
+class ModelSimilarities(object):
+    def __init__(self, targetid, project_dir='.'):
+        self.targetid = targetid
+        self.project_dir = project_dir
+        self._get_templateids_and_model_filepaths()
+        self._mk_traj()
+        self.rmsd()
+        # self.rmsd_dist()
+
+    def _get_templateids_and_model_filepaths(self):
+        model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
+
+        root, dirnames, filenames = os.walk(model_dir).next()
+
+        templateids = [dirname for dirname in dirnames if '_D' in dirname]
+        model_filepaths = []
+        for templateid in templateids:
+            model_filepath = os.path.join(root, templateid, 'model.pdb.gz')
+            if os.path.exists(model_filepath):
+                model_filepaths.append(model_filepath)
+
+        self.templateids = templateids
+        self.model_filepaths = model_filepaths
+
+    def _mk_traj(self):
+        frames = map(mdtraj.load_pdb, self.model_filepaths)
+        self.traj = reduce(lambda x, y: x+y, frames)
+
+    def rmsd(self):
+        ca_atoms = [a.index for a in self.traj.topology.atoms if a.name == 'CA']
+        self.rmsds = mdtraj.rmsd(self.traj, self.traj[0], atom_indices=ca_atoms, parallel=False)
+
+    def rmsd_dist(self):
+        pass
