@@ -99,8 +99,8 @@ class ModelSimilarities(object):
         self.targetid = targetid
         self.project_dir = project_dir
         self._get_templateids_and_model_filepaths()
-        self._mk_traj()
-        self.rmsd()
+        # self._mk_traj()
+        # self.rmsd()
         # self.rmsd_dist()
 
     def _get_templateids_and_model_filepaths(self):
