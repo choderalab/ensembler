@@ -119,8 +119,15 @@ class ModelSimilarities(object):
         self.model_filepaths = model_filepaths
 
     def _mk_traj(self):
+        # TODO memory error?
         frames = map(mdtraj.load_pdb, self.model_filepaths)
         self.traj = reduce(lambda x, y: x+y, frames)
+
+    def _mk_traj_alt(self):
+        traj = mdtraj.load_pdb(self.model_filepaths[0])
+        for model_filepath in self.model_filepaths[1:]:
+            traj += mdtraj.load_pdb(model_filepath)
+        self.traj = traj
 
     def rmsd(self):
         ca_atoms = [a.index for a in self.traj.topology.atoms if a.name == 'CA']
