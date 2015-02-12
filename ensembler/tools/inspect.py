@@ -5,6 +5,7 @@ import pandas as pd
 import yaml
 import mdtraj
 import gzip
+from ensembler.core import logger
 
 
 class LoopmodelLogs(object):
@@ -96,7 +97,11 @@ class LoopmodelLogs(object):
 
 
 class ModelSimilarities(object):
-    def __init__(self, targetid, project_dir='.'):
+    def __init__(self, targetid, project_dir='.', debug_level=None):
+        if debug_level == None:
+            self.debug_level = 'info'
+        else:
+            self.debug_level = debug_level
         self.targetid = targetid
         self.project_dir = project_dir
         self._get_templateids_and_model_filepaths()
@@ -123,6 +128,7 @@ class ModelSimilarities(object):
         with ensembler.utils.mk_temp_dir() as tmpdir:
             model_filepaths = []
             for m, model_filepath_gz in enumerate(self.model_filepaths):
+                logger.debug('Unzipping model {0]/{1]'.format(m, len(self.model_filepaths)))
                 with gzip.open(model_filepath_gz) as model_file:
                     model_filepath = os.path.join(tmpdir, '{0}.pdb'.format(m))
                     model_filepaths.append(model_filepath)
