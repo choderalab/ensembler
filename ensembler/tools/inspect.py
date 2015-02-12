@@ -103,6 +103,7 @@ class ModelSimilarities(object):
         self.targetid = targetid
         self.project_dir = project_dir
         self._get_templateids_and_model_filepaths()
+        self._get_unique_models()
         self._mk_traj()
         # self.rmsd()
         # self.rmsd_dist()
@@ -113,14 +114,30 @@ class ModelSimilarities(object):
         root, dirnames, filenames = os.walk(model_dir).next()
 
         templateids = [dirname for dirname in dirnames if '_D' in dirname]
+        template_dirpaths = []
         model_filepaths = []
         for templateid in templateids:
+            template_dirpaths.append(os.path.join(root, templateid))
             model_filepath = os.path.join(root, templateid, 'model.pdb.gz')
             if os.path.exists(model_filepath):
                 model_filepaths.append(model_filepath)
 
         self.templateids = templateids
+        self.template_dirpaths = template_dirpaths
         self.model_filepaths = model_filepaths
+        self.df = pd.DataFrame(
+            {'templateid': templateids}
+        )
+
+    def _get_unique_models(self):
+        unique_models = []
+        for template_dirpath in self.template_dirpaths:
+            unique_path = os.path.join(template_dirpath, 'unique_by_clustering')
+            if os.path.exists(unique_path):
+                unique_models.append(True)
+            else:
+                unique_models.append(False)
+        self.df['unique_by_clustering'] = unique_models
 
     def _mk_traj(self):
         with ensembler.utils.mk_temp_dir() as tmpdir:
@@ -147,7 +164,8 @@ class ModelSimilarities(object):
 
     def rmsd(self):
         ca_atoms = [a.index for a in self.traj.topology.atoms if a.name == 'CA']
-        self.rmsds = mdtraj.rmsd(self.traj, self.traj[0], atom_indices=ca_atoms, parallel=False)
+        rmsds = mdtraj.rmsd(self.traj, self.traj[0], atom_indices=ca_atoms, parallel=False)
+        self.df['rmsd'] = rmsds
 
     def rmsd_dist(self):
         pass
