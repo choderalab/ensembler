@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import yaml
 import mdtraj
+import gzip
 
 
 class LoopmodelLogs(object):
@@ -99,7 +100,7 @@ class ModelSimilarities(object):
         self.targetid = targetid
         self.project_dir = project_dir
         self._get_templateids_and_model_filepaths()
-        # self._mk_traj()
+        self._mk_traj()
         # self.rmsd()
         # self.rmsd_dist()
 
@@ -119,9 +120,20 @@ class ModelSimilarities(object):
         self.model_filepaths = model_filepaths
 
     def _mk_traj(self):
-        # TODO memory error?
-        frames = map(mdtraj.load_pdb, self.model_filepaths)
-        self.traj = reduce(lambda x, y: x+y, frames)
+        with ensembler.utils.mk_temp_dir() as tmpdir:
+            model_filepaths = []
+            for m, model_filepath_gz in enumerate(self.model_filepaths):
+                with gzip.open(model_filepath_gz) as model_file:
+                    model_filepath = os.path.join(tmpdir, '{0}.pdb'.format(m))
+                    model_filepaths.append(model_filepath)
+                    model_text = model_file.read()
+                with open(model_filepath, 'w') as model_file:
+                    model_file.write(model_text)
+
+            self.traj = mdtraj.load(model_filepaths)
+
+        # frames = map(mdtraj.load_pdb, self.model_filepaths)
+        # self.traj = reduce(lambda x, y: x+y, frames)
 
     def _mk_traj_alt(self):
         traj = mdtraj.load_pdb(self.model_filepaths[0])

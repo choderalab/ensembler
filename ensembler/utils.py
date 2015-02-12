@@ -72,6 +72,14 @@ def loglevel_setter(logger, loglevel):
 
 
 @contextlib.contextmanager
+def mk_temp_dir():
+    """Create a temporary directory, enter, yield, exit, rmdir; used as context manager."""
+    temp_dir = tempfile.mkdtemp()
+    yield temp_dir
+    shutil.rmtree(temp_dir)
+
+
+@contextlib.contextmanager
 def enter_temp_dir():
     """Create a temporary directory, enter, yield, exit, rmdir; used as context manager."""
     temp_dir = tempfile.mkdtemp()
