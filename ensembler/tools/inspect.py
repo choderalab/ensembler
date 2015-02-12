@@ -6,6 +6,7 @@ import yaml
 import mdtraj
 import gzip
 from ensembler.core import logger
+import warnings
 
 
 class LoopmodelLogs(object):
@@ -98,15 +99,12 @@ class LoopmodelLogs(object):
 
 class ModelSimilarities(object):
     def __init__(self, targetid, project_dir='.', log_level=None):
-        if type(log_level) == str:
-            ensembler.utils.loglevel_setter(logger, log_level)
+        ensembler.utils.loglevel_setter(logger, log_level)
         self.targetid = targetid
         self.project_dir = project_dir
         self._get_templateids_and_model_filepaths()
         self._get_unique_models()
         self._mk_traj()
-        # self.rmsd()
-        # self.rmsd_dist()
 
     def _get_templateids_and_model_filepaths(self):
         model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
@@ -115,18 +113,23 @@ class ModelSimilarities(object):
 
         templateids = [dirname for dirname in dirnames if '_D' in dirname]
         template_dirpaths = []
+        has_model = []
         model_filepaths = []
         for templateid in templateids:
             template_dirpaths.append(os.path.join(root, templateid))
             model_filepath = os.path.join(root, templateid, 'model.pdb.gz')
             if os.path.exists(model_filepath):
                 model_filepaths.append(model_filepath)
+                has_model.append(True)
+            else:
+                has_model.append(False)
 
         self.templateids = templateids
         self.template_dirpaths = template_dirpaths
         self.model_filepaths = model_filepaths
         self.df = pd.DataFrame(
-            {'templateid': templateids}
+            {'templateid': templateids,
+             'has_model': has_model}
         )
 
     def _get_unique_models(self):
@@ -153,9 +156,6 @@ class ModelSimilarities(object):
 
             self.traj = mdtraj.load(model_filepaths)
 
-        # frames = map(mdtraj.load_pdb, self.model_filepaths)
-        # self.traj = reduce(lambda x, y: x+y, frames)
-
     def _mk_traj_alt(self):
         traj = mdtraj.load_pdb(self.model_filepaths[0])
         for model_filepath in self.model_filepaths[1:]:
@@ -163,9 +163,18 @@ class ModelSimilarities(object):
         self.traj = traj
 
     def rmsd(self):
+        has_model_indices = self.df[self.df.has_model == True].index
         ca_atoms = [a.index for a in self.traj.topology.atoms if a.name == 'CA']
         rmsds = mdtraj.rmsd(self.traj, self.traj[0], atom_indices=ca_atoms, parallel=False)
-        self.df['rmsd'] = rmsds
+        template_rmsds = [None] * len(self.templateids)
+        for m,t in enumerate(has_model_indices):
+            template_rmsds[t] = rmsds[m]
+
+        self.df['rmsd'] = template_rmsds
 
     def rmsd_dist(self):
+        warnings.warn('Not yet implemented.')
         pass
+
+    def to_pickle(self, ofilepath):
+        self.df.to_pickle(ofilepath)

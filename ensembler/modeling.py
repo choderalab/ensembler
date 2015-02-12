@@ -649,7 +649,7 @@ def write_build_models_metadata(target, target_setup_data, process_only_these_ta
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
 @ensembler.utils.notify_when_done
-def cluster_models(process_only_these_targets=None, verbose=False, cutoff=0.06):
+def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
     '''Cluster models based on RMSD, and filter out non-unique models as
     determined by a given cutoff.
 
@@ -663,6 +663,7 @@ def cluster_models(process_only_these_targets=None, verbose=False, cutoff=0.06):
     '''
     # TODO refactor
     import mdtraj
+    ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
     templates = templates_resolved_seq
     cutoff = 0.06   # Cutoff for RMSD clustering (nm)
@@ -713,6 +714,7 @@ def cluster_models(process_only_these_targets=None, verbose=False, cutoff=0.06):
         # 0.2 Angstroms (RMSD) from the nearest template.
         uniques=[]
         min_rmsd = []
+        CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
         for (t, templateID) in enumerate(valid_templateIDs):
             model_dir = os.path.join(models_target_dir, templateID)
 
@@ -723,15 +725,14 @@ def cluster_models(process_only_these_targets=None, verbose=False, cutoff=0.06):
                     pass
                 continue
 
-            # Cluster using CA atoms
-            CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
+            # Cluster
             rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
             min_rmsd.append(min(rmsds))
 
             if min_rmsd[-1] < cutoff:
                 continue
             else:
-                uniques.append( templateID )
+                uniques.append(templateID)
                 # Create a blank file to say this template was found to be unique
                 # by clustering
                 with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
