@@ -104,3 +104,15 @@ def test_build_models_command():
 def test_cluster_models():
     with integration_test_context(set_up_project_stage='modeled'):
         ensembler.modeling.cluster_models()
+
+@attr('unit')
+def test_cluster_models_command():
+    with integration_test_context(set_up_project_stage='modeled'):
+        args = {
+            '--targetsfile': False,
+            '--targets': False,
+            '--cutoff': False,
+            '--verbose': False,
+            '--help': False,
+        }
+        ensembler.cli_commands.cluster.dispatch(args)

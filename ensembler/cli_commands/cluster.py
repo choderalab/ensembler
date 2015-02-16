@@ -49,4 +49,4 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.modeling.cluster_models(process_only_these_targets=targets, verbose=args['--verbose'], cutoff=cutoff)
+    ensembler.modeling.cluster_models(process_only_these_targets=targets, cutoff=cutoff, loglevel=loglevel)

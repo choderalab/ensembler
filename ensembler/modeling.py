@@ -666,7 +666,6 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
     ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
     templates = templates_resolved_seq
-    cutoff = 0.06   # Cutoff for RMSD clustering (nm)
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
