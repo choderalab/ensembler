@@ -101,15 +101,17 @@ class ModelSimilarities(object):
     def __init__(self, targetid, project_dir='.', log_level=None):
         ensembler.utils.loglevel_setter(logger, log_level)
         self.targetid = targetid
+        self.model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
         self._get_templateids_and_model_filepaths()
         self._get_unique_models()
+        self._get_seqids()
+        self._store_highest_seqid_model()
         self._mk_traj()
 
     def _get_templateids_and_model_filepaths(self):
-        model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
 
-        root, dirnames, filenames = os.walk(model_dir).next()
+        root, dirnames, filenames = os.walk(self.model_dir).next()
 
         templateids = [dirname for dirname in dirnames if '_D' in dirname]
         template_dirpaths = []
@@ -156,16 +158,30 @@ class ModelSimilarities(object):
 
             self.traj = mdtraj.load(model_filepaths)
 
-    def _mk_traj_alt(self):
-        traj = mdtraj.load_pdb(self.model_filepaths[0])
-        for model_filepath in self.model_filepaths[1:]:
-            traj += mdtraj.load_pdb(model_filepath)
-        self.traj = traj
+    def _get_seqids(self):
+        seqid_filepath = os.path.join(self.model_dir, 'sequence-identities.txt')
+        with open(seqid_filepath) as seqid_file:
+            seqid_data = zip(*[line.split() for line in seqid_file.read().splitlines()])
+        seqid_df = pd.DataFrame({
+            'templateid': seqid_data[0],
+            'seqid': seqid_data[1],
+        })
+        self.df = pd.merge(self.df, seqid_df, on='templateid')
+
+    def _store_highest_seqid_model(self):
+        models_sorted = self.df.sort('seqid').templateid
+        for modelid in models_sorted:
+            model_filepath = os.path.join(self.model_dir, modelid, 'model.pdb.gz')
+            if os.path.exists(model_filepath):
+                self.ref_modelid = modelid
+                self.ref_model_filepath = model_filepath
+                break
+        self.ref_model_traj = mdtraj.load_pdb(self.ref_model_filepath)
 
     def rmsd(self):
         has_model_indices = self.df[self.df.has_model == True].index
         ca_atoms = [a.index for a in self.traj.topology.atoms if a.name == 'CA']
-        rmsds = mdtraj.rmsd(self.traj, self.traj[0], atom_indices=ca_atoms, parallel=False)
+        rmsds = mdtraj.rmsd(self.traj, self.ref_model_traj, atom_indices=ca_atoms, parallel=False)
         template_rmsds = [None] * len(self.templateids)
         for m,t in enumerate(has_model_indices):
             template_rmsds[t] = rmsds[m]
@@ -176,5 +192,7 @@ class ModelSimilarities(object):
         warnings.warn('Not yet implemented.')
         pass
 
-    def to_pickle(self, ofilepath):
-        self.df.to_pickle(ofilepath)
+    def to_csv(self, ofilepath=None):
+        if ofilepath is None:
+            ofilepath = os.path.join(self.model_dir, 'rmsds.csv')
+        self.df.to_csv(ofilepath)
