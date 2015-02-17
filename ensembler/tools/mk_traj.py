@@ -49,15 +49,17 @@ def mk_traj(targetid, traj_filepath=None, topol_filepath=None, models_data_filep
     valid_model_templateids = [templateid for templateid in templateids if os.path.exists(os.path.join(models_target_dir, templateid, 'model.pdb.gz'))]
     valid_model_filepaths = [os.path.join(models_target_dir, templateid, 'model.pdb.gz') for templateid in valid_model_templateids]
 
-    # get additional data
     seqid_filepaths = [os.path.join(models_target_dir, templateid, 'sequence-identity.txt') for templateid in valid_model_templateids]
     seqids = [open(seqid_filepath).read().strip() if os.path.exists(seqid_filepath) else None for seqid_filepath in seqid_filepaths]
 
     df = pd.DataFrame({
         'templateid': valid_model_templateids,
+        'model_filepath': valid_model_filepaths,
         'seqid': seqids,
     })
-    df.to_csv(models_data_filepath)
+    df.sort(columns='seqid', inplace=True)
+
+    df.to_csv(models_data_filepath, columns=['templateid', 'seqid'])
 
     # construct traj
     traj = mdtraj.load_pdb(valid_model_filepaths[0])
