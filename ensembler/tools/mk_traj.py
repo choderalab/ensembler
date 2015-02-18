@@ -50,7 +50,7 @@ def mk_traj(targetid, traj_filepath=None, topol_filepath=None, models_data_filep
     valid_model_filepaths = [os.path.join(models_target_dir, templateid, 'model.pdb.gz') for templateid in valid_model_templateids]
 
     seqid_filepaths = [os.path.join(models_target_dir, templateid, 'sequence-identity.txt') for templateid in valid_model_templateids]
-    seqids = [open(seqid_filepath).read().strip() if os.path.exists(seqid_filepath) else None for seqid_filepath in seqid_filepaths]
+    seqids = [float(open(seqid_filepath).read().strip()) if os.path.exists(seqid_filepath) else None for seqid_filepath in seqid_filepaths]
 
     df = pd.DataFrame({
         'templateid': valid_model_templateids,
