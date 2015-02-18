@@ -57,7 +57,7 @@ def mk_traj(targetid, traj_filepath=None, topol_filepath=None, models_data_filep
         'model_filepath': valid_model_filepaths,
         'seqid': seqids,
     })
-    df.sort(columns='seqid', inplace=True)
+    df.sort(columns='seqid', inplace=True, ascending=False)
 
     df.to_csv(models_data_filepath, columns=['templateid', 'seqid'])
 
