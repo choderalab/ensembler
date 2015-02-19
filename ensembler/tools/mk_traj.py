@@ -62,8 +62,8 @@ def mk_traj(targetid, traj_filepath=None, topol_filepath=None, models_data_filep
     df.to_csv(models_data_filepath, columns=['templateid', 'seqid'])
 
     # construct traj
-    traj = mdtraj.load_pdb(valid_model_filepaths[0])
-    for model_filepath in valid_model_filepaths[1:]:
+    traj = mdtraj.load_pdb(df.model_filepath[0])
+    for model_filepath in df.model_filepath[1:]:
         traj = traj.join(mdtraj.load_pdb(model_filepath))
 
     # superpose structured C-alphas
