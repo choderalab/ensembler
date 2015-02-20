@@ -90,7 +90,6 @@ class ProjectCounts(object):
         else:
             df_selected = self.df[self.df.sequence_identity >= seqid_range[0]][self.df.sequence_identity < seqid_range[1]]
 
-
         counts = pd.Series(
             [
                 seqid_range,
@@ -110,6 +109,39 @@ class ProjectCounts(object):
 
         with open(ofilepath, 'w') as ofile:
             ofile.write(counts.to_string()+'\n')
+
+    def write_attrition_rates(self, ofilepath=None, seqid_range=None):
+        if ofilepath is None:
+            if seqid_range is None:
+                ofilepath = os.path.join(self.ofile_basepath, 'attrition_rates.txt')
+            else:
+                ofilepath = os.path.join(self.ofile_basepath, 'attrition_rates-seqid{:.0f}-{:.0f}.txt'.format(seqid_range[0], seqid_range[1]))
+
+        if seqid_range is None:
+            df_selected = self.df
+        else:
+            df_selected = self.df[self.df.sequence_identity >= seqid_range[0]][self.df.sequence_identity < seqid_range[1]]
+
+        ntemplates = float(len(df_selected))
+        rates = pd.Series(
+            [
+                seqid_range,
+                1.0,
+                df_selected.has_model.sum() / ntemplates,
+                df_selected.unique.sum() / ntemplates,
+                df_selected.has_implicit_refined.sum() / ntemplates,
+            ],
+            index=[
+                'sequence_identity_range',
+                'templates',
+                'models',
+                'unique_models',
+                'implicit_refined',
+            ]
+        )
+
+        with open(ofilepath, 'w') as ofile:
+            ofile.write(rates.to_string()+'\n')
 
 
 class LoopmodelLogs(object):
