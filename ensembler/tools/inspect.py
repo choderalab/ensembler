@@ -11,12 +11,13 @@ import warnings
 
 
 class ProjectCounts(object):
-    def __init__(self, targetid, project_dir='.', ofile_basepath='.', log_level=None):
+    def __init__(self, targetid, project_dir='.', ofile_basepath=None, log_level=None):
         ensembler.utils.loglevel_setter(logger, log_level)
         self.targetid = targetid
         self.model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
-        self.ofile_basepath = ofile_basepath
+        if ofile_basepath == None:
+            self.ofile_basepath = self.model_dir
         self.df = pd.DataFrame()
         self._count_templates()
         self._count_models()
