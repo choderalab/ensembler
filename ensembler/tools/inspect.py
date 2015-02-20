@@ -11,11 +11,12 @@ import warnings
 
 
 class ProjectCounts(object):
-    def __init__(self, targetid, project_dir='.', log_level=None):
+    def __init__(self, targetid, project_dir='.', ofile_basepath='.', log_level=None):
         ensembler.utils.loglevel_setter(logger, log_level)
         self.targetid = targetid
         self.model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
+        self.ofile_basepath = ofile_basepath
         self.df = pd.DataFrame()
         self._count_templates()
         self._count_models()
@@ -80,9 +81,9 @@ class ProjectCounts(object):
     def write_counts(self, ofilepath=None, seqid_range=None):
         if ofilepath is None:
             if seqid_range is None:
-                ofilepath = 'counts.txt'
+                ofilepath = os.path.join(self.ofile_basepath, 'counts.txt')
             else:
-                ofilepath = 'counts-seqid{:.0f}-{:.0f}.txt'.format(seqid_range[0], seqid_range[1])
+                ofilepath = os.path.join(self.ofile_basepath, 'counts-seqid{:.0f}-{:.0f}.txt'.format(seqid_range[0], seqid_range[1]))
 
         if seqid_range is None:
             df_selected = self.df
