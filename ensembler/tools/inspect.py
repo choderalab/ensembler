@@ -2,6 +2,7 @@ from datetime import datetime
 import ensembler
 import os
 import re
+import numpy as np
 import pandas as pd
 import yaml
 import mdtraj
@@ -24,6 +25,14 @@ class ProjectCounts(object):
         self._count_uniques()
         self._count_implicit_refined()
         self._get_sequence_identities()
+
+        self.output_columns=[
+            'sequence_identity_range',
+            'templates',
+            'models',
+            'unique_models',
+            'implicit_refined',
+        ]
 
     def _count_templates(self):
         templateid = []
@@ -96,41 +105,31 @@ class ProjectCounts(object):
     def write_counts(self, ofilepath=None, seqid_range=None):
         if ofilepath is None:
             if seqid_range is None:
-                ofilepath = os.path.join(self.ofile_basepath, 'counts.txt')
+                ofilepath = os.path.join(self.ofile_basepath, 'counts.csv')
             else:
-                ofilepath = os.path.join(self.ofile_basepath, 'counts-seqid{:.0f}-{:.0f}.txt'.format(seqid_range[0], seqid_range[1]))
+                ofilepath = os.path.join(self.ofile_basepath, 'counts-seqid{:.0f}-{:.0f}.csv'.format(seqid_range[0], seqid_range[1]))
 
         if seqid_range is None:
             df_selected = self.df
         else:
             df_selected = self.df[self.df.sequence_identity >= seqid_range[0]][self.df.sequence_identity < seqid_range[1]]
 
-        counts = pd.Series(
-            [
-                seqid_range,
-                len(df_selected),
-                df_selected.has_model.sum(),
-                df_selected.unique.sum(),
-                df_selected.has_implicit_refined.sum(),
-            ],
-            index=[
-                'sequence_identity_range',
-                'templates',
-                'models',
-                'unique_models',
-                'implicit_refined',
-            ]
-        )
+        counts = pd.DataFrame({
+            'sequence_identity_range': [seqid_range],
+            'templates': [len(df_selected)],
+            'models': [df_selected.has_model.sum()],
+            'unique_models': [df_selected.unique.sum()],
+            'implicit_refined': [df_selected.has_implicit_refined.sum()],
+        })
 
-        with open(ofilepath, 'w') as ofile:
-            ofile.write(counts.to_string()+'\n')
+        counts.to_csv(ofilepath, columns=self.output_columns)
 
     def write_attrition_rates(self, ofilepath=None, seqid_range=None):
         if ofilepath is None:
             if seqid_range is None:
-                ofilepath = os.path.join(self.ofile_basepath, 'attrition_rates.txt')
+                ofilepath = os.path.join(self.ofile_basepath, 'attrition_rates.csv')
             else:
-                ofilepath = os.path.join(self.ofile_basepath, 'attrition_rates-seqid{:.0f}-{:.0f}.txt'.format(seqid_range[0], seqid_range[1]))
+                ofilepath = os.path.join(self.ofile_basepath, 'attrition_rates-seqid{:.0f}-{:.0f}.csv'.format(seqid_range[0], seqid_range[1]))
 
         if seqid_range is None:
             df_selected = self.df
@@ -143,25 +142,22 @@ class ProjectCounts(object):
             df_selected.has_implicit_refined.sum(),
         ]
 
-        rates = pd.Series(
-            [
-                seqid_range,
-                1.0,
-                counts[0] / float(len(df_selected)),
-                counts[1] / float(counts[0]),
-                counts[2] / float(counts[1]),
-            ],
-            index=[
-                'sequence_identity_range',
-                'templates',
-                'models',
-                'unique_models',
-                'implicit_refined',
-            ]
-        )
+        rates = [
+            1.0,
+            counts[0] / np.float64(len(df_selected)),
+            counts[1] / np.float64(counts[0]),
+            counts[2] / np.float64(counts[1]),
+        ]
 
-        with open(ofilepath, 'w') as ofile:
-            ofile.write(rates.to_string()+'\n')
+        rates_df = pd.DataFrame({
+            'sequence_identity_range': [seqid_range],
+            'templates': [rates[0]],
+            'models': [rates[1]],
+            'unique_models': [rates[2]],
+            'implicit_refined': [rates[3]],
+        })
+
+        rates_df.to_csv(ofilepath, columns=self.output_columns)
 
 
 class LoopmodelLogs(object):
