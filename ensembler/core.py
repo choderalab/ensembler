@@ -65,6 +65,9 @@ logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
 # metadata_filename_regex = re.compile('(^|.*)(meta)([0-9]+)\.yaml')
 
+target_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}$')
+template_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}_[A-Z0-9]{4}_[A-Z0-9]$')
+
 # ========
 # MPI
 # ========

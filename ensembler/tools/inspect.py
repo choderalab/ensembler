@@ -1,12 +1,114 @@
 from datetime import datetime
 import ensembler
 import os
+import re
 import pandas as pd
 import yaml
 import mdtraj
 import gzip
 from ensembler.core import logger
 import warnings
+
+
+class ProjectCounts(object):
+    def __init__(self, targetid, project_dir='.', log_level=None):
+        ensembler.utils.loglevel_setter(logger, log_level)
+        self.targetid = targetid
+        self.model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
+        self.project_dir = project_dir
+        self.df = pd.DataFrame()
+        self._count_templates()
+        self._count_models()
+        self._count_uniques()
+        self._count_implicit_refined()
+        self._get_sequence_identities()
+
+    def _count_templates(self):
+        templateid = []
+        root, dirnames, filenames = next(os.walk(self.model_dir))
+        for dirname in dirnames:
+            if re.match(ensembler.core.template_id_regex, dirname):
+                templateid.append(dirname)
+        self.df['templateid'] = templateid
+
+    def _count_models(self):
+        has_model = []
+        for templateid in self.df.templateid:
+            model_path = os.path.join(self.model_dir, templateid, 'model.pdb.gz')
+            if os.path.exists(model_path):
+                has_model.append(True)
+            else:
+                has_model.append(False)
+        self.df['has_model'] = has_model
+
+    def _count_uniques(self):
+        unique = []
+        for templateid in self.df.templateid:
+            model_path = os.path.join(self.model_dir, templateid, 'unique_by_clustering')
+            if os.path.exists(model_path):
+                unique.append(True)
+            else:
+                unique.append(False)
+        self.df['unique'] = unique
+
+    def _count_implicit_refined(self):
+        has_implicit_refined = []
+        for templateid in self.df.templateid:
+            model_path = os.path.join(self.model_dir, templateid, 'implicit-refined.pdb.gz')
+            if os.path.exists(model_path):
+                has_implicit_refined.append(True)
+            else:
+                has_implicit_refined.append(False)
+        self.df['has_implicit_refined'] = has_implicit_refined
+
+    def _get_sequence_identities(self):
+        sequence_identity = []
+        for templateid in self.df.templateid:
+            seqid_path = os.path.join(self.model_dir, templateid, 'sequence-identity.txt')
+            if os.path.exists(seqid_path):
+                seqid = float(open(seqid_path).read().strip())
+                sequence_identity.append(seqid)
+            else:
+                sequence_identity.append(None)
+        self.df['sequence_identity'] = sequence_identity
+
+    def save_df(self, ofilepath=None):
+        if ofilepath is None:
+            ofilepath = 'counts.csv'
+            self.df.to_csv(ofilepath)
+
+    def write_counts(self, ofilepath=None, seqid_range=None):
+        if ofilepath is None:
+            if seqid_range is None:
+                ofilepath = 'counts.txt'
+            else:
+                ofilepath = 'counts-seqid{:.0f}-{:.0f}.txt'.format(seqid_range[0], seqid_range[1])
+
+        if seqid_range is None:
+            df_selected = self.df
+        else:
+            df_selected = self.df[self.df.sequence_identity >= seqid_range[0]][self.df.sequence_identity < seqid_range[1]]
+
+
+        counts = pd.Series(
+            [
+                seqid_range,
+                len(df_selected),
+                df_selected.has_model.sum(),
+                df_selected.unique.sum(),
+                df_selected.has_implicit_refined.sum(),
+            ],
+            index=[
+                'sequence_identity_range',
+                'templates',
+                'models',
+                'unique_models',
+                'implicit_refined',
+            ]
+        )
+
+        with open(ofilepath, 'w') as ofile:
+            ofile.write(counts.to_string()+'\n')
 
 
 class LoopmodelLogs(object):
