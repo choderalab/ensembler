@@ -65,6 +65,20 @@ class ProjectCounts(object):
     def _get_sequence_identities(self):
         sequence_identity = []
         for templateid in self.df.templateid:
+            aln_path = os.path.join(self.model_dir, templateid, 'alignment.pir')
+            if os.path.exists(aln_path):
+                with open(aln_path) as aln_file:
+                    aln_text = aln_file.read().splitlines()
+                aln = [aln_text[3], aln_text[6]]
+                seqid = 100.0 * (sum([aa1 == aa2 for aa1, aa2 in zip(*aln)]) / float(len(aln[0])))
+                sequence_identity.append(seqid)
+            else:
+                sequence_identity.append(None)
+        self.df['sequence_identity'] = sequence_identity
+
+    def _get_sequence_identities_old(self):   # TODO delete
+        sequence_identity = []
+        for templateid in self.df.templateid:
             seqid_path = os.path.join(self.model_dir, templateid, 'sequence-identity.txt')
             if os.path.exists(seqid_path):
                 seqid = float(open(seqid_path).read().strip())
