@@ -136,14 +136,19 @@ class ProjectCounts(object):
         else:
             df_selected = self.df[self.df.sequence_identity >= seqid_range[0]][self.df.sequence_identity < seqid_range[1]]
 
-        ntemplates = float(len(df_selected))
+        counts = [
+            df_selected.has_model.sum(),
+            df_selected.unique.sum(),
+            df_selected.has_implicit_refined.sum(),
+        ]
+
         rates = pd.Series(
             [
                 seqid_range,
                 1.0,
-                df_selected.has_model.sum() / ntemplates,
-                df_selected.unique.sum() / ntemplates,
-                df_selected.has_implicit_refined.sum() / ntemplates,
+                counts[0] / float(len(df_selected)),
+                counts[1] / float(counts[0]),
+                counts[2] / float(counts[1]),
             ],
             index=[
                 'sequence_identity_range',
