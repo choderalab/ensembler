@@ -360,12 +360,8 @@ class ModelingLogs(object):
         log_data = {}
         root, dirs, files = next(os.walk(self.target_models_dir))
         templateids = [dirname for dirname in dirs if re.match(ensembler.core.template_id_regex, dirname)]
-        logfilepaths = [templateid for templateid in templateids if os.path.join(self.target_models_dir, templateid, 'modeling-log.yaml')]
+        logfilepaths = [os.path.join(self.target_models_dir, templateid, 'modeling-log.yaml') for templateid in templateids]
         valid_logfilepaths = [logfilepath for logfilepath in logfilepaths if os.path.exists(logfilepath)]
-
-        print templateids
-        print logfilepaths
-        print valid_logfilepaths
 
         for t, logfilepath in enumerate(valid_logfilepaths):
             with open(logfilepath) as logfile:
