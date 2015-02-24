@@ -383,7 +383,7 @@ class ModelingLogs(object):
                                 log_data['timing_total_seconds'] = [timing_total_seconds]
                             log_data['timing_total_seconds'].append(timing_total_seconds)
 
-        df = log_data
+        df = pd.DataFrame(log_data)
 
         return df
 
