@@ -379,9 +379,9 @@ class ModelingLogs(object):
                     else:
                         timing_total_seconds = None
 
-                    if 'timing_total_seconds' not in log_data:
-                        log_data['timing_total_seconds'] = [None] * len(valid_logfilepaths)
-                    log_data['timing_total_seconds'][t] = timing_total_seconds
+                    if 'timing_timedelta' not in log_data:
+                        log_data['timing_timedelta'] = [None] * len(valid_logfilepaths)
+                    log_data['timing_timedelta'][t] = timing_total_seconds
 
         self.df = pd.DataFrame(log_data)
 
