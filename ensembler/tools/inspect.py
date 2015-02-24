@@ -363,6 +363,10 @@ class ModelingLogs(object):
         logfilepaths = [templateid for templateid in templateids if os.path.join(self.target_models_dir, templateid, 'modeling-log.yaml')]
         valid_logfilepaths = [logfilepath for logfilepath in logfilepaths if os.path.exists(logfilepath)]
 
+        print templateids
+        print logfilepaths
+        print valid_logfilepaths
+
         for t, logfilepath in enumerate(valid_logfilepaths):
             with open(logfilepath) as logfile:
                 log = yaml.load(logfile)
