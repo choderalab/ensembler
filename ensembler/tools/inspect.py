@@ -353,9 +353,9 @@ class ModelingLogs(object):
     def __init__(self, targetid, project_dir='.'):
         self.project_dir = project_dir
         self.targetid = targetid
-        self.df = self.parse_logs()
+        self._parse_logs()
 
-    def parse_logs(self):
+    def _parse_logs(self):
         self.target_models_dir = os.path.join(self.project_dir, ensembler.core.default_project_dirnames.models, self.targetid)
         log_data = {}
         root, dirs, files = next(os.walk(self.target_models_dir))
@@ -384,9 +384,8 @@ class ModelingLogs(object):
                             else:
                                 log_data['timing_total_seconds'].append(timing_total_seconds)
 
-        df = pd.DataFrame(log_data)
-
-        return df
+        self.log_data = log_data
+        self.df = pd.DataFrame(log_data)
 
     def to_csv(self, ofilepath):
         self.df.to_csv(ofilepath)
