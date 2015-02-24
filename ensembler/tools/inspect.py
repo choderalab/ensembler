@@ -381,7 +381,8 @@ class ModelingLogs(object):
 
                             if 'timing_total_seconds' not in log_data:
                                 log_data['timing_total_seconds'] = [timing_total_seconds]
-                            log_data['timing_total_seconds'].append(timing_total_seconds)
+                            else:
+                                log_data['timing_total_seconds'].append(timing_total_seconds)
 
         df = pd.DataFrame(log_data)
 
