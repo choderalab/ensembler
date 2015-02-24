@@ -360,7 +360,7 @@ class ModelingLogs(object):
         log_data = {}
         root, dirs, files = next(os.walk(self.target_models_dir))
         templateids = [dirname for dirname in dirs if re.match(ensembler.core.template_id_regex, dirname)]
-        logfilepaths = [os.path.join(self.target_models_dir, templateid, 'modeling-log.yaml') for templateid in templateids]
+        logfilepaths = [os.path.join(self.target_models_dir, templateid, self.logfilename) for templateid in templateids]
         valid_logfilepaths = [logfilepath for logfilepath in logfilepaths if os.path.exists(logfilepath)]
 
         for t, logfilepath in enumerate(valid_logfilepaths):
@@ -375,15 +375,27 @@ class ModelingLogs(object):
                 if key == 'timing':
                     if re.match('[0-9]+:[0-9]+:[0-9]+', log[key]):
                         hours, mins, seconds = [int(x) for x in log[key].split(':')]
-                        timing_total_seconds = datetime.timedelta(seconds=(seconds + mins*60 + hours*3600))
+                        timing_timedelta = datetime.timedelta(seconds=(seconds + mins*60 + hours*3600))
                     else:
-                        timing_total_seconds = None
+                        timing_timedelta = None
 
                     if 'timing_timedelta' not in log_data:
                         log_data['timing_timedelta'] = [None] * len(valid_logfilepaths)
-                    log_data['timing_timedelta'][t] = timing_total_seconds
+                    log_data['timing_timedelta'][t] = timing_timedelta
 
         self.df = pd.DataFrame(log_data)
 
     def to_csv(self, ofilepath):
         self.df.to_csv(ofilepath)
+
+
+class BuildModelsLogs(ModelingLogs):
+    def __init__(self, targetid, project_dir='.'):
+        self.logfilename = 'modeling-log.yaml'
+        super(BuildModelsLogs, self).__init__(targetid, project_dir=project_dir)
+
+
+class RefineImplicitLogs(ModelingLogs):
+    def __init__(self, targetid, project_dir='.'):
+        self.logfilename = 'implicit-log.yaml'
+        super(RefineImplicitLogs, self).__init__(targetid, project_dir=project_dir)
