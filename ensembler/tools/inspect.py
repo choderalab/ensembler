@@ -385,7 +385,7 @@ class ModelingLogs(object):
                                 log_data['timing_total_seconds'].append(timing_total_seconds)
 
         self.log_data = log_data
-        self.df = pd.DataFrame(log_data)
+        # self.df = pd.DataFrame(log_data)
 
     def to_csv(self, ofilepath):
         self.df.to_csv(ofilepath)
