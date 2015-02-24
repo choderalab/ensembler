@@ -359,30 +359,29 @@ class ModelingLogs(object):
         self.target_models_dir = os.path.join(self.project_dir, ensembler.core.default_project_dirnames.models, self.targetid)
         log_data = {}
         root, dirs, files = next(os.walk(self.target_models_dir))
-        for dirname in dirs:
-            if re.match(ensembler.core.template_id_regex, dirname):
-                logfilepath = os.path.join(self.target_models_dir, dirname, 'modeling-log.yaml')
-                if os.path.exists(logfilepath):
-                    with open(logfilepath) as logfile:
-                        log = yaml.load(logfile)
+        templateids = [dirname for dirname in dirs if re.match(ensembler.core.template_id_regex, dirname)]
+        logfilepaths = [templateid for templateid in templateids if os.path.join(self.target_models_dir, templateid, 'modeling-log.yaml')]
+        valid_logfilepaths = [logfilepath for logfilepath in logfilepaths if os.path.exists(logfilepath)]
 
-                    for key in log:
-                        if key not in log_data:
-                            log_data[key] = [log[key]]
-                        else:
-                            log_data[key].append(log[key])
+        for t, logfilepath in enumerate(valid_logfilepaths):
+            with open(logfilepath) as logfile:
+                log = yaml.load(logfile)
 
-                        if key == 'timing':
-                            if re.match('[0-9]+:[0-9]+:[0-9]+', log[key]):
-                                hours, mins, seconds = [int(x) for x in log[key].split(':')]
-                                timing_total_seconds = datetime.timedelta(seconds=(seconds + mins*60 + hours*3600))
-                            else:
-                                timing_total_seconds = None
+            for key in log:
+                if key not in log_data:
+                    log_data[key] = [None] * t
+                log_data[key].append(log[key])
 
-                            if 'timing_total_seconds' not in log_data:
-                                log_data['timing_total_seconds'] = [timing_total_seconds]
-                            else:
-                                log_data['timing_total_seconds'].append(timing_total_seconds)
+                if key == 'timing':
+                    if re.match('[0-9]+:[0-9]+:[0-9]+', log[key]):
+                        hours, mins, seconds = [int(x) for x in log[key].split(':')]
+                        timing_total_seconds = datetime.timedelta(seconds=(seconds + mins*60 + hours*3600))
+                    else:
+                        timing_total_seconds = None
+
+                    if 'timing_total_seconds' not in log_data:
+                        log_data['timing_total_seconds'] = [None] * t
+                    log_data['timing_total_seconds'].append(timing_total_seconds)
 
         self.log_data = log_data
         # self.df = pd.DataFrame(log_data)
