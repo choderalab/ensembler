@@ -264,8 +264,8 @@ class ModelSimilarities(object):
 class ModelingLogs(object):
     def __init__(self, targetid, project_dir='.'):
         self.project_dir = project_dir
-        self.df = self.parse_logs()
         self.targetid = targetid
+        self.df = self.parse_logs()
 
     def parse_logs(self):
         self.target_models_dir = os.path.join(self.project_dir, ensembler.core.default_project_dirnames.models, self.targetid)
