@@ -369,8 +369,8 @@ class ModelingLogs(object):
 
             for key in log:
                 if key not in log_data:
-                    log_data[key] = [None] * t
-                log_data[key].append(log[key])
+                    log_data[key] = [None] * len(valid_logfilepaths)
+                log_data[key][t] = log[key]
 
                 if key == 'timing':
                     if re.match('[0-9]+:[0-9]+:[0-9]+', log[key]):
@@ -380,8 +380,8 @@ class ModelingLogs(object):
                         timing_total_seconds = None
 
                     if 'timing_total_seconds' not in log_data:
-                        log_data['timing_total_seconds'] = [None] * t
-                    log_data['timing_total_seconds'].append(timing_total_seconds)
+                        log_data['timing_total_seconds'] = [None] * len(valid_logfilepaths)
+                    log_data['timing_total_seconds'][t] = timing_total_seconds
 
         self.log_data = log_data
         # self.df = pd.DataFrame(log_data)
