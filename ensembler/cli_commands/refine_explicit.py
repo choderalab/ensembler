@@ -13,6 +13,11 @@ MPI-enabled.
 
 Options:"""
 
+helpstring_unique_options = [
+    """\
+  --write_solvated_model           Write solvated model prior to performing MD.""",
+]
+
 helpstring_nonunique_options = [
     """\
   --openmm_platform <platform>    Specify the OpenMM Platform to use {CUDA|OpenCL|CPU|Reference}
@@ -45,8 +50,8 @@ helpstring_nonunique_options = [
   -v --verbose                 """,
 ]
 
-helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_nonunique_options)])
-docopt_helpstring = ''
+helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
+docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 def dispatch(args):
     if args['--targetsfile']:
@@ -77,4 +82,4 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.refinement.refine_explicitMD(openmm_platform=args['--openmm_platform'], gpupn=gpupn, sim_length=sim_length, process_only_these_targets=targets, process_only_these_templates=templates, retry_failed_runs=args['--retry_failed_runs'], verbose=args['--verbose'])
+    ensembler.refinement.refine_explicitMD(openmm_platform=args['--openmm_platform'], gpupn=gpupn, sim_length=sim_length, process_only_these_targets=targets, process_only_these_templates=templates, retry_failed_runs=args['--retry_failed_runs'], write_solvated_model=args['--write_solvated_model'], verbose=args['--verbose'])

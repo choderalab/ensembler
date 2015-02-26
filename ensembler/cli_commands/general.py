@@ -26,7 +26,7 @@ Usage:
       [--templates <template>] [--padding <padding>] [-v | --verbose]
   ensembler refine_explicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>]
       [--templates <template>] [--gpupn <gpupn>] [--openmm_platform <platform>]
-      [--simlength <simlength>] [--retry_failed_runs] [-v | --verbose]
+      [--simlength <simlength>] [--retry_failed_runs] [--write_solvated_model] [-v | --verbose]
   ensembler package_models [-h | --help] [--package_for <choice>] [--targets <target>]
       [--targetsfile <targetsfile>] [--nfahclones <n>] [--archivefahproject]
   ensembler testrun_pipeline [-h | --help]
