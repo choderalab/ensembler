@@ -399,3 +399,9 @@ class RefineImplicitLogs(ModelingLogs):
     def __init__(self, targetid, project_dir='.'):
         self.logfilename = 'implicit-log.yaml'
         super(RefineImplicitLogs, self).__init__(targetid, project_dir=project_dir)
+
+
+class RefineExplicitLogs(ModelingLogs):
+    def __init__(self, targetid, project_dir='.'):
+        self.logfilename = 'explicit-log.yaml'
+        super(RefineExplicitLogs, self).__init__(targetid, project_dir=project_dir)
