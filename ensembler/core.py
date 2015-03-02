@@ -68,6 +68,12 @@ logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 target_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}$')
 template_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}_[A-Z0-9]{4}_[A-Z0-9]$')
 
+model_filenames_by_ensembler_stage = {
+    'build_models': 'model.pdb.gz',
+    'refine_implicit_md': 'implicit-refined.pdb.gz',
+    'refine_explicit_md': 'explicit-refined.pdb.gz',
+}
+
 # ========
 # MPI
 # ========

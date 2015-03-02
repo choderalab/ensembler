@@ -6,10 +6,11 @@ import ensembler.initproject
 import ensembler.modeling
 import ensembler.refinement
 import ensembler.packaging
+from simtk import unit
 
 
 class QuickModel(object):
-    def __init__(self, targetid=None, templateids=None, target_uniprot_entry_name=None, uniprot_domain_regex=None, pdbids=None, chainids=None, template_uniprot_query=None, template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None, structure_dirs=None):
+    def __init__(self, targetid=None, templateids=None, target_uniprot_entry_name=None, uniprot_domain_regex=None, pdbids=None, chainids=None, template_uniprot_query=None, template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None, structure_dirs=None, sim_length=100*unit.picoseconds):
         """
         Run this after having set up targets and templates with the appropriate ensembler commands.
 
@@ -25,6 +26,7 @@ class QuickModel(object):
         :param package_for_fah: boolean
         :param nfahclones: int
         :param structure_dirs: list of str
+        :param sim_length: simtk.unit.picoseconds
         """
         self.targetid = targetid
         self.templateids = templateids
@@ -38,6 +40,7 @@ class QuickModel(object):
         self.package_for_fah = package_for_fah
         self.nfahclones = nfahclones
         self.structure_dirs = structure_dirs
+        self.sim_length = sim_length
 
         if not ensembler.core.check_project_toplevel_dir(raise_exception=False):
             ensembler.initproject.InitProject('.')
@@ -126,10 +129,10 @@ class QuickModel(object):
         ensembler.modeling.align_targets_and_templates(process_only_these_targets=targetid, process_only_these_templates=templateids)
         ensembler.modeling.build_models(process_only_these_targets=targetid, process_only_these_templates=templateids)
         ensembler.modeling.cluster_models(process_only_these_targets=targetid)
-        ensembler.refinement.refine_implicit_md(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        ensembler.refinement.refine_implicit_md(process_only_these_targets=targetid, process_only_these_templates=templateids, sim_length=self.sim_length)
         ensembler.refinement.solvate_models(process_only_these_targets=targetid, process_only_these_templates=templateids)
         ensembler.refinement.determine_nwaters(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        ensembler.refinement.refine_explicitMD(process_only_these_targets=targetid, process_only_these_templates=templateids)
+        ensembler.refinement.refine_explicitMD(process_only_these_targets=targetid, process_only_these_templates=templateids, sim_length=self.sim_length)
         if package_for_fah:
             if not nfahclones:
                 nfahclones = 1
