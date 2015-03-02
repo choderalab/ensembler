@@ -246,7 +246,7 @@ class ModelSimilarities(object):
     def _store_highest_seqid_model(self):
         models_sorted = self.df.sort('seqid').templateid
         for modelid in models_sorted:
-            model_filepath = os.path.join(self.model_dir, modelid, 'model.pdb.gz')
+            model_filepath = os.path.join(self.model_dir, modelid, self.model_filename)
             if os.path.exists(model_filepath):
                 self.ref_modelid = modelid
                 self.ref_model_filepath = model_filepath
