@@ -1,10 +1,9 @@
 import os
-import re
 import numpy as np
 import pandas as pd
 import mdtraj
 import ensembler
-from ensembler.core import logger
+from ensembler.core import logger, check_ensembler_modeling_stage_complete
 
 
 def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=None, models_data_filepath=None, process_only_these_templates=None):
@@ -41,7 +40,7 @@ def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=No
 
     if ensembler_stage is None:
         for stagename in ['refine_explicit_md', 'refine_implicit_md', 'build_models']:
-            if check_ensembler_stage_complete(stagename, targetid):
+            if check_ensembler_modeling_stage_complete(stagename, targetid):
                 ensembler_stage = stagename
                 break
 
@@ -94,39 +93,3 @@ def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=No
     traj[0].save(topol_filepath)
     traj.save(traj_filepath)
     return traj, df
-
-
-def check_ensembler_stage_complete(ensembler_stage, targetid):
-    if not check_ensembler_stage_metadata_exists(ensembler_stage, targetid):
-        return False
-    if not check_ensembler_stage_first_model_file_exists(ensembler_stage, targetid):
-        return False
-    return True
-
-
-def check_ensembler_stage_metadata_exists(ensembler_stage, targetid):
-    next_ensembler_stage = ensembler.core.project_stages[
-        ensembler.core.project_stages.index(ensembler_stage) + 1]
-    try:
-        project_metadata = ensembler.core.ProjectMetadata(project_stage=next_ensembler_stage, target_id=targetid)
-    except IOError:
-        return False
-    if ensembler_stage in project_metadata.data:
-        return True
-    else:
-        return False
-
-
-def check_ensembler_stage_first_model_file_exists(ensembler_stage, targetid):
-    models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
-    root, dirnames, filenames = next(os.walk(models_target_dir))
-    for dirname in dirnames:
-        if re.match(ensembler.core.template_id_regex, dirname):
-            model_filepath = os.path.join(
-                models_target_dir,
-                dirname,
-                ensembler.core.model_filenames_by_ensembler_stage[ensembler_stage]
-            )
-            if os.path.exists(model_filepath):
-                return True
-    return False

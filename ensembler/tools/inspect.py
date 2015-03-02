@@ -7,7 +7,7 @@ import pandas as pd
 import yaml
 import mdtraj
 import gzip
-from ensembler.core import logger
+from ensembler.core import logger, check_ensembler_modeling_stage_complete
 import warnings
 
 
@@ -161,11 +161,23 @@ class ProjectCounts(object):
 
 
 class ModelSimilarities(object):
-    def __init__(self, targetid, project_dir='.', log_level=None):
+    def __init__(self, targetid, ensembler_stage=None, project_dir='.', log_level=None):
+        ensembler.core.check_project_toplevel_dir()
         ensembler.utils.loglevel_setter(logger, log_level)
         self.targetid = targetid
         self.model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
+        if ensembler_stage is not None:
+            self.ensembler_stage = ensembler_stage
+        else:
+            for stagename in ['refine_explicit_md', 'refine_implicit_md', 'build_models']:
+                if check_ensembler_modeling_stage_complete(stagename, targetid):
+                    self.ensembler_stage = stagename
+                    break
+            if self.ensembler_stage is None:
+                raise Exception('Models have not yet been built for this Ensembler project.')
+        self.model_filename = ensembler.core.model_filenames_by_ensembler_stage[self.ensembler_stage]
+
         self._get_templateids_and_model_filepaths()
         self._get_unique_models()
         self._get_seqids()
@@ -182,7 +194,7 @@ class ModelSimilarities(object):
         model_filepaths = []
         for templateid in templateids:
             template_dirpaths.append(os.path.join(root, templateid))
-            model_filepath = os.path.join(root, templateid, 'model.pdb.gz')
+            model_filepath = os.path.join(root, templateid, self.model_filename)
             if os.path.exists(model_filepath):
                 model_filepaths.append(model_filepath)
                 has_model.append(True)
@@ -192,10 +204,10 @@ class ModelSimilarities(object):
         self.templateids = templateids
         self.template_dirpaths = template_dirpaths
         self.model_filepaths = model_filepaths
-        self.df = pd.DataFrame(
-            {'templateid': templateids,
-             'has_model': has_model}
-        )
+        self.df = pd.DataFrame({
+            'templateid': templateids,
+            'has_model': has_model
+        })
 
     def _get_unique_models(self):
         unique_models = []

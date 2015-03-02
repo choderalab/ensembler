@@ -10,6 +10,8 @@ from collections import namedtuple
 # ========
 # Global package variables
 # ========
+import ensembler
+
 src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
@@ -504,3 +506,39 @@ def find_loopmodel_executable():
                     continue
                 return os.path.join(path, filename)
     raise Exception('Loopmodel executable not found in PATH')
+
+
+def check_ensembler_modeling_stage_first_model_file_exists(ensembler_stage, targetid):
+    models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
+    root, dirnames, filenames = next(os.walk(models_target_dir))
+    for dirname in dirnames:
+        if re.match(ensembler.core.template_id_regex, dirname):
+            model_filepath = os.path.join(
+                models_target_dir,
+                dirname,
+                ensembler.core.model_filenames_by_ensembler_stage[ensembler_stage]
+            )
+            if os.path.exists(model_filepath):
+                return True
+    return False
+
+
+def check_ensembler_modeling_stage_metadata_exists(ensembler_stage, targetid):
+    next_ensembler_stage = ensembler.core.project_stages[
+        ensembler.core.project_stages.index(ensembler_stage) + 1]
+    try:
+        project_metadata = ensembler.core.ProjectMetadata(project_stage=next_ensembler_stage, target_id=targetid)
+    except IOError:
+        return False
+    if ensembler_stage in project_metadata.data:
+        return True
+    else:
+        return False
+
+
+def check_ensembler_modeling_stage_complete(ensembler_stage, targetid):
+    if not check_ensembler_modeling_stage_metadata_exists(ensembler_stage, targetid):
+        return False
+    if not check_ensembler_modeling_stage_first_model_file_exists(ensembler_stage, targetid):
+        return False
+    return True
