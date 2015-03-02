@@ -21,11 +21,11 @@ def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=No
         options: build_models|refine_implicit_md|refine_explicit_md
         default: most advanced stage for which model files are available
     traj_filepath : str
-        default: models/[targetid]/modelstraj.xtc
+        default: models/[targetid]/traj-[ensembler_stage].xtc
     topol_filepath : str
-        default: models/[targetid]/modelstraj-topol.pdb
+        default: models/[targetid]/traj-[ensembler_stage]-topol.pdb
     models_data_filepath :
-        default: models/[targetid]/modelstraj-data.csv
+        default: models/[targetid]/traj-[ensembler_stage]-data.csv
     process_only_these_templates : list of str
 
     Returns
@@ -62,7 +62,7 @@ def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=No
         templateids = [dir for dir in dirs if '_D' in dir]
 
     model_filename = ensembler.core.model_filenames_by_ensembler_stage[ensembler_stage]
-    valid_model_templateids = [templateid for templateid in templateids if os.path.exists(os.path.join(models_target_dir, templateid, 'model.pdb.gz'))]
+    valid_model_templateids = [templateid for templateid in templateids if os.path.exists(os.path.join(models_target_dir, templateid, model_filename))]
     valid_model_filepaths = [os.path.join(models_target_dir, templateid, model_filename) for templateid in valid_model_templateids]
 
     seqid_filepaths = [os.path.join(models_target_dir, templateid, 'sequence-identity.txt') for templateid in valid_model_templateids]
