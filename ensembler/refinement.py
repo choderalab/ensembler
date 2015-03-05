@@ -351,6 +351,9 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         models_target_dir = os.path.join(models_dir, target.id)
         if not os.path.exists(models_target_dir): continue
 
+        if mpistate.rank == 0:
+            target_starttime = datetime.datetime.utcnow()
+
         # Process all templates.
         for template_index in range(mpistate.rank, len(templates), mpistate.size):
             template = templates[template_index]
@@ -405,8 +408,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
         if mpistate.rank == 0:
             project_metadata = ensembler.core.ProjectMetadata(project_stage='solvate_models', target_id=target.id)
-
             datestamp = ensembler.core.get_utcnow_formatted()
+            target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             metadata = {
                 'target_id': target.id,
@@ -417,7 +420,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                 'ensembler_commit': ensembler.version.git_revision,
                 'biopython_version': Bio.__version__,
                 'openmm_version': simtk.openmm.version.short_version,
-                'openmm_commit': simtk.openmm.version.git_revision
+                'openmm_commit': simtk.openmm.version.git_revision,
+                'timing': ensembler.core.strf_timedelta(target_timedelta),
             }
 
             project_metadata.add_data(metadata)

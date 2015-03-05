@@ -108,6 +108,7 @@ class SetUpProjectStageMethods:
         self._copy_modeling_files(
             target_level_files=[
                 'solvate_models-meta0.yaml',
+                'determine_nwaters-meta0.yaml',
                 'nwaters-use.txt',
                 'nwaters-max.txt',
                 'nwaters-list.txt',

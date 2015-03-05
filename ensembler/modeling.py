@@ -677,6 +677,8 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         # Construct a mdtraj trajectory containing all models
         # =============================
 
+        starttime = datetime.datetime.utcnow()
+
         logger.debug('Building a list of valid models...')
 
         model_pdbfilenames = []
@@ -755,6 +757,8 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         project_metadata = ensembler.core.ProjectMetadata(project_stage='cluster_models', target_id=target.id)
         datestamp = ensembler.core.get_utcnow_formatted()
 
+        timedelta = datetime.datetime.utcnow() - starttime
+
         metadata = {
             'target_id': target.id,
             'datestamp': datestamp,
@@ -765,7 +769,8 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
             'ensembler_commit': ensembler.version.git_revision,
             'biopython_version': Bio.__version__,
             'mdtraj_version': mdtraj.version.short_version,
-            'mdtraj_commit': mdtraj.version.git_revision
+            'mdtraj_commit': mdtraj.version.git_revision,
+            'timing': ensembler.core.strf_timedelta(timedelta),
         }
 
         project_metadata.add_data(metadata)
