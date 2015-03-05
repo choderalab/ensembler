@@ -69,7 +69,6 @@ class RenumberResidues(object):
                     pass
 
     def _output_models(self):
-        ofilepath_implicit = os.path.join(self.models_target_dir, 'topol-renumbered-implicit.pdb')
-        ofilepath_explicit = os.path.join(self.models_target_dir, 'topol-renumbered-explicit.pdb')
-        self.model['implicit'].save_pdb(ofilepath_implicit)
-        self.model['explicit'].save_pdb(ofilepath_explicit)
+        for key in self.model:
+            ofilepath = os.path.join(self.models_target_dir, 'topol-renumbered-{0}.pdb'.format(key))
+            self.model[key].save_pdb(ofilepath)
