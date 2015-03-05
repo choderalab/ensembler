@@ -15,10 +15,10 @@ class ProjectCounts(object):
     def __init__(self, targetid, project_dir='.', ofile_basepath=None, log_level=None):
         ensembler.utils.loglevel_setter(logger, log_level)
         self.targetid = targetid
-        self.model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
+        self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
         if ofile_basepath == None:
-            self.ofile_basepath = self.model_dir
+            self.ofile_basepath = self.models_target_dir
         self.df = pd.DataFrame()
         self._count_templates()
         self._count_models()
@@ -36,7 +36,7 @@ class ProjectCounts(object):
 
     def _count_templates(self):
         templateid = []
-        root, dirnames, filenames = next(os.walk(self.model_dir))
+        root, dirnames, filenames = next(os.walk(self.models_target_dir))
         for dirname in dirnames:
             if re.match(ensembler.core.template_id_regex, dirname):
                 templateid.append(dirname)
@@ -45,7 +45,7 @@ class ProjectCounts(object):
     def _count_models(self):
         has_model = []
         for templateid in self.df.templateid:
-            model_path = os.path.join(self.model_dir, templateid, 'model.pdb.gz')
+            model_path = os.path.join(self.models_target_dir, templateid, 'model.pdb.gz')
             if os.path.exists(model_path):
                 has_model.append(True)
             else:
@@ -55,7 +55,7 @@ class ProjectCounts(object):
     def _count_uniques(self):
         unique = []
         for templateid in self.df.templateid:
-            model_path = os.path.join(self.model_dir, templateid, 'unique_by_clustering')
+            model_path = os.path.join(self.models_target_dir, templateid, 'unique_by_clustering')
             if os.path.exists(model_path):
                 unique.append(True)
             else:
@@ -65,7 +65,7 @@ class ProjectCounts(object):
     def _count_implicit_refined(self):
         has_implicit_refined = []
         for templateid in self.df.templateid:
-            model_path = os.path.join(self.model_dir, templateid, 'implicit-refined.pdb.gz')
+            model_path = os.path.join(self.models_target_dir, templateid, 'implicit-refined.pdb.gz')
             if os.path.exists(model_path):
                 has_implicit_refined.append(True)
             else:
@@ -75,7 +75,7 @@ class ProjectCounts(object):
     def _get_sequence_identities(self):
         sequence_identity = []
         for templateid in self.df.templateid:
-            aln_path = os.path.join(self.model_dir, templateid, 'alignment.pir')
+            aln_path = os.path.join(self.models_target_dir, templateid, 'alignment.pir')
             if os.path.exists(aln_path):
                 with open(aln_path) as aln_file:
                     aln_text = aln_file.read().splitlines()
@@ -89,7 +89,7 @@ class ProjectCounts(object):
     def _get_sequence_identities_old(self):   # TODO delete
         sequence_identity = []
         for templateid in self.df.templateid:
-            seqid_path = os.path.join(self.model_dir, templateid, 'sequence-identity.txt')
+            seqid_path = os.path.join(self.models_target_dir, templateid, 'sequence-identity.txt')
             if os.path.exists(seqid_path):
                 seqid = float(open(seqid_path).read().strip())
                 sequence_identity.append(seqid)
@@ -165,7 +165,7 @@ class ModelSimilarities(object):
         ensembler.core.check_project_toplevel_dir()
         ensembler.utils.loglevel_setter(logger, log_level)
         self.targetid = targetid
-        self.model_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
+        self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
         if ensembler_stage is not None:
             self.ensembler_stage = ensembler_stage
@@ -186,7 +186,7 @@ class ModelSimilarities(object):
 
     def _get_templateids_and_model_filepaths(self):
 
-        root, dirnames, filenames = os.walk(self.model_dir).next()
+        root, dirnames, filenames = os.walk(self.models_target_dir).next()
 
         templateids = [dirname for dirname in dirnames if '_D' in dirname]
         template_dirpaths = []
@@ -234,7 +234,7 @@ class ModelSimilarities(object):
             self.traj = mdtraj.load(model_filepaths)
 
     def _get_seqids(self):
-        seqid_filepath = os.path.join(self.model_dir, 'sequence-identities.txt')
+        seqid_filepath = os.path.join(self.models_target_dir, 'sequence-identities.txt')
         with open(seqid_filepath) as seqid_file:
             seqid_data = zip(*[line.split() for line in seqid_file.read().splitlines()])
         seqid_df = pd.DataFrame({
@@ -246,7 +246,7 @@ class ModelSimilarities(object):
     def _store_highest_seqid_model(self):
         models_sorted = self.df.sort('seqid').templateid
         for modelid in models_sorted:
-            model_filepath = os.path.join(self.model_dir, modelid, self.model_filename)
+            model_filepath = os.path.join(self.models_target_dir, modelid, self.model_filename)
             if os.path.exists(model_filepath):
                 self.ref_modelid = modelid
                 self.ref_model_filepath = model_filepath
@@ -269,7 +269,7 @@ class ModelSimilarities(object):
 
     def to_csv(self, ofilepath=None):
         if ofilepath is None:
-            ofilepath = os.path.join(self.model_dir, 'rmsds.csv')
+            ofilepath = os.path.join(self.models_target_dir, 'rmsds.csv')
         self.df.to_csv(ofilepath)
 
 

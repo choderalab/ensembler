@@ -31,6 +31,7 @@ class SetUpProjectStageMethods:
         self.templates_list = ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']
 
     def init(self):
+        ensembler.initproject.InitProject(self.temp_dir)
         shutil.copy(os.path.join(integration_test_resources_dir, 'meta0.yaml'), self.temp_dir)
 
     def targets(self):
@@ -53,48 +54,95 @@ class SetUpProjectStageMethods:
         for target in self.targets_list:
             for template in self.templates_list:
                 ensembler.utils.create_dir(os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target, template))
-                shutil.copy(
-                    os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, template, 'alignment.pir'),
-                    os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target, template, 'alignment.pir')
-                )
-            shutil.copy(
-                os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, 'sequence-identities.txt'),
-                os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target)
-            )
+        self._copy_modeling_files(
+            target_level_files=[
+                'sequence-identities.txt'
+            ],
+            template_level_files=[
+                'alignment.pir'
+            ]
+        )
 
     def modeled(self):
         self.aligned()
-        for target in self.targets_list:
-            shutil.copy(
-                os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, 'build_models-meta0.yaml'),
-                os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target)
-            )
-            for template in self.templates_list:
-                for filename in [
-                    'model.pdb',
-                    'model.pdb.gz',
-                    'modeling-log.yaml',
-                    'restraints.rsr.gz',
-                    'sequence-identity.txt',
-                ]:
-                    shutil.copy(
-                        os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, template, filename),
-                        os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target, template)
-                    )
+        self._copy_modeling_files(
+            target_level_files=[
+                'build_models-meta0.yaml'
+            ],
+            template_level_files=[
+                'model.pdb',
+                'model.pdb.gz',
+                'modeling-log.yaml',
+                'restraints.rsr.gz',
+                'sequence-identity.txt',
+            ]
+        )
 
     def clustered(self):
         self.modeled()
-        for target in self.targets_list:
-            for filename in [
+        self._copy_modeling_files(
+            target_level_files=[
                 'cluster_models-meta0.yaml',
                 'unique-models.txt',
-            ]:
+            ],
+            template_level_files=[
+                'unique_by_clustering'
+            ]
+        )
+
+    def refined_implicit(self):
+        self.clustered()
+        self._copy_modeling_files(
+            target_level_files=[
+                'refine_implicit_md-meta0.yaml'
+            ],
+            template_level_files=[
+                'implicit-refined.pdb.gz',
+                'implicit-log.yaml',
+                'implicit-energies.txt',
+            ]
+        )
+
+    def solvated(self):
+        self.refined_implicit()
+        self._copy_modeling_files(
+            target_level_files=[
+                'solvate_models-meta0.yaml',
+                'nwaters-use.txt',
+                'nwaters-max.txt',
+                'nwaters-list.txt',
+            ],
+            template_level_files=[
+                'nwaters.txt',
+            ]
+        )
+
+    def refined_explicit(self):
+        self.solvated()
+        self._copy_modeling_files(
+            target_level_files=[
+                'refine_explicit_md-meta0.yaml',
+            ],
+            template_level_files=[
+                'explicit-system.xml.gz',
+                'explicit-state.xml.gz',
+                'explicit-refined.pdb.gz',
+                'explicit-log.yaml',
+                'explicit-integrator.xml.gz',
+                'explicit-energies.txt',
+            ]
+        )
+
+    def _copy_modeling_files(self, target_level_files=None, template_level_files=None):
+        for target in self.targets_list:
+            for filename in target_level_files:
                 shutil.copy(
                     os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, filename),
                     os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target)
                 )
             for template in self.templates_list:
-                shutil.copy(
-                    os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, template, 'unique_by_clustering'),
-                    os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target, template)
-                )
+                for filename in template_level_files:
+                    shutil.copy(
+                        os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, template, filename),
+                        os.path.join(self.temp_dir, ensembler.core.default_project_dirnames.models, target, template)
+                    )
