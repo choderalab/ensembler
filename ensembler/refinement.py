@@ -316,7 +316,7 @@ def auto_select_openmm_platform():
     raise Exception('No OpenMM platform found')
 
 
-def solvate_models(process_only_these_targets=None, process_only_these_templates=None, verbose=False, padding=None):
+def solvate_models(process_only_these_targets=None, process_only_these_templates=None, forcefields_to_use=None, verbose=False, padding=None):
     '''Solvate models which have been through MD refinement with implict solvent.
 
     MPI-enabled.
@@ -335,7 +335,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
     # OpenMM parameters
 
-    forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml'] # list of forcefields to use in parameterization
+    if forcefields_to_use is None:
+        forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml']
     nparticles_per_water = 3 # number of particles per water molecule
 
     #box_width = 90.0 * unit.angstroms
@@ -555,7 +556,7 @@ def refine_explicitMD(
         openmm_platform = auto_select_openmm_platform()
 
     if forcefields_to_use is None:
-        forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml'] # list of forcefields to use in parameterization
+        forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml']
     forcefield = app.ForceField(*forcefields_to_use)
 
     nonbondedMethod = app.PME

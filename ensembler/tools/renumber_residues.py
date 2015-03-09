@@ -7,7 +7,6 @@ import ensembler.UniProt
 from ensembler.core import logger
 
 
-
 class RenumberResidues(object):
     # TODO: note somewhere that this will not work with targets with sequences which do not match the UniProt seq (e.g. mutatations, insertions, deletions)
     def __init__(self, targetid, project_dir='.', log_level=None):
