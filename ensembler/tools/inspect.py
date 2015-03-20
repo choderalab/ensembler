@@ -350,7 +350,7 @@ class LoopmodelLogs(object):
                     nmissing_resis += missing_resi_span
             missing_resis_df.append({
                 'templateid': templateid,
-                'missing_resi_spans': np.array(missing_resi_spans),
+                'missing_resi_spans': missing_resi_spans,
                 'nmissing_resis': nmissing_resis,
             })
 
