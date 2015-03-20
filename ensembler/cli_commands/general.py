@@ -16,7 +16,7 @@ Usage:
   ensembler align [-h | --help] [--targets <targets>] [--targetsfile <targetsfile>]
       [--templates <templates>] [-v | --verbose]
   ensembler build_models [-h | --help] [--targets <target>] [--targetsfile <targetsfile>]
-      [--templates <template>] [-v | --verbose]
+      [--templates <template>] [--write_modeller_restraints_file] [-v | --verbose]
   ensembler cluster [-h | --help] [--targets <target>] [--targetsfile <targetsfile>]
       [--cutoff <cutoff>] [-v | --verbose]
   ensembler refine_implicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>]

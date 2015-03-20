@@ -11,6 +11,7 @@ import traceback
 import Bio.SeqUtils
 import simtk.openmm
 import yaml
+import warnings
 import ensembler
 import ensembler.version
 import Bio
@@ -24,7 +25,8 @@ from ensembler.core import mpistate, logger
 try:
     import subprocess32 as subprocess
     loopmodel_subprocess_kwargs = {'timeout': 10800}   # 3 hour timeout - used for loopmodel call
-except:
+except ImportError:
+    warnings.warn('subprocess32 module not available. Falling back to subprocess module, without timeout functionality.')
     import subprocess
     loopmodel_subprocess_kwargs = {}
 
@@ -375,7 +377,8 @@ def write_sorted_seq_identities(target, seq_identity_data):
 
 
 @ensembler.utils.notify_when_done
-def build_models(process_only_these_targets=None, process_only_these_templates=None, loglevel=None):
+def build_models(process_only_these_targets=None, process_only_these_templates=None,
+                 write_modeller_restraints_file=False, loglevel=None):
     """Uses the build_model method to build homology models for a given set of
     targets and templates.
 
@@ -396,11 +399,16 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
             template_resolved_seq = templates_resolved_seq[template_index]
             template_full_seq = templates_full_seq[template_index]
             if process_only_these_templates and template_resolved_seq.id not in process_only_these_templates: continue
-            build_model(target, template_resolved_seq, template_full_seq, target_setup_data, loglevel=loglevel)
-        write_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates)
+            build_model(target, template_resolved_seq, template_full_seq, target_setup_data,
+                        write_modeller_restraints_file=write_modeller_restraints_file,
+                        loglevel=loglevel)
+        write_build_models_metadata(target, target_setup_data, process_only_these_targets,
+                                    process_only_these_templates,
+                                    write_modeller_restraints_file)
 
 
-def build_model(target, template_resolved_seq, template_full_seq, target_setup_data, loglevel=None):
+def build_model(target, template_resolved_seq, template_full_seq, target_setup_data,
+                write_modeller_restraints_file=False, loglevel=None):
     """Uses Modeller to build a homology model for a given target and
     template.
 
@@ -409,9 +417,17 @@ def build_model(target, template_resolved_seq, template_full_seq, target_setup_d
     Parameters
     ----------
     target : BioPython SeqRecord
-    template : BioPython SeqRecord
+    template_resolved_seq : BioPython SeqRecord
         Must be a corresponding .pdb template file with the same ID in the
         templates/structures directory.
+    template_resolved_seq : BioPython SeqRecord
+        Must be a corresponding .pdb template file with the same ID in the
+        templates/structures directory.
+    target_setup_data : TargetSetupData obj
+    write_modeller_restraints_file : bool
+        Write file containing restraints used by Modeller - note that this file can be relatively
+        large, e.g. ~300KB per model for a protein kinase domain target.
+    loglevel : bool
     """
     ensembler.utils.loglevel_setter(logger, loglevel)
 
@@ -450,7 +466,9 @@ def build_model(target, template_resolved_seq, template_full_seq, target_setup_d
         try:
             start = datetime.datetime.utcnow()
             shutil.copy(aln_filepath, 'alignment.pir')
-            run_modeller(target, template, model_dir, model_pdbfilepath, model_pdbfilepath_uncompressed, template_structure_dir)
+            run_modeller(target, template, model_dir, model_pdbfilepath,
+                         model_pdbfilepath_uncompressed, template_structure_dir,
+                         write_modeller_restraints_file=write_modeller_restraints_file)
             if os.path.getsize(model_pdbfilepath) < 1:
                 raise Exception('Output PDB file is empty.')
 
@@ -515,7 +533,9 @@ def build_models_setup_target(target):
     return target_setup_data
 
 
-def gen_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates):
+def gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
+                              process_only_these_templates,
+                              write_modeller_restraints_file):
     """
     Generate build_models metadata for a given target.
     :param target: BioPython SeqRecord
@@ -528,6 +548,7 @@ def gen_build_models_metadata(target, target_setup_data, process_only_these_targ
     modeller_version = get_modeller_version()
     metadata = {
         'target_id': target.id,
+        'write_modeller_restraints_file': write_modeller_restraints_file,
         'datestamp': datestamp,
         'timing': ensembler.core.strf_timedelta(target_timedelta),
         'nsuccessful_models': nsuccessful_models,
@@ -581,7 +602,28 @@ def write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath='alignme
         outfile.write(contents)
 
 
-def save_modeller_output_files(target, model_dir, a, env, model_pdbfilepath, model_pdbfilepath_uncompressed):
+def run_modeller(target, template, model_dir, model_pdbfilepath, model_pdbfilepath_uncompressed,
+                 template_structure_dir, aln_filepath='alignment.pir',
+                 write_modeller_restraints_file=False):
+    modeller.log.none()
+    env = modeller.environ()
+    env.io.atom_files_directory = [template_structure_dir]
+    a = modeller.automodel.allhmodel(
+        env,
+        alnfile=aln_filepath,
+        knowns=template.id,
+        sequence=target.id
+    )
+    a.make()  # do homology modeling
+
+    save_modeller_output_files(target, model_dir, a, env, model_pdbfilepath,
+                               model_pdbfilepath_uncompressed,
+                               write_modeller_restraints_file=write_modeller_restraints_file)
+
+
+def save_modeller_output_files(target, model_dir, a, env, model_pdbfilepath,
+                               model_pdbfilepath_uncompressed,
+                               write_modeller_restraints_file=False):
     # save PDB file
     # Note that the uncompressed pdb file needs to be kept until after the clustering step has completed
     tmp_model_pdbfilepath = a.outputs[0]['name']
@@ -597,26 +639,11 @@ def save_modeller_output_files(target, model_dir, a, env, model_pdbfilepath, mod
         seqid_file.write('%.1f\n' % target_model.seq_id)
 
     # Copy restraints.
-    restraint_filepath = os.path.abspath(os.path.join(model_dir, 'restraints.rsr.gz'))
-    with open('%s.rsr' % target.id, 'r') as rsrfile:
-        with gzip.open(restraint_filepath, 'wb') as rsrgzfile:
-            rsrgzfile.write(rsrfile.read())
-
-
-def run_modeller(target, template, model_dir, model_pdbfilepath, model_pdbfilepath_uncompressed,
-                 template_structure_dir, aln_filepath='alignment.pir'):
-    modeller.log.none()
-    env = modeller.environ()
-    env.io.atom_files_directory = [template_structure_dir]
-    a = modeller.automodel.allhmodel(
-        env,
-        alnfile=aln_filepath,
-        knowns=template.id,
-        sequence=target.id
-    )
-    a.make()  # do homology modeling
-
-    save_modeller_output_files(target, model_dir, a, env, model_pdbfilepath, model_pdbfilepath_uncompressed)
+    if write_modeller_restraints_file:
+        restraint_filepath = os.path.abspath(os.path.join(model_dir, 'restraints.rsr.gz'))
+        with open('%s.rsr' % target.id, 'r') as rsrfile:
+            with gzip.open(restraint_filepath, 'wb') as rsrgzfile:
+                rsrgzfile.write(rsrfile.read())
 
 
 def end_successful_build_model_logfile(log_file, start):
@@ -639,10 +666,13 @@ def end_exception_build_model_logfile(e, log_file):
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
-def write_build_models_metadata(target, target_setup_data, process_only_these_targets, process_only_these_templates):
+def write_build_models_metadata(target, target_setup_data, process_only_these_targets,
+                                process_only_these_templates,
+                                write_modeller_restraints_file):
     project_metadata = ensembler.core.ProjectMetadata(project_stage='build_models', target_id=target.id)
     metadata = gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                                         process_only_these_templates)
+                                         process_only_these_templates,
+                                         write_modeller_restraints_file)
     project_metadata.add_data(metadata)
     project_metadata.write()
 

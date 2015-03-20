@@ -12,7 +12,7 @@ build:
 requirements:
   build:
     - python
-    - distribute
+    - setuptools
 
   run:
     - python
@@ -28,3 +28,4 @@ requirements:
 about:
   home: https://github.com/choderalab/ensembler
   license: GNU Lesser General Public License v2 or later (LGPLv2+)
+  summary: Pipeline for automating omics-scale protein modeling and simulation setup.

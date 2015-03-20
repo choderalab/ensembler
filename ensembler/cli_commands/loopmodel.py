@@ -37,4 +37,8 @@ def dispatch(args):
     else:
         templates = False
 
-    ensembler.modeling.model_template_loops(process_only_these_templates=templates, overwrite_structures=args['--overwrite_structures'], loglevel=loglevel)
+    ensembler.modeling.model_template_loops(
+        process_only_these_templates=templates,
+        overwrite_structures=args['--overwrite_structures'],
+        loglevel=loglevel
+    )

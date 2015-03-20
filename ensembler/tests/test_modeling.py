@@ -91,13 +91,17 @@ def test_build_models_command():
     with integration_test_context(set_up_project_stage='aligned'):
         args = {
             '--targets': 'EGFR_HUMAN_D0',
+            '--targetsfile': None,
             '--templates': ','.join(['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']),
+            '--write_modeller_restraints_file': None,
             '--verbose': False,
             '--help': False,
         }
         ensembler.cli_commands.build_models.dispatch(args)
         assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4KB8_D', 'model.pdb'))
         assert os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4HNF_A', 'model.pdb'))
+        assert not os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4KB8_D', 'restraints.rsr.gz'))
+        assert not os.path.exists(os.path.join(ensembler.core.default_project_dirnames.models, 'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4HNF_A', 'restraints.rsr.gz'))
 
 
 @attr('unit')
