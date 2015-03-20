@@ -334,25 +334,29 @@ class LoopmodelLogs(object):
         )
         return df
 
-    def add_nmissing_resis_data(self):
-        nmissing_resis_df = []
+    def add_missing_resis_data(self):
+        missing_resis_df = []
         for templateid in self.df.templateid:
             loopfile_path = os.path.join(self.project_dir, 'templates/structures-modeled-loops', templateid + '.loop')
             with open(loopfile_path) as loopfile:
                 lines = loopfile.readlines()
                 nmissing_resis = 0
+                missing_resi_spans = []
                 for line in lines:
                     loop_start = int(line[4:8])
                     loop_end = int(line[8:12])
-                    nmissing_resis += loop_end - loop_start + 1
-            nmissing_resis_df.append({
+                    missing_resi_span = loop_end - loop_start + 1
+                    missing_resi_spans.append(missing_resi_span)
+                    nmissing_resis += missing_resi_span
+            missing_resis_df.append({
                 'templateid': templateid,
+                'missing_resi_spans': np.array(missing_resi_spans),
                 'nmissing_resis': nmissing_resis,
             })
 
-        nmissing_resis_df = pd.DataFrame(nmissing_resis_df)
+        missing_resis_df = pd.DataFrame(missing_resis_df)
 
-        self.df = self.df.merge(nmissing_resis_df, on='templateid')
+        self.df = self.df.merge(missing_resis_df, on='templateid')
 
     def to_hdf(self, ofilepath):
         self.df.to_hdf(ofilepath, 'df')
