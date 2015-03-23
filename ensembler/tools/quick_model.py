@@ -10,7 +10,10 @@ from simtk import unit
 
 
 class QuickModel(object):
-    def __init__(self, targetid=None, templateids=None, target_uniprot_entry_name=None, uniprot_domain_regex=None, pdbids=None, chainids=None, template_uniprot_query=None, template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None, structure_dirs=None, sim_length=100*unit.picoseconds):
+    def __init__(self, targetid=None, templateids=None, target_uniprot_entry_name=None,
+                 uniprot_domain_regex=None, pdbids=None, chainids=None, template_uniprot_query=None,
+                 template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None,
+                 structure_dirs=None, sim_length=100*unit.picoseconds):
         """
         Run this after having set up targets and templates with the appropriate ensembler commands.
 

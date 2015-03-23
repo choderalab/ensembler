@@ -26,8 +26,8 @@ def dispatch(args):
     )
 
     structure_paths = ','.join([
-        os.path.join(ensembler.core.src_toplevel_dir, 'tests', 'integration_test_resources', 'structures', 'pdb'),
-        os.path.join(ensembler.core.src_toplevel_dir, 'tests', 'integration_test_resources', 'structures', 'sifts'),
+        os.path.join(ensembler.core.installation_toplevel_dir, 'tests', 'integration_test_resources', 'structures', 'pdb'),
+        os.path.join(ensembler.core.installation_toplevel_dir, 'tests', 'integration_test_resources', 'structures', 'sifts'),
     ])
 
     ensembler.cli_commands.gather_templates.dispatch(

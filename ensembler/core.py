@@ -12,7 +12,7 @@ from collections import namedtuple
 # ========
 import ensembler
 
-src_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+installation_toplevel_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 datestamp_format_string = '%Y-%m-%d %H:%M:%S UTC'
 
@@ -44,9 +44,7 @@ project_dirtypes = [
     'templates_structures_resolved',
     'templates_structures_modeled_loops',
 ]
-
-ProjectDirNames = namedtuple('ProjectDirNames',  project_dirtypes)
-
+ProjectDirNames = namedtuple('ProjectDirNames', project_dirtypes)
 default_project_dirnames = ProjectDirNames(
     targets='targets',
     templates='templates',
@@ -57,6 +55,14 @@ default_project_dirnames = ProjectDirNames(
     structures_sifts=os.path.join('structures', 'sifts'),
     templates_structures_resolved=os.path.join('templates', 'structures-resolved'),
     templates_structures_modeled_loops=os.path.join('templates', 'structures-modeled-loops'),
+)
+
+installation_dirtypes = [
+    'tests_integration_test_resources'
+]
+InstallationDirNames = namedtuple('InstallationDirNames', installation_dirtypes)
+default_installation_dirnames = InstallationDirNames(
+    tests_integration_test_resources=os.path.join('tests', 'integration_test_resources'),
 )
 
 logger = logging.getLogger('info')
