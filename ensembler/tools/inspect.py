@@ -303,7 +303,7 @@ class AnalyzeEnergies(object):
     def _get_templateids_and_template_filepaths(self):
         root, dirnames, filenames = os.walk(self.models_target_dir).next()
 
-        templateids = [dirname for dirname in dirnames if os.path.exists(os.path.join(dirname, 'alignment.pir'))]
+        templateids = [dirname for dirname in dirnames if os.path.exists(os.path.join(self.models_target_dir, dirname, 'alignment.pir'))]
         template_dirpaths = [os.path.join(self.models_target_dir, templateid) for templateid in templateids]
 
         self.templateids = templateids
