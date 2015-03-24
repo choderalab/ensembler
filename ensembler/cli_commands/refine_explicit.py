@@ -15,36 +15,44 @@ Options:"""
 
 helpstring_unique_options = [
     """\
-  --write_solvated_model           Write solvated model prior to performing MD.""",
+  --write_solvated_model            Write solvated model prior to performing MD.""",
 ]
 
 helpstring_nonunique_options = [
     """\
-  --openmm_platform <platform>    Specify the OpenMM Platform to use {CUDA|OpenCL|CPU|Reference}
-                                  (default is to auto-select the fastest platform availble).""",
+  --openmm_platform <platform>      Specify the OpenMM Platform to use {CUDA|OpenCL|CPU|Reference}
+                                    (default is to auto-select the fastest platform availble).""",
 
     """\
-  --gpupn <gpupn>                 If using GPUs, specify how many are available per node
-                                  [default: 1].""",
+  --gpupn <gpupn>                   If using GPUs, specify how many are available per node
+                                    [default: 1].""",
 
     """\
-  --simlength <simlength>         Simulation length (ps) [default: 100.0].""",
+  --simlength <simlength>           Simulation length (ps) [default: 100.0].""",
 
     """\
-  --retry_failed_runs             Retry simulation runs which previously failed, e.g. due to bad
-                                  inter-atom contacts.""",
+  --retry_failed_runs               Retry simulation runs which previously failed, e.g. due to bad
+                                    inter-atom contacts.""",
 
     """\
-  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
-                               Comment targets out with "#".""",
+  --targetsfile <targetsfile>       File containing a list of target IDs to work on (newline-separated).
+                                    Comment targets out with "#".""",
 
     """\
-  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
-                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
+  --targets <target>                Define one or more target IDs to work on (comma-separated), e.g.
+                                    "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 
     """\
-  --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
-                               "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+  --templates <template>            Define one or more template IDs to work on (comma-separated), e.g.
+                                    "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+
+    """\
+  --ff <ffname>                     OpenMM force field name [default: amber99sbildn]
+                                    See OpenMM documentation for other ff options""",
+
+    """\
+  --water_model <modelname>         OpenMM water model name [default: tip3p]
+                                    See OpenMM documentation for other water model options""",
 
     """\
   -v --verbose                 """,
@@ -82,4 +90,15 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.refinement.refine_explicitMD(openmm_platform=args['--openmm_platform'], gpupn=gpupn, sim_length=sim_length, process_only_these_targets=targets, process_only_these_templates=templates, retry_failed_runs=args['--retry_failed_runs'], write_solvated_model=args['--write_solvated_model'], verbose=args['--verbose'])
+    ensembler.refinement.refine_explicitMD(
+        openmm_platform=args['--openmm_platform'],
+        gpupn=gpupn,
+        sim_length=sim_length,
+        process_only_these_targets=targets,
+        process_only_these_templates=templates,
+        retry_failed_runs=args['--retry_failed_runs'],
+        write_solvated_model=args['--write_solvated_model'],
+        ff=args['--ff'],
+        water_model=args['--water_model'],
+        verbose=args['--verbose'],
+    )

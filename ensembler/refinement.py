@@ -5,6 +5,7 @@ import gzip
 import sys
 import subprocess
 import yaml
+from collections import deque
 import numpy as np
 import Bio
 import ensembler
@@ -19,7 +20,8 @@ import simtk.openmm.version
 def refine_implicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
         process_only_these_templates=None, verbose=False, write_trajectory=False,
-        forcefields_to_use=None,                      # list of forcefields to use in parameterization
+        ff='amber99sbildn',
+        implicit_water_model='amber99_obc',
         sim_length=100.0 * unit.picoseconds,
         timestep=2.0 * unit.femtoseconds,             # timestep
         temperature=300.0 * unit.kelvin,              # simulation temperature
@@ -44,9 +46,8 @@ def refine_implicit_md(
     if not openmm_platform:
         openmm_platform = auto_select_openmm_platform()
 
-    if forcefields_to_use is None:
-        forcefields_to_use = ['amber99sbildn.xml', 'amber99_obc.xml'] # list of forcefields to use in parameterization
-    forcefield = app.ForceField(*forcefields_to_use)
+    ff_files = [ff+'.xml', implicit_water_model+'.xml']
+    forcefield = app.ForceField(*ff_files)
 
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
@@ -284,6 +285,8 @@ def refine_implicit_md(
                 'target_id': target.id,
                 'datestamp': datestamp,
                 'timing': ensembler.core.strf_timedelta(target_timedelta),
+                'ff': ff,
+                'implicit_water_model': implicit_water_model,
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': ensembler.core.literal_str(sys.version),
@@ -316,7 +319,11 @@ def auto_select_openmm_platform():
     raise Exception('No OpenMM platform found')
 
 
-def solvate_models(process_only_these_targets=None, process_only_these_templates=None, forcefields_to_use=None, verbose=False, padding=None):
+def solvate_models(process_only_these_targets=None, process_only_these_templates=None,
+                   ff='amber99sbildn',
+                   water_model='tip3p',
+                   verbose=False,
+                   padding=None):
     '''Solvate models which have been through MD refinement with implict solvent.
 
     MPI-enabled.
@@ -333,20 +340,11 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
     templates = templates_resolved_seq
 
-    # OpenMM parameters
-
-    if forcefields_to_use is None:
-        forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml']
-    nparticles_per_water = 3 # number of particles per water molecule
-
-    #box_width = 90.0 * unit.angstroms
-    #boxsize = box_width * openmm.Vec3(1,1,1)
-
-    forcefield = app.ForceField(*forcefields_to_use)
+    ff_files = [ff+'.xml', water_model+'.xml']
+    forcefield = app.ForceField(*ff_files)
 
     for target in targets:
-        
-        # Process only specified targets if directed.
+
         if process_only_these_targets and (target.id not in process_only_these_targets): continue
 
         models_target_dir = os.path.join(models_dir, target.id)
@@ -355,7 +353,6 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         if mpistate.rank == 0:
             target_starttime = datetime.datetime.utcnow()
 
-        # Process all templates.
         for template_index in range(mpistate.rank, len(templates), mpistate.size):
             template = templates[template_index]
             if process_only_these_templates and template.id not in process_only_these_templates:
@@ -373,7 +370,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             
             # Pass if solvation has already been run for this model.
             nwaters_filename = os.path.join(model_dir, 'nwaters.txt')
-            if os.path.exists(nwaters_filename): continue
+            if os.path.exists(nwaters_filename):
+                continue
 
             try:
                 if verbose: print "Reading model..."
@@ -383,12 +381,17 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                 # Count initial atoms.
                 natoms_initial = len(pdb.positions)
 
+                # Add solvent
                 if verbose: print "Solvating model..."
                 modeller = app.Modeller(pdb.topology, pdb.positions)
-                #modeller.addSolvent(forcefield, model='tip3p', boxSize=boxsize)
                 modeller.addSolvent(forcefield, model='tip3p', padding=padding)
-                #topology = modeller.getTopology()
                 positions = modeller.getPositions()
+
+                # Get number of particles per water molecule by inspecting the last residue in the topology
+                resi_generator = modeller.topology.residues()
+                resi_deque = deque(resi_generator, maxlen=1)
+                last_resi = resi_deque.pop()
+                nparticles_per_water = len([atom for atom in last_resi.atoms()])
 
                 # Count final atoms.
                 natoms_final = len(positions)
@@ -530,7 +533,8 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
 def refine_explicitMD(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
         process_only_these_templates=None, verbose=False, write_trajectory=False,
-        forcefields_to_use=None,
+        ff='amber99sbildn',
+        water_model='tip3p',
         sim_length=100.0 * unit.picoseconds,
         timestep=2.0 * unit.femtoseconds, # timestep
         temperature=300.0 * unit.kelvin, # simulation temperature
@@ -555,9 +559,8 @@ def refine_explicitMD(
     if not openmm_platform:
         openmm_platform = auto_select_openmm_platform()
 
-    if forcefields_to_use is None:
-        forcefields_to_use = ['amber99sbildn.xml', 'tip3p.xml']
-    forcefield = app.ForceField(*forcefields_to_use)
+    ff_files = [ff+'.xml', water_model+'.xml']
+    forcefield = app.ForceField(*ff_files)
 
     nonbondedMethod = app.PME
 
@@ -567,7 +570,7 @@ def refine_explicitMD(
     nsteps_per_iteration = 500
     niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
-    def solvate_pdb(pdb, target_nwaters, model='tip3p'):
+    def solvate_pdb(pdb, target_nwaters, water_model=water_model):
         """
         Solvate the contents of a PDB file, ensuring it has exactly 'target_nwaters' waters.
 
@@ -605,7 +608,7 @@ def refine_explicitMD(
 
         # Solvate with zero padding to determine min number of waters and minimal unit cell dimensions.
         modeller = app.Modeller(pdb.topology, pdb.positions)
-        modeller.addSolvent(forcefield, model=model, padding=0.0*unit.angstroms)
+        modeller.addSolvent(forcefield, model=water_model, padding=0.0*unit.angstroms)
         topology = modeller.getTopology()
         positions = modeller.getPositions()
         box_min = topology.getUnitCellDimensions()
@@ -621,7 +624,7 @@ def refine_explicitMD(
         modeller = app.Modeller(pdb.topology, pdb.positions)
         topology = modeller.getTopology()
         topology.setUnitCellDimensions(box_min * scale)
-        modeller.addSolvent(forcefield, model=model)
+        modeller.addSolvent(forcefield, model=water_model)
         positions = modeller.getPositions()
         box_enlarged = topology.getUnitCellDimensions()
         natoms_enlarged = len(positions) # minimal number of atoms
@@ -641,7 +644,7 @@ def refine_explicitMD(
             modeller = app.Modeller(pdb.topology, pdb.positions)
             topology = modeller.getTopology()
             topology.setUnitCellDimensions(box_min * scale)
-            modeller.addSolvent(forcefield, model=model)
+            modeller.addSolvent(forcefield, model=water_model)
             positions = modeller.getPositions()
             topology = modeller.getTopology()
             natoms = len(positions) # minimal number of atoms
@@ -896,6 +899,8 @@ def refine_explicitMD(
                 'target_id': target.id,
                 'datestamp': datestamp,
                 'timing': ensembler.core.strf_timedelta(target_timedelta),
+                'ff': ff,
+                'water_model': water_model,
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': ensembler.core.literal_str(sys.version),

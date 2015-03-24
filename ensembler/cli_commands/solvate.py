@@ -35,6 +35,14 @@ helpstring_nonunique_options = [
                                "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
+  --ff <ffname>                     OpenMM force field name [default: amber99sbildn]
+                                    See OpenMM documentation for other ff options""",
+
+    """\
+  --water_model <modelname>         OpenMM water model name [default: tip3p]
+                                    See OpenMM documentation for other water model options""",
+
+    """\
   -v --verbose                 """,
 ]
 
@@ -62,5 +70,12 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.refinement.solvate_models(process_only_these_targets=targets, process_only_these_templates=templates, verbose=args['--verbose'], padding=padding)
+    ensembler.refinement.solvate_models(
+        process_only_these_targets=targets,
+        process_only_these_templates=templates,
+        padding=padding,
+        ff=args['--ff'],
+        water_model=args['--water_model'],
+        verbose=args['--verbose'],
+    )
     ensembler.refinement.determine_nwaters(process_only_these_targets=targets, process_only_these_templates=templates, verbose=args['--verbose'])

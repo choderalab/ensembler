@@ -29,6 +29,14 @@ helpstring_unique_options = [
     """\
   --retry_failed_runs             Retry simulation runs which previously failed, e.g. due to bad
                                   inter-atom contacts.""",
+
+    """\
+  --ff <ffname>                     OpenMM force field name [default: amber99sbildn]
+                                    See OpenMM documentation for other ff options""",
+
+    """\
+  --water_model <modelname>         OpenMM water model name [default: tip3p]
+                                    See OpenMM documentation for other water model options""",
 ]
 
 helpstring_nonunique_options = [
@@ -80,4 +88,14 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.refinement.refine_implicit_md(openmm_platform=args['--openmm_platform'], gpupn=gpupn, sim_length=sim_length, process_only_these_targets=targets, process_only_these_templates=templates, retry_failed_runs=args['--retry_failed_runs'], verbose=args['--verbose'])
+    ensembler.refinement.refine_implicit_md(
+        openmm_platform=args['--openmm_platform'],
+        gpupn=gpupn,
+        sim_length=sim_length,
+        process_only_these_targets=targets,
+        process_only_these_templates=templates,
+        retry_failed_runs=args['--retry_failed_runs'],
+        ff=args['--ff'],
+        implicit_water_model=args['--water_model'],
+        verbose=args['--verbose']
+    )

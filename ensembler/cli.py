@@ -10,6 +10,12 @@ docopt_full_helpstring = '\n'.join(docopt_elements)
 
 
 def validate_args(args, required_args):
+    """
+    Parameters
+    ----------
+    args: dict
+    required_args: list of str
+    """
     for required_arg in required_args:
         if args[required_arg] is None:
             raise Exception('Required argument %s is missing.' % required_arg)
