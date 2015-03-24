@@ -347,7 +347,7 @@ class AnalyzeEnergies(object):
                 has_energies.append(False)
                 final_energies.append(None)
 
-        self.df['has_energies_file'] = has_energies
+        self.df['has_energies'] = has_energies
         self.df['final_energy'] = final_energies
 
     def _get_seqids(self):
