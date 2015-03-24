@@ -273,6 +273,99 @@ class ModelSimilarities(object):
         self.df.to_csv(ofilepath)
 
 
+class AnalyzeEnergies(object):
+    def __init__(self, targetid, ensembler_stage=None, project_dir='.', log_level=None):
+        ensembler.core.check_project_toplevel_dir()
+        ensembler.utils.loglevel_setter(logger, log_level)
+        self.targetid = targetid
+        self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
+        self.project_dir = project_dir
+        if ensembler_stage is not None:
+            self.ensembler_stage = ensembler_stage
+        else:
+            for stagename in ['refine_explicit_md', 'refine_implicit_md']:
+                if check_ensembler_modeling_stage_complete(stagename, targetid):
+                    self.ensembler_stage = stagename
+                    break
+            if self.ensembler_stage is None:
+                raise Exception('Models have not yet been built for this Ensembler project.')
+
+        if self.ensembler_stage == 'refine_implicit_md':
+            self.energies_filename = 'implicit-energies.txt'
+        elif self.ensembler_stage == 'refine_explicit_md':
+            self.energies_filename = 'explicit-energies.txt'
+
+        self._get_templateids_and_template_filepaths()
+        self._get_unique_models()
+        self._get_final_energies()
+        self._get_seqids()
+
+    def _get_templateids_and_template_filepaths(self):
+        root, dirnames, filenames = os.walk(self.models_target_dir).next()
+
+        templateids = [dirname for dirname in dirnames if os.path.exists(os.path.join(dirname, 'alignment.pir'))]
+        template_dirpaths = [os.path.join(self.models_target_dir, templateid) for templateid in templateids]
+
+        self.templateids = templateids
+        self.template_dirpaths = template_dirpaths
+        self.df = pd.DataFrame({
+            'templateid': templateids,
+        })
+
+    def _get_unique_models(self):
+        unique_models = []
+        for template_dirpath in self.template_dirpaths:
+            unique_path = os.path.join(template_dirpath, 'unique_by_clustering')
+            if os.path.exists(unique_path):
+                unique_models.append(True)
+            else:
+                unique_models.append(False)
+        self.df['unique_by_clustering'] = unique_models
+
+    def _get_final_energies(self):
+        has_energies = []
+        final_energies = []
+        for template_dirpath in self.template_dirpaths:
+            energies_filepath = os.path.join(template_dirpath, self.energies_filename)
+            if os.path.exists(energies_filepath):
+                with open(energies_filepath) as energies_file:
+                    lines = energies_file.read().splitlines()
+                if len(lines) > 1:
+
+                    try:
+                        final_energies.append(float(lines[-1].split()[2]))
+                        has_energies.append(True)
+                    except ValueError:
+                        warnings.warn(lines[-1])
+                        has_energies.append(False)
+                        final_energies.append(None)
+
+                else:
+                    has_energies.append(False)
+                    final_energies.append(None)
+            else:
+                has_energies.append(False)
+                final_energies.append(None)
+
+        self.df['has_energies_file'] = has_energies
+        self.df['final_energy'] = final_energies
+
+    def _get_seqids(self):
+        seqid_filepath = os.path.join(self.models_target_dir, 'sequence-identities.txt')
+        with open(seqid_filepath) as seqid_file:
+            seqid_data = zip(*[line.split() for line in seqid_file.read().splitlines()])
+        seqid_df = pd.DataFrame({
+            'templateid': seqid_data[0],
+            'seqid': seqid_data[1],
+        })
+        self.df = pd.merge(self.df, seqid_df, on='templateid')
+
+    def to_csv(self, ofilepath=None):
+        if ofilepath is None:
+            ofilepath = os.path.join(self.models_target_dir, 'final_energies-{0}.csv'.format(self.ensembler_stage))
+        self.df.to_csv(ofilepath)
+
+
 class LoopmodelLogs(object):
     def __init__(self, project_dir='.'):
         self.project_dir = project_dir
