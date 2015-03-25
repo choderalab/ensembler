@@ -297,6 +297,7 @@ class AnalyzeEnergies(object):
 
         self._get_templateids_and_template_filepaths()
         self._get_unique_models()
+        self._get_successful()
         self._get_final_energies()
         self._get_seqids()
 
@@ -321,6 +322,18 @@ class AnalyzeEnergies(object):
             else:
                 unique_models.append(False)
         self.df['unique_by_clustering'] = unique_models
+
+    def _get_successful(self):
+        successful = []
+        for template_dirpath in self.template_dirpaths:
+            log_filepath = os.path.join(template_dirpath, 'implicit-log.yaml')
+            with open(log_filepath) as log_file:
+                log_data = yaml.load(log_file)
+            if log_data.get('successful') == True:
+                successful.append(True)
+            else:
+                successful.append(False)
+        self.df['successful'] = successful
 
     def _get_final_energies(self):
         has_energies = []
