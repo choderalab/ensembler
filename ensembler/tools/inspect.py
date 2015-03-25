@@ -327,10 +327,13 @@ class AnalyzeEnergies(object):
         successful = []
         for template_dirpath in self.template_dirpaths:
             log_filepath = os.path.join(template_dirpath, 'implicit-log.yaml')
-            with open(log_filepath) as log_file:
-                log_data = yaml.load(log_file)
-            if log_data.get('successful') == True:
-                successful.append(True)
+            if os.path.exists(log_filepath):
+                with open(log_filepath) as log_file:
+                    log_data = yaml.load(log_file)
+                if log_data.get('successful') == True:
+                    successful.append(True)
+                else:
+                    successful.append(False)
             else:
                 successful.append(False)
         self.df['successful'] = successful
