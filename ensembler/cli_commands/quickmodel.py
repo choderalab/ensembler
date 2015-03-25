@@ -40,9 +40,6 @@ helpstring_unique_options = [
   --template_uniprot_query <query>         e.g. "'domain:"Protein kinase" AND reviewed:yes'\"""",
 
     """\
-  --template_seqid_cutoff <cutoff>         e.g. "80\"""",
-
-    """\
   --no-loopmodel                           """,
 
     """\
@@ -61,6 +58,9 @@ helpstring_nonunique_options = [
   --structure_paths <structure_paths>      e.g.
                                            "/Users/partond/tmp/kinome-MSMSeeder/structures/pdb,
                                            /Users/partond/tmp/kinome-MSMSeeder/structures/sifts\"""",
+
+    """\
+  --template_seqid_cutoff <cutoff>         e.g. "80\"""",
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])

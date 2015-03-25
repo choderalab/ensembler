@@ -14,6 +14,10 @@ helpstring_unique_options = [
   --write_modeller_restraints_file  Write Modeller restraints file (default: False)
                                     Note that this file can be relatively large, e.g. ~300KB per
                                     model for a protein kinase domain target""",
+
+    """\
+  --template_seqid_cutoff <cutoff>  Select only templates with sequence identity (percentage)
+                                    greater than the given cutoff.""",
 ]
 
 helpstring_nonunique_options = [
@@ -51,6 +55,11 @@ def dispatch(args):
     else:
         templates = False
 
+    if args['--template_seqid_cutoff']:
+        template_seqid_cutoff = float(args['--template_seqid_cutoff'])
+    else:
+        template_seqid_cutoff = False
+
     if args['--verbose']:
         loglevel = 'debug'
     else:
@@ -59,6 +68,7 @@ def dispatch(args):
     ensembler.modeling.build_models(
         process_only_these_targets=targets,
         process_only_these_templates=templates,
+        template_seqid_cutoff=template_seqid_cutoff,
         write_modeller_restraints_file=args['--write_modeller_restraints_file'],
         loglevel=loglevel
     )

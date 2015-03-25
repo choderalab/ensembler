@@ -3,6 +3,7 @@ import logging
 import sys
 import re
 import warnings
+import numpy as np
 import Bio
 import Bio.SeqIO
 from collections import namedtuple
@@ -548,3 +549,21 @@ def check_ensembler_modeling_stage_complete(ensembler_stage, targetid):
     if not check_ensembler_modeling_stage_first_model_file_exists(ensembler_stage, targetid):
         return False
     return True
+
+
+def select_templates_by_seqid_cutoff(targetid, seqid_cutoff=None):
+    """
+    :param seqid_cutoff:
+    :return:
+    """
+    seqid_filepath = os.path.join(ensembler.core.default_project_dirnames.models, targetid, 'sequence-identities.txt')
+    with open(seqid_filepath) as seqid_file:
+        seqid_lines_split = [line.split() for line in seqid_file.read().splitlines()]
+
+    templateids = np.array([i[0] for i in seqid_lines_split])
+    seqids = np.array([float(i[1]) for i in seqid_lines_split])
+
+    # must coerce to string due to yaml.dump type requirements
+    selected_templateids = [str(x) for x in templateids[seqids > seqid_cutoff]]
+
+    return selected_templateids

@@ -378,7 +378,7 @@ def write_sorted_seq_identities(target, seq_identity_data):
 
 @ensembler.utils.notify_when_done
 def build_models(process_only_these_targets=None, process_only_these_templates=None,
-                 write_modeller_restraints_file=False, loglevel=None):
+                 template_seqid_cutoff=None, write_modeller_restraints_file=False, loglevel=None):
     """Uses the build_model method to build homology models for a given set of
     targets and templates.
 
@@ -391,19 +391,31 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     # making os.chdir calls.
     ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
-    ntemplates = len(templates_resolved_seq)
+
+    if process_only_these_templates:
+        selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+    else:
+        selected_template_indices = range(len(templates_resolved_seq))
+
     for target in targets:
         if process_only_these_targets and target.id not in process_only_these_targets: continue
-        target_setup_data = build_models_setup_target(target)
-        for template_index in range(mpistate.rank, ntemplates, mpistate.size):
-            template_resolved_seq = templates_resolved_seq[template_index]
-            template_full_seq = templates_full_seq[template_index]
+        target_setup_data = build_models_target_setup(target)
+
+        if template_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+            selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+
+        ntemplates_selected = len(selected_template_indices)
+
+        for template_index in range(mpistate.rank, ntemplates_selected, mpistate.size):
+            template_resolved_seq = templates_resolved_seq[selected_template_indices[template_index]]
+            template_full_seq = templates_full_seq[selected_template_indices[template_index]]
             if process_only_these_templates and template_resolved_seq.id not in process_only_these_templates: continue
             build_model(target, template_resolved_seq, template_full_seq, target_setup_data,
                         write_modeller_restraints_file=write_modeller_restraints_file,
                         loglevel=loglevel)
         write_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                                    process_only_these_templates,
+                                    process_only_these_templates, template_seqid_cutoff,
                                     write_modeller_restraints_file)
 
 
@@ -514,7 +526,7 @@ def get_modeller_version_from_readme(modeller_module):
                     return version
 
 
-def build_models_setup_target(target):
+def build_models_target_setup(target):
     target_setup_data = None
     if mpistate.rank == 0:
         models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, target.id)
@@ -534,7 +546,7 @@ def build_models_setup_target(target):
 
 
 def gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                              process_only_these_templates,
+                              process_only_these_templates, template_seqid_cutoff,
                               write_modeller_restraints_file):
     """
     Generate build_models metadata for a given target.
@@ -549,6 +561,7 @@ def gen_build_models_metadata(target, target_setup_data, process_only_these_targ
     metadata = {
         'target_id': target.id,
         'write_modeller_restraints_file': write_modeller_restraints_file,
+        'template_seqid_cutoff': template_seqid_cutoff,
         'datestamp': datestamp,
         'timing': ensembler.core.strf_timedelta(target_timedelta),
         'nsuccessful_models': nsuccessful_models,
@@ -571,10 +584,9 @@ def check_model_pdbfilepath_ends_in_pdbgz(model_pdbfilepath):
 
 def check_all_model_files_present(model_dir):
     seqid_filepath = os.path.abspath(os.path.join(model_dir, 'sequence-identity.txt'))
-    restraint_filepath = os.path.abspath(os.path.join(model_dir, 'restraints.rsr.gz'))
     model_pdbfilepath = os.path.abspath(os.path.join(model_dir, 'model.pdb.gz'))
     aln_filepath = os.path.abspath(os.path.join(model_dir, 'alignment.pir'))
-    files_to_check = [model_pdbfilepath, seqid_filepath, aln_filepath, restraint_filepath]
+    files_to_check = [model_pdbfilepath, seqid_filepath, aln_filepath]
     files_present = [os.path.exists(filename) for filename in files_to_check]
     return all(files_present)
 
@@ -667,11 +679,11 @@ def end_exception_build_model_logfile(e, log_file):
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
 def write_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                                process_only_these_templates,
+                                process_only_these_templates, template_seqid_cutoff,
                                 write_modeller_restraints_file):
     project_metadata = ensembler.core.ProjectMetadata(project_stage='build_models', target_id=target.id)
     metadata = gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                                         process_only_these_templates,
+                                         process_only_these_templates, template_seqid_cutoff,
                                          write_modeller_restraints_file)
     project_metadata.add_data(metadata)
     project_metadata.write()
