@@ -7,7 +7,9 @@ import simtk.unit as unit
 import simtk.openmm as openmm
 
 
-def package_for_fah(process_only_these_targets=None, verbose=False, nclones=1, archive=False):
+def package_for_fah(process_only_these_targets=None,
+                    process_only_these_templates=None, template_seqid_cutoff=None,
+                    verbose=False, nclones=1, archive=False):
     '''Create the input files and directory structure necessary to start a Folding@Home project.
 
     MPI-enabled.
@@ -26,7 +28,11 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=1, a
     mpistate.comm.Barrier()
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
-    templates = templates_resolved_seq
+
+    if process_only_these_templates:
+        selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+    else:
+        selected_template_indices = range(len(templates_resolved_seq))
 
     def generateRun(run):
         """
@@ -189,7 +195,15 @@ def package_for_fah(process_only_these_targets=None, verbose=False, nclones=1, a
         # Process all templates.
         if verbose: print "Building list of valid templates..."
         valid_templates = list()
-        for template in templates:
+
+        if template_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+            selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+
+        ntemplates_selected = len(selected_template_indices)
+
+        for template_index in range(mpistate.rank, ntemplates_selected, mpistate.size):
+            template = templates_resolved_seq[selected_template_indices[template_index]]
             # Check to make sure all files needed are present.
             is_valid = True
             filenames = ['explicit-system.xml', 'explicit-state.xml', 'explicit-integrator.xml']

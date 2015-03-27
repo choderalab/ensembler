@@ -34,6 +34,14 @@ helpstring_nonunique_options = [
     """\
   --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
                                "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
+
+    """\
+  --templates <template>            Define one or more template IDs to work on (comma-separated), e.g.
+                                    "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+
+    """\
+  --template_seqid_cutoff <cutoff>  Select only templates with sequence identity (percentage)
+                                    greater than the given cutoff.""",
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
@@ -53,6 +61,16 @@ def dispatch(args):
     else:
         targets = False
 
+    if args['--templates']:
+        templates = args['--templates'].split(',')
+    else:
+        templates = False
+
+    if args['--template_seqid_cutoff']:
+        template_seqid_cutoff = float(args['--template_seqid_cutoff'])
+    else:
+        template_seqid_cutoff = False
+
     if args['--nfahclones']:
         n_fah_clones = int(args['--nfahclones'])
     else:
@@ -64,7 +82,16 @@ def dispatch(args):
         archive = False
 
     if package_for.lower() == 'transfer':
-        ensembler.packaging.package_for_transfer(process_only_these_targets=targets)
+        ensembler.packaging.package_for_transfer(
+            process_only_these_targets=targets,
+            process_only_these_templates=templates,
+        )
 
     elif package_for.lower() == 'fah':
-        ensembler.packaging.package_for_fah(process_only_these_targets=targets, nclones=n_fah_clones, archive=archive)
+        ensembler.packaging.package_for_fah(
+            process_only_these_targets=targets,
+            process_only_these_templates=templates,
+            template_seqid_cutoff=template_seqid_cutoff,
+            nclones=n_fah_clones,
+            archive=archive,
+        )
