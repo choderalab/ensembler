@@ -55,6 +55,10 @@ helpstring_nonunique_options = [
                                     See OpenMM documentation for other water model options""",
 
     """\
+  --template_seqid_cutoff <cutoff>  Select only templates with sequence identity (percentage)
+                                    greater than the given cutoff.""",
+
+    """\
   -v --verbose                 """,
 ]
 
@@ -75,6 +79,11 @@ def dispatch(args):
     else:
         templates = False
 
+    if args['--template_seqid_cutoff']:
+        template_seqid_cutoff = float(args['--template_seqid_cutoff'])
+    else:
+        template_seqid_cutoff = False
+
     if args['--gpupn']:
         gpupn = int(args['--gpupn'])
     else:
@@ -90,12 +99,13 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.refinement.refine_explicitMD(
+    ensembler.refinement.refine_explicit_md(
         openmm_platform=args['--openmm_platform'],
         gpupn=gpupn,
         sim_length=sim_length,
         process_only_these_targets=targets,
         process_only_these_templates=templates,
+        template_seqid_cutoff=template_seqid_cutoff,
         retry_failed_runs=args['--retry_failed_runs'],
         write_solvated_model=args['--write_solvated_model'],
         ff=args['--ff'],

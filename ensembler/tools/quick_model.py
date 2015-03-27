@@ -135,7 +135,7 @@ class QuickModel(object):
         ensembler.refinement.refine_implicit_md(process_only_these_targets=targetid, process_only_these_templates=templateids, sim_length=self.sim_length)
         ensembler.refinement.solvate_models(process_only_these_targets=targetid, process_only_these_templates=templateids)
         ensembler.refinement.determine_nwaters(process_only_these_targets=targetid, process_only_these_templates=templateids)
-        ensembler.refinement.refine_explicitMD(process_only_these_targets=targetid, process_only_these_templates=templateids, sim_length=self.sim_length)
+        ensembler.refinement.refine_explicit_md(process_only_these_targets=targetid, process_only_these_templates=templateids, sim_length=self.sim_length)
         if package_for_fah:
             if not nfahclones:
                 nfahclones = 1

@@ -29,7 +29,7 @@ def main():
     # Run simulations
     # ========
 
-    ensembler.refinement.refine_explicitMD(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)
+    ensembler.refinement.refine_explicit_md(openmm_platform=args.openmm_platform, gpupn=args.gpupn, process_only_these_targets=args.targets, process_only_these_templates=args.templates, verbose=args.verbose)
 
 if __name__ == '__main__':
     main()

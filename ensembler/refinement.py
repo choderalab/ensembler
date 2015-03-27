@@ -19,7 +19,8 @@ import simtk.openmm.version
 
 def refine_implicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
-        process_only_these_templates=None, verbose=False, write_trajectory=False,
+        process_only_these_templates=None, template_seqid_cutoff=None,
+        verbose=False, write_trajectory=False,
         ff='amber99sbildn',
         implicit_water_model='amber99_obc',
         sim_length=100.0 * unit.picoseconds,
@@ -30,7 +31,8 @@ def refine_implicit_md(
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
         pH=8.0,
-        retry_failed_runs=False):
+        retry_failed_runs=False,
+        cpu_platform_threads=1):
     # TODO - refactor
     '''Run MD refinement in implicit solvent.
 
@@ -41,10 +43,19 @@ def refine_implicit_md(
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
-    templates = templates_resolved_seq
+
+    if process_only_these_templates:
+        selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+    else:
+        selected_template_indices = range(len(templates_resolved_seq))
 
     if not openmm_platform:
         openmm_platform = auto_select_openmm_platform()
+
+    if openmm_platform == 'CPU':
+        platform_properties = {'CpuThreads': str(cpu_platform_threads)}
+    else:
+        platform_properties = {}
 
     ff_files = [ff+'.xml', implicit_water_model+'.xml']
     forcefield = app.ForceField(*ff_files)
@@ -55,7 +66,7 @@ def refine_implicit_md(
     nsteps_per_iteration = 500
     niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
-    def simulate_implicitMD():
+    def simulate_implicit_md():
 
         if verbose: print "Reading model..."
         with gzip.open(model_filename) as model_file:
@@ -84,7 +95,7 @@ def refine_implicit_md(
 
         if verbose: print "Creating Context..."
         integrator = openmm.LangevinIntegrator(temperature, collision_rate, timestep)
-        context = openmm.Context(system, integrator, platform)
+        context = openmm.Context(system, integrator, platform, platform_properties)
         context.setPositions(positions)
 
         if verbose: print "Minimizing structure..."
@@ -199,15 +210,16 @@ def refine_implicit_md(
                 print ""
             else: print variants
 
-        if process_only_these_templates:
-            templates_to_process = process_only_these_templates
-        else:
-            templates_to_process = [template.id for template in templates]
+        if template_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+            selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
 
-        for template_index in range(mpistate.rank, len(templates_to_process), mpistate.size):
-            template = templates_to_process[template_index]
+        ntemplates_selected = len(selected_template_indices)
 
-            model_dir = os.path.join(models_target_dir, template)
+        for template_index in range(mpistate.rank, ntemplates_selected, mpistate.size):
+            template = templates_resolved_seq[selected_template_indices[template_index]]
+
+            model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
 
             # Only simulate models that are unique following filtering by clustering.
@@ -227,13 +239,13 @@ def refine_implicit_md(
             # Check to make sure the initial model file is present.
             model_filename = os.path.join(model_dir, 'model.pdb.gz')
             if not os.path.exists(model_filename):
-                if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template, mpistate.rank, gpuid)
+                if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template.id, mpistate.rank, gpuid)
                 continue
 
             pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
 
             print "-------------------------------------------------------------------------"
-            print "Simulating %s => %s in implicit solvent for %.1f ps (MPI rank: %d, GPU ID: %d)" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds, mpistate.rank, gpuid)
+            print "Simulating %s => %s in implicit solvent for %.1f ps (MPI rank: %d, GPU ID: %d)" % (target.id, template.id, niterations * nsteps_per_iteration * timestep / unit.picoseconds, mpistate.rank, gpuid)
             print "-------------------------------------------------------------------------"
 
             # Open log file
@@ -249,7 +261,7 @@ def refine_implicit_md(
 
             try:
                 start = datetime.datetime.utcnow()
-                simulate_implicitMD()
+                simulate_implicit_md()
                 timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
                     'finished': True,
@@ -284,6 +296,9 @@ def refine_implicit_md(
             metadata = {
                 'target_id': target.id,
                 'datestamp': datestamp,
+                'template_seqid_cutoff': template_seqid_cutoff,
+                'process_only_these_targets': process_only_these_targets,
+                'process_only_these_templates': process_only_these_templates,
                 'timing': ensembler.core.strf_timedelta(target_timedelta),
                 'ff': ff,
                 'implicit_water_model': implicit_water_model,
@@ -320,11 +335,12 @@ def auto_select_openmm_platform():
 
 
 def solvate_models(process_only_these_targets=None, process_only_these_templates=None,
+                   template_seqid_cutoff=None,
                    ff='amber99sbildn',
                    water_model='tip3p',
                    verbose=False,
                    padding=None):
-    '''Solvate models which have been through MD refinement with implict solvent.
+    '''Solvate models which have been subjected to MD refinement with implicit solvent.
 
     MPI-enabled.
     '''
@@ -338,7 +354,11 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
-    templates = templates_resolved_seq
+
+    if process_only_these_templates:
+        selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+    else:
+        selected_template_indices = range(len(templates_resolved_seq))
 
     ff_files = [ff+'.xml', water_model+'.xml']
     forcefield = app.ForceField(*ff_files)
@@ -353,10 +373,14 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         if mpistate.rank == 0:
             target_starttime = datetime.datetime.utcnow()
 
-        for template_index in range(mpistate.rank, len(templates), mpistate.size):
-            template = templates[template_index]
-            if process_only_these_templates and template.id not in process_only_these_templates:
-                continue
+        if template_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+            selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+
+        ntemplates_selected = len(selected_template_indices)
+
+        for template_index in range(mpistate.rank, ntemplates_selected, mpistate.size):
+            template = templates_resolved_seq[selected_template_indices[template_index]]
 
             model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
@@ -418,6 +442,9 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             metadata = {
                 'target_id': target.id,
                 'datestamp': datestamp,
+                'template_seqid_cutoff': template_seqid_cutoff,
+                'process_only_these_targets': process_only_these_targets,
+                'process_only_these_templates': process_only_these_templates,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': ensembler.core.literal_str(sys.version),
                 'ensembler_version': ensembler.version.short_version,
@@ -438,7 +465,10 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         print 'Done.'
 
 
-def determine_nwaters(process_only_these_targets=None, process_only_these_templates=None, verbose=False, select_at_percentile=None):
+def determine_nwaters(process_only_these_targets=None,
+                      process_only_these_templates=None, template_seqid_cutoff=None,
+                      verbose=False,
+                      select_at_percentile=None):
     '''Determine distribution of nwaters, and select the value at a certain percentile.
     If not user-specified, the percentile is set to 100 if there are less than 10 templates, otherwise it is set to 68.
     '''
@@ -448,11 +478,11 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
         models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
         targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
-        templates = templates_resolved_seq
 
-        nselected_templates = len(process_only_these_templates) if process_only_these_templates else len(templates)
-        if not select_at_percentile:
-            select_at_percentile = 100 if nselected_templates < 10 else 68
+        if process_only_these_templates:
+            selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+        else:
+            selected_template_indices = range(len(templates_resolved_seq))
 
         for target in targets:
 
@@ -462,10 +492,20 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
             models_target_dir = os.path.join(models_dir, target.id)
             if not os.path.exists(models_target_dir): continue
 
+            if template_seqid_cutoff:
+                process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+                selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+
+            ntemplates_selected = len(selected_template_indices)
+
+            if not select_at_percentile:
+                select_at_percentile = 100 if ntemplates_selected < 10 else 68
+
             if verbose: print "Determining number of waters in each system from target '%s'..." % target.id
 
             nwaters_list = []
-            for template in templates:
+            for template_index in range(ntemplates_selected):
+                template = templates_resolved_seq[selected_template_indices[template_index]]
                 if process_only_these_templates and template.id not in process_only_these_templates:
                     continue
 
@@ -494,34 +534,52 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
             index_selected = int((len(nwaters_array) - 1) * (float(select_at_percentile) / 100.0))
             index68 = int((len(nwaters_array) - 1) * 0.68)
             index95 = int((len(nwaters_array) - 1) * 0.95)
-            logger.info("Number of waters in solvated models (target: %s): min = %d, max = %d, mean = %.1f, 68%% = %.0f, 95%% = %.0f, chosen_percentile (%d%%) = %.0f" % (target.id, nwaters_array.min(), nwaters_array.max(), nwaters_array.mean(), nwaters_array[index68], nwaters_array[index95], select_at_percentile, nwaters_array[index_selected]))
+            if len(nwaters_array) > 0:
+                logger.info('Number of waters in solvated models (target: %s): min = %d, max = %d, '
+                            'mean = %.1f, 68%% = %.0f, 95%% = %.0f, chosen_percentile (%d%%) = %.0f' %
+                            (
+                                target.id,
+                                nwaters_array.min(),
+                                nwaters_array.max(),
+                                nwaters_array.mean(),
+                                nwaters_array[index68],
+                                nwaters_array[index95],
+                                select_at_percentile,
+                                nwaters_array[index_selected]
+                            )
+                            )
 
-            filename = os.path.join(models_target_dir, 'nwaters-max.txt')
-            with open(filename, 'w') as outfile:
-                outfile.write('%d\n' % nwaters_array.max())
+                filename = os.path.join(models_target_dir, 'nwaters-max.txt')
+                with open(filename, 'w') as outfile:
+                    outfile.write('%d\n' % nwaters_array.max())
 
-            # Use 68th percentile.
-            filename = os.path.join(models_target_dir, 'nwaters-use.txt')
-            with open(filename, 'w') as outfile:
-                outfile.write('%d\n' % nwaters_array[index_selected])
+                # Use 68th percentile.
+                filename = os.path.join(models_target_dir, 'nwaters-use.txt')
+                with open(filename, 'w') as outfile:
+                    outfile.write('%d\n' % nwaters_array[index_selected])
 
-            if mpistate.rank == 0:
-                project_metadata = ensembler.core.ProjectMetadata(project_stage='determine_nwaters', target_id=target.id)
+            else:
+                logger.info('No nwaters information found.')
 
-                datestamp = ensembler.core.get_utcnow_formatted()
+            project_metadata = ensembler.core.ProjectMetadata(project_stage='determine_nwaters', target_id=target.id)
 
-                metadata = {
-                    'target_id': target.id,
-                    'datestamp': datestamp,
-                    'python_version': sys.version.split('|')[0].strip(),
-                    'python_full_version': ensembler.core.literal_str(sys.version),
-                    'ensembler_version': ensembler.version.short_version,
-                    'ensembler_commit': ensembler.version.git_revision,
-                    'biopython_version': Bio.__version__,
-                }
+            datestamp = ensembler.core.get_utcnow_formatted()
 
-                project_metadata.add_data(metadata)
-                project_metadata.write()
+            metadata = {
+                'target_id': target.id,
+                'datestamp': datestamp,
+                'template_seqid_cutoff': template_seqid_cutoff,
+                'process_only_these_targets': process_only_these_targets,
+                'process_only_these_templates': process_only_these_templates,
+                'python_version': sys.version.split('|')[0].strip(),
+                'python_full_version': ensembler.core.literal_str(sys.version),
+                'ensembler_version': ensembler.version.short_version,
+                'ensembler_commit': ensembler.version.git_revision,
+                'biopython_version': Bio.__version__,
+            }
+
+            project_metadata.add_data(metadata)
+            project_metadata.write()
 
         mpistate.comm.Barrier()
 
@@ -530,9 +588,10 @@ def determine_nwaters(process_only_these_targets=None, process_only_these_templa
         print 'Done.'
 
 
-def refine_explicitMD(
+def refine_explicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
-        process_only_these_templates=None, verbose=False, write_trajectory=False,
+        process_only_these_templates=None, template_seqid_cutoff=None,
+        verbose=False, write_trajectory=False,
         ff='amber99sbildn',
         water_model='tip3p',
         sim_length=100.0 * unit.picoseconds,
@@ -544,6 +603,7 @@ def refine_explicitMD(
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
         write_solvated_model=False, careful_cleaning=True,
+        cpu_platform_threads=1,
         retry_failed_runs=False):
     '''Run MD refinement in explicit solvent.
 
@@ -554,10 +614,19 @@ def refine_explicitMD(
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
-    templates = templates_resolved_seq
+
+    if process_only_these_templates:
+        selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
+    else:
+        selected_template_indices = range(len(templates_resolved_seq))
 
     if not openmm_platform:
         openmm_platform = auto_select_openmm_platform()
+
+    if openmm_platform == 'CPU':
+        platform_properties = {'CpuThreads': str(cpu_platform_threads)}
+    else:
+        platform_properties = {}
 
     ff_files = [ff+'.xml', water_model+'.xml']
     forcefield = app.ForceField(*ff_files)
@@ -691,7 +760,7 @@ def refine_explicitMD(
         return [positions, topology]
 
 
-    def simulate_explicitMD():
+    def simulate_explicit_md():
         # Choose platform.
         platform = openmm.Platform.getPlatformByName(openmm_platform)
 
@@ -712,7 +781,7 @@ def refine_explicitMD(
 
         if verbose: print "Creating Context..."
         integrator = openmm.LangevinIntegrator(temperature, collision_rate, timestep)
-        context = openmm.Context(system, integrator, platform)
+        context = openmm.Context(system, integrator, platform, platform_properties)
         context.setPositions(positions)
 
         if verbose: print "Minimizing structure..."
@@ -804,15 +873,16 @@ def refine_explicitMD(
             line = infile.readline()
         nwaters = int(line)
 
-        if process_only_these_templates:
-            templates_to_process = process_only_these_templates
-        else:
-            templates_to_process = [template.id for template in templates]
+        if template_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+            selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
 
-        for template_index in range(mpistate.rank, len(templates_to_process), mpistate.size):
-            template = templates_to_process[template_index]
+        ntemplates_selected = len(selected_template_indices)
 
-            model_dir = os.path.join(models_target_dir, template)
+        for template_index in range(mpistate.rank, ntemplates_selected, mpistate.size):
+            template = templates_resolved_seq[selected_template_indices[template_index]]
+
+            model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
 
             # Only simulate models that are unique following filtering by clustering.
@@ -832,7 +902,7 @@ def refine_explicitMD(
             # Check to make sure the initial model file is present.
             model_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
             if not os.path.exists(model_filename):
-                if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template, mpistate.rank, gpuid)
+                if verbose: print 'model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template.id, mpistate.rank, gpuid)
                 continue
 
             pdb_filename = os.path.join(model_dir, 'explicit-refined.pdb.gz')
@@ -841,7 +911,7 @@ def refine_explicitMD(
             state_filename = os.path.join(model_dir, 'explicit-state.xml')
 
             print "-------------------------------------------------------------------------"
-            print "Simulating %s => %s in explicit solvent for %.1f ps" % (target.id, template, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
+            print "Simulating %s => %s in explicit solvent for %.1f ps" % (target.id, template.id, niterations * nsteps_per_iteration * timestep / unit.picoseconds)
             print "-------------------------------------------------------------------------"
 
             # Open log file
@@ -862,7 +932,7 @@ def refine_explicitMD(
                     pdb = app.PDBFile(model_file)
                 [positions, topology] = solvate_pdb(pdb, nwaters)
 
-                simulate_explicitMD()
+                simulate_explicit_md()
 
                 timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
@@ -898,6 +968,9 @@ def refine_explicitMD(
             metadata = {
                 'target_id': target.id,
                 'datestamp': datestamp,
+                'template_seqid_cutoff': template_seqid_cutoff,
+                'process_only_these_targets': process_only_these_targets,
+                'process_only_these_templates': process_only_these_templates,
                 'timing': ensembler.core.strf_timedelta(target_timedelta),
                 'ff': ff,
                 'water_model': water_model,

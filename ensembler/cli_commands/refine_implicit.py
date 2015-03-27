@@ -53,6 +53,10 @@ helpstring_nonunique_options = [
                                "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
+  --template_seqid_cutoff <cutoff>  Select only templates with sequence identity (percentage)
+                                    greater than the given cutoff.""",
+
+    """\
   -v --verbose                 """,
 ]
 
@@ -72,6 +76,11 @@ def dispatch(args):
         templates = args['--templates'].split(',')
     else:
         templates = False
+
+    if args['--template_seqid_cutoff']:
+        template_seqid_cutoff = float(args['--template_seqid_cutoff'])
+    else:
+        template_seqid_cutoff = False
 
     if args['--gpupn']:
         gpupn = int(args['--gpupn'])
@@ -94,6 +103,7 @@ def dispatch(args):
         sim_length=sim_length,
         process_only_these_targets=targets,
         process_only_these_templates=templates,
+        template_seqid_cutoff=template_seqid_cutoff,
         retry_failed_runs=args['--retry_failed_runs'],
         ff=args['--ff'],
         implicit_water_model=args['--water_model'],
