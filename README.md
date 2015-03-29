@@ -6,6 +6,10 @@ Ensembler
 
 Software pipeline for automating omics-scale protein modeling and simulation setup.
 
+Online documentation
+--------------------
+Go to the [official online documentation](http://ensembler.readthedocs.org/).
+
 Authors
 -------
 
