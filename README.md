@@ -1,10 +1,14 @@
 Ensembler
 =========
 
-[![Binstar Badge](https://binstar.org/dannyparton/ensembler/badges/version.svg)](https://binstar.org/dannyparton/ensembler)
+[![Binstar Badge](https://binstar.org/omnia/ensembler/badges/version.svg)](https://binstar.org/omnia/ensembler)
 [![Documentation Status](https://readthedocs.org/projects/ensembler/badge/?version=latest)](http://ensembler.readthedocs.org/en/latest/)
 
 Software pipeline for automating omics-scale protein modeling and simulation setup.
+
+Online documentation
+--------------------
+Go to the [official online documentation](http://ensembler.readthedocs.org/).
 
 Authors
 -------
@@ -37,7 +41,7 @@ Installation
 
 Using conda:
 
-    conda config --add channels http://conda.binstar.org/dannyparton
+    conda config --add channels http://conda.binstar.org/omnia
     conda install ensembler
 
 From source:
