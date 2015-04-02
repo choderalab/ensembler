@@ -30,7 +30,7 @@ def refine_implicit_md(
         cutoff=None,                                  # nonbonded cutoff
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
-        pH=8.0,
+        pH=7.0,
         retry_failed_runs=False,
         cpu_platform_threads=1):
     # TODO - refactor

@@ -1,5 +1,6 @@
 import ensembler
 import ensembler.refinement
+from ensembler.param_parsers import parse_api_params_string, eval_quantity_string
 import simtk.unit as unit
 
 helpstring_header = """\
@@ -59,6 +60,10 @@ helpstring_nonunique_options = [
                                     greater than the given cutoff.""",
 
     """\
+  --api_params <params>             See API documentation for
+                                    ensembler.refinement.refine_implicit_md""",
+
+    """\
   -v --verbose                 """,
 ]
 
@@ -90,7 +95,7 @@ def dispatch(args):
         gpupn = 1
 
     if args['--simlength']:
-        sim_length = float(args['--simlength']) * unit.picoseconds
+        sim_length = eval_quantity_string(args['--simlength'])
     else:
         sim_length = 100.0 * unit.picoseconds
 
@@ -98,6 +103,11 @@ def dispatch(args):
         loglevel = 'debug'
     else:
         loglevel = 'info'
+
+    if args['--api_params']:
+        api_params = parse_api_params_string(args['--api_params'])
+    else:
+        api_params = {}
 
     ensembler.refinement.refine_explicit_md(
         openmm_platform=args['--openmm_platform'],
@@ -111,4 +121,5 @@ def dispatch(args):
         ff=args['--ff'],
         water_model=args['--water_model'],
         verbose=args['--verbose'],
+        **api_params
     )

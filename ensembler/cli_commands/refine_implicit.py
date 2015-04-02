@@ -1,5 +1,6 @@
 import ensembler
 import ensembler.refinement
+from ensembler.param_parsers import parse_api_params_string, eval_quantity_string
 import simtk.unit as unit
 
 helpstring_header = """\
@@ -16,19 +17,19 @@ Options:"""
 
 helpstring_unique_options = [
     """\
-  --openmm_platform <platform>    Specify the OpenMM Platform to use {CUDA|OpenCL|CPU|Reference}
-                                  (default is to auto-select the fastest platform availble).""",
+  --openmm_platform <platform>      Specify the OpenMM Platform to use {CUDA|OpenCL|CPU|Reference}
+                                    (default is to auto-select the fastest platform availble).""",
 
     """\
-  --gpupn <gpupn>                 If using GPUs, specify how many are available per node
-                                  [default: 1].""",
+  --gpupn <gpupn>                   If using GPUs, specify how many are available per node
+                                    [default: 1].""",
 
     """\
-  --simlength <simlength>         Simulation length (ps) [default: 100.0].""",
+  --simlength <simlength>           Simulation length (ps) [default: 100.0].""",
 
     """\
-  --retry_failed_runs             Retry simulation runs which previously failed, e.g. due to bad
-                                  inter-atom contacts.""",
+  --retry_failed_runs               Retry simulation runs which previously failed, e.g. due to bad
+                                    inter-atom contacts.""",
 
     """\
   --ff <ffname>                     OpenMM force field name [default: amber99sbildn]
@@ -37,6 +38,10 @@ helpstring_unique_options = [
     """\
   --water_model <modelname>         OpenMM water model name [default: tip3p]
                                     See OpenMM documentation for other water model options""",
+
+    """\
+  --api_params <params>             See API documentation for
+                                    ensembler.refinement.refine_implicit_md""",
 ]
 
 helpstring_nonunique_options = [
@@ -88,7 +93,7 @@ def dispatch(args):
         gpupn = 1
 
     if args['--simlength']:
-        sim_length = float(args['--simlength']) * unit.picoseconds
+        sim_length = eval_quantity_string(args['--simlength'])
     else:
         sim_length = 100.0 * unit.picoseconds
 
@@ -96,6 +101,11 @@ def dispatch(args):
         loglevel = 'debug'
     else:
         loglevel = 'info'
+
+    if args['--api_params']:
+        api_params = parse_api_params_string(args['--api_params'])
+    else:
+        api_params = {}
 
     ensembler.refinement.refine_implicit_md(
         openmm_platform=args['--openmm_platform'],
@@ -107,5 +117,6 @@ def dispatch(args):
         retry_failed_runs=args['--retry_failed_runs'],
         ff=args['--ff'],
         implicit_water_model=args['--water_model'],
-        verbose=args['--verbose']
+        verbose=args['--verbose'],
+        **api_params
     )
