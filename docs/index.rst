@@ -60,7 +60,8 @@ compute cluster. It makes use of a number of external packages:
  - `Modeller <https://salilab.org/modeller>`_ for comparative modeling of target sequences onto template structures
  - `Rosetta <https://www.rosettacommons.org/software>`_ loopmodel for reconstruction of missing template loops
  - `OpenMM <https://simtk.org/home/openmm>`_ for model refinement with highly efficient, GPU-acclerated, molecular dynamics simulation
- - `MDTraj <http://mdtraj.org>`_ for fast RMSD calculation
+ - `MDTraj <http://mdtraj.org>`_ for trajectory-manipulation and fast RMSD calculation
+ - `MSMBuilder <http://msmbuilder.org>`_ for clustering
 
 
 Overview of the Ensembler Pipeline

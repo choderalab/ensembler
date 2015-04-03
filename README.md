@@ -57,6 +57,7 @@ Dependencies
 * Modeller - http://salilab.org/modeller/
 * mpi4py - http://mpi4py.scipy.org/
 * mdtraj - http://mdtraj.org/
+* MSMBuilder - http://msmbuilder.org/
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
 * Other Python packages: BioPython, mpi4py, numpy, lxml, PyYAML
 

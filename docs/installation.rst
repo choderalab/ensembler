@@ -60,6 +60,9 @@ To use Ensembler, the following libraries and software will need to be installed
     `MDTraj <http://mdtraj.org/>`_
         Simulation trajectory analysis library.
 
+    `MSMBuilder <http://msmbuilder.org/>`_
+        Statistical models for biomolecular dynamics.
+
     `BioPython <http://biopython.org/wiki/Main_Page>`_
         Collection of Python tools for computational biology and
         bioinformatics.

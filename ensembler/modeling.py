@@ -20,6 +20,8 @@ import Bio.pairwise2
 import Bio.SubsMat.MatrixInfo
 import modeller
 import modeller.automodel
+import mdtraj
+import msmbuilder.cluster
 from ensembler.core import get_targets_and_templates
 from ensembler.core import mpistate, logger
 try:
@@ -704,7 +706,6 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
     Runs serially.
     '''
     # TODO refactor
-    import mdtraj
     ensembler.utils.loglevel_setter(logger, loglevel)
     targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
     templates = templates_resolved_seq
@@ -724,7 +725,7 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         logger.debug('Building a list of valid models...')
 
         model_pdbfilenames = []
-        valid_templateIDs = []
+        valid_templateids = []
         for t, template in enumerate(templates):
             model_dir = os.path.join(models_target_dir, template.id)
             model_pdbfilename = os.path.join(model_dir, 'model.pdb')
@@ -737,7 +738,7 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
                         with open(model_pdbfilename, 'w') as model_pdbfile:
                             model_pdbfile.write(model_pdbfile_compressed.read())
             model_pdbfilenames.append(model_pdbfilename)
-            valid_templateIDs.append(template.id)
+            valid_templateids.append(template.id)
 
         logger.info('Constructing a trajectory containing all valid models...')
 
@@ -753,37 +754,14 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
             os.unlink(f)
 
-        # Each template will be added to the list uniques if it is further than
-        # 0.2 Angstroms (RMSD) from the nearest template.
-        uniques=[]
-        min_rmsd = []
         CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
-        for (t, templateID) in enumerate(valid_templateIDs):
-            model_dir = os.path.join(models_target_dir, templateID)
+        unique_templateids = models_regular_spatial_clustering(valid_templateids, traj, atom_indices=CAatoms, cutoff=cutoff)
+        write_unique_by_clustering_files(unique_templateids, models_target_dir)
 
-            # Add the first template to the list of uniques
-            if t==0:
-                uniques.append(templateID)
-                with open(os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file:
-                    pass
-                continue
-
-            # Cluster
-            rmsds = mdtraj.rmsd(traj[0:t], traj[t], atom_indices=CAatoms, parallel=False)
-            min_rmsd.append(min(rmsds))
-
-            if min_rmsd[-1] < cutoff:
-                continue
-            else:
-                uniques.append(templateID)
-                # Create a blank file to say this template was found to be unique
-                # by clustering
-                with open( os.path.join(model_dir, 'unique_by_clustering'), 'w') as unique_file: pass
-
-        with open( os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
-            for u in uniques:
+        with open(os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
+            for u in unique_templateids:
                 uniques_file.write(u+'\n')
-            logger.info('%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(uniques), len(valid_templateIDs), cutoff))
+            logger.info('%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(unique_templateids), len(valid_templateids), cutoff))
 
         for template in templates:
             model_dir = os.path.join(models_target_dir, template.id)
@@ -795,7 +773,6 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         # Metadata
         # ========
 
-        import mdtraj.version
         project_metadata = ensembler.core.ProjectMetadata(project_stage='cluster_models', target_id=target.id)
         datestamp = ensembler.core.get_utcnow_formatted()
 
@@ -804,7 +781,7 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         metadata = {
             'target_id': target.id,
             'datestamp': datestamp,
-            'nunique_models': len(uniques),
+            'nunique_models': len(unique_templateids),
             'python_version': sys.version.split('|')[0].strip(),
             'python_full_version': ensembler.core.literal_str(sys.version),
             'ensembler_version': ensembler.version.short_version,
@@ -817,3 +794,63 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
 
         project_metadata.add_data(metadata)
         project_metadata.write()
+
+
+def models_regular_spatial_clustering(templateids, traj, atom_indices=None, cutoff=0.06):
+    """
+    Use MSMBuilder to perform RMSD-based regular spatial clustering on a set of models.
+
+    Parameters
+    ----------
+    templateids: list of str
+    traj: mdtraj.Trajectory
+    atom_indices: np.array
+    cutoff: float
+        Minimum distance cutoff for RMSD clustering (nm)
+    """
+    if atom_indices:
+        reduced_traj = traj.atom_slice(atom_indices)
+    else:
+        reduced_traj = traj
+
+    cluster = msmbuilder.cluster.RegularSpatial(cutoff, metric='rmsd')
+    cluster_labels = cluster.fit_predict([reduced_traj])[0]
+    unique_templateids = list(set([templateids[t] for t in cluster_labels]))
+    return unique_templateids
+
+
+def write_unique_by_clustering_files(unique_templateids, models_target_dir):
+    for templateid in unique_templateids:
+        unique_filename = os.path.join(models_target_dir, templateid, 'unique_by_clustering')
+        with open(unique_filename, 'w') as unique_file:
+            pass
+
+
+def _deprecated_models_regular_spatial_clustering(templateids, traj, atom_indices=None, cutoff=0.06):
+    """
+    Superseded by models_regular_spatial_clustering
+    """
+    mdtraj_rmsd_args = {}
+    if atom_indices:
+        mdtraj_rmsd_args['atom_indices'] = atom_indices
+
+    unique_templateids = []
+    min_rmsd = []
+    # Iterate through models
+    for (t, templateid) in enumerate(templateids):
+        # Add the first templateid to the list of uniques
+        if t==0:
+            unique_templateids.append(templateid)
+            continue
+
+        # Calculate rmsds of models up to t against the model t.
+        rmsds = mdtraj.rmsd(traj[0:t], traj[t], parallel=False, **mdtraj_rmsd_args)
+        min_rmsd.append(min(rmsds))
+
+        # If any rmsd is less than cutoff, discard; otherwise add to list of uniques
+        if min_rmsd[-1] < cutoff:
+            continue
+        else:
+            unique_templateids.append(templateid)
+
+    return unique_templateids

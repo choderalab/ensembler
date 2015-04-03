@@ -18,6 +18,7 @@ requirements:
     - python
     - mpi4py
     - mdtraj
+    - msmbuilder
     - biopython
     - openmm
     - numpy

@@ -42,11 +42,14 @@ def dispatch(args):
     else:
         targets = False
 
-    cutoff = ensembler.utils.set_arg_with_default(args['--cutoff'], default_arg=0.06)
+    dispatch_args = {}
+
+    if args['--cutoff']:
+        dispatch_args['cutoff'] = float(args['--cutoff'])
 
     if args['--verbose']:
         loglevel = 'debug'
     else:
         loglevel = 'info'
 
-    ensembler.modeling.cluster_models(process_only_these_targets=targets, cutoff=cutoff, loglevel=loglevel)
+    ensembler.modeling.cluster_models(process_only_these_targets=targets, loglevel=loglevel, **dispatch_args)
