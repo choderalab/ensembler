@@ -49,8 +49,11 @@ def build_uniprot_query_string_from_acs(acs):
     return ac_query_string
 
 
-def get_uniprot_xml(uniprot_query_string):
+def get_uniprot_xml(uniprot_query_string, write_to_filepath=None):
     uniprotxmlstring = query_uniprot(uniprot_query_string)
+    if write_to_filepath:
+        with open(write_to_filepath, 'w') as ofile:
+            ofile.write(uniprotxmlstring)
     parser = etree.XMLParser(huge_tree=True)
     uniprotxml = etree.fromstring(uniprotxmlstring, parser)
     return uniprotxml

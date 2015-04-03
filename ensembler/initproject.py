@@ -153,17 +153,24 @@ def gen_targetexplorer_metadata(dbapi_uri, search_string):
 
 
 class GatherTargetsFromUniProt(GatherTargets):
-    def __init__(self, uniprot_query_string, uniprot_domain_regex='', run_main=True):
+    def __init__(self, uniprot_query_string, uniprot_domain_regex='', save_uniprot_xml=False, run_main=True):
         super(GatherTargetsFromUniProt, self).__init__()
         self.uniprot_query_string = uniprot_query_string
         self.uniprot_domain_regex = uniprot_domain_regex
+        self._save_uniprot_xml = save_uniprot_xml
         if run_main:
             self._gather_targets()
 
     @ensembler.utils.notify_when_done
     def _gather_targets(self):
         logger.info('Querying UniProt web server...')
-        uniprotxml = ensembler.UniProt.get_uniprot_xml(self.uniprot_query_string)
+
+        get_uniprot_xml_args = {}
+        if self._save_uniprot_xml:
+            get_uniprot_xml_args['write_to_filepath'] = 'targets-uniprot.xml'
+
+        uniprotxml = ensembler.UniProt.get_uniprot_xml(self.uniprot_query_string, **get_uniprot_xml_args)
+
         logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
         log_unique_domain_names(self.uniprot_query_string, uniprotxml)
         if self.uniprot_domain_regex is not None:
