@@ -25,17 +25,17 @@ gather_from_options = ['targetexplorer', 'uniprot', 'pdb']
 helpstring_nonunique_options = [
     """\
   --gather_from <method>         Choose a source from which to gather data.
-                                 {targetexplorer|uniprot|pdb} [default: targetexplorer]
+                                 {uniprot|pdb|targetexplorer} [default: uniprot]
                                    - "uniprot": UniProt (www.uniprot.org). Requires a query string
                                      defined by the --query flag, plus an optional regular
                                      expression for selecting domains (--uniprot_domain_regex).
+                                   - "pdb": PDB (www.pdb.org). Requires a query string defined by
+                                   the --query falg, plus an optional regular expression for
+                                   selecting domains (--uniprot_domain_regex).
                                    - "targetexplorer": a TargetExplorer database
                                      (https://github.com/choderalab/targetexplorer). Requires a
                                      query string defined by the --query flag, and a URI specified
-                                     by the --dbapi_uri flag.
-                                   - "pdb": PDB (www.pdb.org). Requires a query string defined by
-                                   the --query falg, plus an optional regular expression for
-                                   selecting domains (--uniprot_domain_regex).""",
+                                     by the --dbapi_uri flag.""",
 
     """\
   --query <query>                Query string for selecting templates
@@ -55,6 +55,7 @@ helpstring_nonunique_options = [
 
                                    if --gather_from="targetexplorer":
                                      Use syntax as described in the TargetExplorer documentation.
+
                                    if --gather_from="pdb":
                                      List of comma-separated PDB IDs.""",
 

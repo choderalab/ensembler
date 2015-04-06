@@ -2,6 +2,7 @@ import gzip
 import json
 import sys
 import os
+import re
 
 from lxml import etree
 import Bio.SeqUtils
@@ -240,12 +241,10 @@ def gen_pdb_metadata(pdbids, uniprot_domain_regex, chainids):
 
 
 def log_unique_domain_names(uniprot_query_string, uniprotxml):
-    if 'domain:' in uniprot_query_string:
-        # First extract the domain selection
-        # Example query string: 'domain:"Protein kinase" AND reviewed:yes'
-        # Can assume that the domain selection will be bounded by double-quotes
-        query_string_split = uniprot_query_string.split('"')
-        query_string_domain_selection = query_string_split[query_string_split.index('domain:') + 1]
+    # Example query string: 'domain:"Protein kinase" AND reviewed:yes'
+    domain_match = re.search('domain:([\"\'].*[\"\'])', uniprot_query_string)
+    if domain_match and len(domain_match.groups()) > 0:
+        query_string_domain_selection = domain_match.groups()[0].replace('\'', '').replace('\"', '')
         uniprot_query_string_domains = uniprotxml.xpath(
             'entry/feature[@type="domain"][match_regex(@description, "%s")]' % query_string_domain_selection,
             extensions={
@@ -254,13 +253,13 @@ def log_unique_domain_names(uniprot_query_string, uniprotxml):
         )
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_query_string_domains])
         logger.info('Set of unique domain names selected by the domain selector \'%s\' during the initial UniProt search:\n%s\n'
-              % (query_string_domain_selection, uniprot_unique_domain_names))
+                    % (query_string_domain_selection, uniprot_unique_domain_names))
 
     else:
         uniprot_domains = uniprotxml.xpath('entry/feature[@type="domain"]')
         uniprot_unique_domain_names = set([domain.get('description') for domain in uniprot_domains])
         logger.info('Set of unique domain names returned from the initial UniProt search using the query string \'%s\':\n%s\n'
-              % (uniprot_query_string, uniprot_unique_domain_names))
+                    % (uniprot_query_string, uniprot_unique_domain_names))
 
 
 def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):

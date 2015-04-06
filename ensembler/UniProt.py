@@ -93,26 +93,26 @@ def print_uniprot_xml_comparison(new_xml, old_xml):
     # Get some basic statistics from the XML documents
 
     new_entries = new_xml.findall('entry')
-    new_nentries = len( new_entries)
-    new_nentries_with_pdb = len( new_xml.findall('entry/dbReference[@type="PDB"]') )
-    new_nentries_with_disease = len( new_xml.findall('entry/comment[@type="disease"]') )
+    new_nentries = len(new_entries)
+    new_nentries_with_pdb = len(new_xml.findall('entry/dbReference[@type="PDB"]'))
+    new_nentries_with_disease = len(new_xml.findall('entry/comment[@type="disease"]'))
 
     old_entries = old_xml.findall('entry')
-    old_nentries = len( old_entries )
-    old_nentries_with_pdb = len( old_xml.findall('entry/dbReference[@type="PDB"]') )
-    old_nentries_with_disease = len( old_xml.findall('entry/comment[@type="disease"]') )
+    old_nentries = len(old_entries)
+    old_nentries_with_pdb = len(old_xml.findall('entry/dbReference[@type="PDB"]'))
+    old_nentries_with_disease = len(old_xml.findall('entry/comment[@type="disease"]'))
 
-    print 'Number of entries (old XML, new XML): %d, %d' % ( old_nentries, new_nentries )
-    print 'Number of entries with PDBs (of any kind) (old XML, new XML): %d, %d' % ( old_nentries_with_pdb, new_nentries_with_pdb )
-    print 'Number of entries with disease annotations (old XML, new XML): %d, %d' % ( old_nentries_with_disease, new_nentries_with_disease )
+    print 'Number of entries (old XML, new XML): %d, %d' % (old_nentries, new_nentries)
+    print 'Number of entries with PDBs (of any kind) (old XML, new XML): %d, %d' % (old_nentries_with_pdb, new_nentries_with_pdb)
+    print 'Number of entries with disease annotations (old XML, new XML): %d, %d' % (old_nentries_with_disease, new_nentries_with_disease)
 
     # Also print any ACs that would be removed or added
 
-    new_ACs = [ x.findtext('accession') for x in new_entries ]
-    old_ACs = [ x.findtext('accession') for x in old_entries ]
+    new_ACs = [x.findtext('accession') for x in new_entries]
+    old_ACs = [x.findtext('accession') for x in old_entries]
 
-    added_ACs = [ new_AC for new_AC in new_ACs if new_AC not in old_ACs ]
-    removed_ACs = [ old_AC for old_AC in old_ACs if old_AC not in new_ACs ]
+    added_ACs = [new_AC for new_AC in new_ACs if new_AC not in old_ACs]
+    removed_ACs = [old_AC for old_AC in old_ACs if old_AC not in new_ACs]
 
     if len(added_ACs) > 0:
         print 'ACs to be added:'
@@ -136,7 +136,7 @@ def print_uniprot_xml_comparison(new_xml, old_xml):
         with open(temp_diff_filepath, 'w') as temp_diff_file:
             subprocess.call(['diff', '--ignore-matching-lines=<uniprot', temp_old_xml_filepath, temp_new_xml_filepath], stdout=temp_diff_file)
         with open(temp_diff_filepath, 'r') as temp_diff_file:
-            len_diff = len( temp_diff_file.readlines() )
+            len_diff = len(temp_diff_file.readlines())
 
     finally:
         shutil.rmtree(tempdirpath)
