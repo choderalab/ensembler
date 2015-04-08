@@ -62,6 +62,9 @@ helpstring_unique_options = [
                                  "Protein kinase", "Protein kinase; 1" and "Protein kinase; 2",
                                  and excludes "Protein kinase; truncated" and "Protein kinase;
                                  inactive\"""",
+
+    """\
+  -v --verbose                   """,
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options)])
@@ -69,15 +72,20 @@ docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 
 def dispatch(args):
+    if args['--verbose']:
+        loglevel = 'debug'
+    else:
+        loglevel = 'info'
+
     if args['--gather_from'].lower() == 'targetexplorer':
         required_args = ['--dbapi_uri']
         ensembler.cli.validate_args(args, required_args)
-        ensembler.initproject.GatherTargetsFromTargetExplorer(args['--dbapi_uri'], search_string=args['--query'])
+        ensembler.initproject.GatherTargetsFromTargetExplorer(args['--dbapi_uri'], search_string=args['--query'], loglevel=loglevel)
 
     elif args['--gather_from'].lower() == 'uniprot':
         required_args = ['--query']
         ensembler.cli.validate_args(args, required_args)
-        ensembler.initproject.GatherTargetsFromUniProt(args['--query'], uniprot_domain_regex=args['--uniprot_domain_regex'])
+        ensembler.initproject.GatherTargetsFromUniProt(args['--query'], uniprot_domain_regex=args['--uniprot_domain_regex'], loglevel=loglevel)
 
     else:
         raise Exception('--gather_from flag must be set to either "uniprot" or "targetexplorer"')

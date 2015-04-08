@@ -17,7 +17,9 @@ helpstring_unique_options = [
 
     """\
   --overwrite_structures       Overwrite structure files""",
+]
 
+helpstring_nonunique_options = [
     """\
   -v --verbose                 """,
 ]

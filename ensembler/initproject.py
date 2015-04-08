@@ -96,7 +96,8 @@ class GatherTargets(object):
 
 
 class GatherTargetsFromTargetExplorer(GatherTargets):
-    def __init__(self, dbapi_uri, search_string='', run_main=True):
+    def __init__(self, dbapi_uri, search_string='', loglevel=None, run_main=True):
+        ensembler.utils.loglevel_setter(logger, loglevel)
         super(GatherTargetsFromTargetExplorer, self).__init__()
         self.dbapi_uri = dbapi_uri
         self.search_string = search_string
@@ -154,7 +155,8 @@ def gen_targetexplorer_metadata(dbapi_uri, search_string):
 
 
 class GatherTargetsFromUniProt(GatherTargets):
-    def __init__(self, uniprot_query_string, uniprot_domain_regex='', save_uniprot_xml=False, run_main=True):
+    def __init__(self, uniprot_query_string, uniprot_domain_regex='', save_uniprot_xml=False, loglevel=None, run_main=True):
+        ensembler.utils.loglevel_setter(logger, loglevel)
         super(GatherTargetsFromUniProt, self).__init__()
         self.uniprot_query_string = uniprot_query_string
         self.uniprot_domain_regex = uniprot_domain_regex
@@ -273,7 +275,7 @@ def log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml):
 
 
 @ensembler.utils.notify_when_done
-def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None):
+def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_dirs=None, loglevel=None):
     """Gather protein template data from a TargetExplorer DB network API.
     Pass the URI for the database API and a search string.
     The search string uses SQLAlchemy syntax and standard TargetExplorer
@@ -285,6 +287,7 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
     To select all domains within the database:
     search_string=''
     """
+    ensembler.utils.loglevel_setter(logger, loglevel)
     manual_overrides = ensembler.core.ManualOverrides()
     templates_json = get_targetexplorer_templates_json(dbapi_uri, search_string)
     selected_pdbchains = extract_template_pdbchains_from_targetexplorer_json(templates_json, manual_overrides=manual_overrides)
@@ -298,9 +301,10 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
 
 
 @ensembler.utils.notify_when_done
-def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, structure_dirs=None):
+def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex=None, structure_dirs=None, pdbids=None, chainids=None, loglevel=None):
     """# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures."""
+    ensembler.utils.loglevel_setter(logger, loglevel)
     manual_overrides = ensembler.core.ManualOverrides()
     selected_pdbchains = None
     if mpistate.rank == 0:
@@ -309,11 +313,12 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
         if uniprot_domain_regex is not None:
             log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
 
-        selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides)
+        selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=uniprot_domain_regex, manual_overrides=manual_overrides, specified_pdbids=pdbids, specified_chainids=chainids)
         for pdbchain in selected_pdbchains:
             get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
 
     selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
+    logger.debug('Selected PDB chains: {0}'.format([pdbchain['templateid'] for pdbchain in selected_pdbchains]))
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
@@ -322,7 +327,7 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex, st
 
 
 @ensembler.utils.notify_when_done
-def gather_templates_from_pdb(pdbids, uniprot_domain_regex, chainids=None, structure_dirs=None):
+def gather_templates_from_pdb(pdbids, uniprot_domain_regex=None, chainids=None, structure_dirs=None, loglevel=None):
     """
     :param pdbids: list of str
     :param uniprot_domain_regex: str
@@ -330,17 +335,20 @@ def gather_templates_from_pdb(pdbids, uniprot_domain_regex, chainids=None, struc
     :param structure_dirs: list of str
     :return:
     """
+    ensembler.utils.loglevel_setter(logger, loglevel)
     manual_overrides = ensembler.core.ManualOverrides()
     selected_pdbchains = None
     if mpistate.rank == 0:
         for pdbid in pdbids:
             get_pdb_and_sifts_files(pdbid, structure_dirs)
         uniprot_acs = extract_uniprot_acs_from_sifts_files(pdbids)
+        logger.debug('Extracted UniProt ACs: {0}'.format(uniprot_acs))
         uniprot_ac_query_string = ensembler.UniProt.build_uniprot_query_string_from_acs(uniprot_acs)
         uniprotxml = ensembler.UniProt.get_uniprot_xml(uniprot_ac_query_string)
-        selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=pdbids, specified_chainids=chainids)
+        selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=uniprot_domain_regex, manual_overrides=manual_overrides, specified_pdbids=pdbids, specified_chainids=chainids)
 
     selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
+    logger.debug('Selected PDB chains: {0}'.format([pdbchain['templateid'] for pdbchain in selected_pdbchains]))
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
@@ -488,7 +496,7 @@ def extract_pdb_template_seq(pdbchain):
     templateid = pdbchain['templateid']
     chainid = pdbchain['chainid']
     pdbid = pdbchain['pdbid']
-    domain_span = pdbchain['domain_span'] # UniProt coords
+    residue_span = pdbchain['residue_span']   # UniProt coords
 
     sifts_filepath = os.path.join('structures', 'sifts', pdbid + '.xml.gz')
     siftsxml = parse_sifts_xml(sifts_filepath)
@@ -496,29 +504,29 @@ def extract_pdb_template_seq(pdbchain):
     add_pdb_modified_xml_tags_to_residues(siftsxml)
 
     # domain_span_sifts_coords = [
-    #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, domain_span[0])).get('dbResNum')),
-    #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, domain_span[1])).get('dbResNum')),
+    #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, residue_span[0])).get('dbResNum')),
+    #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, residue_span[1])).get('dbResNum')),
     # ]
 
     # TODO once working, check whether this fills in all loops
     # An alternative approach would be to just take the UniProt sequence specified by the domain span
     selected_residues = siftsxml.xpath(
         'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"]'
-        '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
+        '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, residue_span[0], residue_span[1])
     )
 
     # now extract PDB residues which have the correct PDB chain ID, are resolved, have a UniProt crossref and are within the UniProt domain bounds, and do not have "PDB modified", "Conflict" or "Engineered mutation" tags.
     selected_resolved_residues = siftsxml.xpath(
         'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][not(../residueDetail[contains(text(),"Not_Observed")])]'
         '[../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]][not(../residueDetail[contains(text(),"modified")])]'
-        '[not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, domain_span[0], domain_span[1])
+        '[not(../residueDetail[contains(text(),"Conflict")])][not(../residueDetail[contains(text(),"mutation")])]' % (chainid, residue_span[0], residue_span[1])
     )
 
     # second stage of filtering to remove residues which conflict with the UniProt resname, but are not annotated as such
     selected_resolved_residues = [r for r in selected_resolved_residues if Bio.SeqUtils.seq1(r.get('dbResName')) == r.find('../crossRefDb[@dbSource="UniProt"]').get('dbResName')]
 
     # all_pdb_domain_residues = siftsxml.xpath(
-    #     'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, domain_span[0], domain_span[1])
+    #     'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"][../crossRefDb[@dbSource="UniProt"][@dbResNum >= "%d"][@dbResNum <= "%d"]]' % (chainid, residue_span[0], residue_span[1])
     # )
 
     if len(selected_resolved_residues) == 0 or len(selected_residues) == 0:
@@ -612,12 +620,12 @@ def gen_gather_templates_metadata(nselected_templates, additional_metadata=None)
     return metadata
 
 
-def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex, manual_overrides, specified_pdbids=None, specified_chainids=None):
+def dep_extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=None, manual_overrides=None, specified_pdbids=None, specified_chainids=None):
     selected_pdbchains = []
     all_uniprot_entries = uniprotxml.findall('entry')
     for entry in all_uniprot_entries:
         entry_name = entry.find('name').text
-        if uniprot_domain_regex is not None:
+        if uniprot_domain_regex:
             selected_domains = entry.xpath(
                 'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
                 extensions={(None, 'match_regex'): ensembler.core.xpath_match_regex_case_sensitive}
@@ -629,12 +637,12 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
         for domain in selected_domains:
             domain_id = '%s_D%d' % (entry_name, domain_iter)
             domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
-            if domain_id in manual_overrides.template.domain_spans:
+            if manual_overrides and domain_id in manual_overrides.template.domain_spans:
                 domain_span = [int(x) for x in manual_overrides.template.domain_spans[domain_id].split('-')]
             domain_len = domain_span[1] - domain_span[0] + 1
-            if manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
+            if manual_overrides and manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
                 continue
-            if manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
+            if manual_overrides and manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
                 continue
 
             domain_iter += 1
@@ -643,7 +651,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
 
             for pdb in pdbs:
                 pdbid = pdb.get('id')
-                if pdbid in manual_overrides.template.skip_pdbs:
+                if manual_overrides and pdbid in manual_overrides.template.skip_pdbs:
                     continue
                 if specified_pdbids and pdbid not in specified_pdbids:
                     continue
@@ -668,6 +676,95 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
                             selected_pdbchains.append(data)
     logger.info('%d PDB chains selected.' % len(selected_pdbchains))
     return selected_pdbchains
+
+
+def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=None, manual_overrides=None, specified_pdbids=None, specified_chainids=None):
+    selected_pdbchains = []
+    all_uniprot_entries = uniprotxml.findall('entry')
+    for entry in all_uniprot_entries:
+        entry_name = entry.find('name').text
+        if uniprot_domain_regex:
+            selected_domains = entry.xpath(
+                'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
+                extensions={(None, 'match_regex'): ensembler.core.xpath_match_regex_case_sensitive}
+            )
+
+            domain_iter = 0
+            for domain in selected_domains:
+                domain_id = '%s_D%d' % (entry_name, domain_iter)
+                domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
+                if manual_overrides and domain_id in manual_overrides.template.domain_spans:
+                    domain_span = [int(x) for x in manual_overrides.template.domain_spans[domain_id].split('-')]
+                domain_len = domain_span[1] - domain_span[0] + 1
+                if manual_overrides and manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
+                    continue
+                if manual_overrides and manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
+                    continue
+
+                domain_iter += 1
+                pdbs = domain.getparent().xpath(
+                    'dbReference[@type="PDB"]/property[@type="method"][@value="X-ray" or @value="NMR"]/..'
+                )
+
+                for pdb in pdbs:
+                    pdbid = pdb.get('id')
+                    if manual_overrides and pdbid in manual_overrides.template.skip_pdbs:
+                        continue
+                    if specified_pdbids and pdbid not in specified_pdbids:
+                        continue
+                    pdb_chain_span_nodes = pdb.findall('property[@type="chains"]')
+
+                    for pdb_chain_span_node in pdb_chain_span_nodes:
+                        chain_span_string = pdb_chain_span_node.get('value')
+                        chain_spans = ensembler.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
+
+                        for chainid in chain_spans.keys():
+                            if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
+                                continue
+                            span = chain_spans[chainid]
+                            if (span[0] < domain_span[0] + 30) & (span[1] > domain_span[1] - 30):
+                                templateid = '%s_%s_%s' % (domain_id, pdbid, chainid)
+                                data = {
+                                    'templateid': templateid,
+                                    'pdbid': pdbid,
+                                    'chainid': chainid,
+                                    'residue_span': domain_span
+                                }
+                                selected_pdbchains.append(data)
+
+        else:
+            pdbs = entry.xpath(
+                'dbReference[@type="PDB"]/property[@type="method"][@value="X-ray" or @value="NMR"]/..'
+            )
+
+            for pdb in pdbs:
+                pdbid = pdb.get('id')
+                if manual_overrides and pdbid in manual_overrides.template.skip_pdbs:
+                    continue
+                if specified_pdbids and pdbid not in specified_pdbids:
+                    continue
+                pdb_chain_span_nodes = pdb.findall('property[@type="chains"]')
+
+                for pdb_chain_span_node in pdb_chain_span_nodes:
+                    chain_span_string = pdb_chain_span_node.get('value')
+                    chain_spans = ensembler.UniProt.parse_uniprot_pdbref_chains(chain_span_string)
+
+                    for chainid in chain_spans.keys():
+                        if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
+                            continue
+                        span = chain_spans[chainid]
+                        templateid = '%s_%s_%s' % (entry_name, pdbid, chainid)
+                        data = {
+                            'templateid': templateid,
+                            'pdbid': pdbid,
+                            'chainid': chainid,
+                            'residue_span': span
+                        }
+                        selected_pdbchains.append(data)
+
+    logger.info('%d PDB chains selected.' % len(selected_pdbchains))
+    return selected_pdbchains
+
 
 structure_type_file_extension_mapper = {'pdb': '.pdb.gz', 'sifts': '.xml.gz'}
 

@@ -73,6 +73,9 @@ helpstring_nonunique_options = [
                                  "Protein kinase", "Protein kinase; 1" and "Protein kinase; 2",
                                  and excludes "Protein kinase; truncated" and "Protein kinase;
                                  inactive\"""",
+
+    """\
+  -v --verbose                   """,
 ]
 
 helpstring_unique_options = [
@@ -92,6 +95,11 @@ docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
 
 def dispatch(args):
+    if args['--verbose']:
+        loglevel = 'debug'
+    else:
+        loglevel = 'info'
+
     if args['--structure_paths']:
         structure_paths = args['--structure_paths'].split(',')
     else:
@@ -100,15 +108,15 @@ def dispatch(args):
     if args['--gather_from'].lower() == 'targetexplorer':
         required_args = ['--dbapi_uri']
         ensembler.cli.validate_args(args, required_args)
-        ensembler.initproject.gather_templates_from_targetexplorer(args['--dbapi_uri'], search_string=args['--query'], structure_dirs=structure_paths)
+        ensembler.initproject.gather_templates_from_targetexplorer(args['--dbapi_uri'], search_string=args['--query'], structure_dirs=structure_paths, loglevel=loglevel)
 
     elif args['--gather_from'].lower() == 'uniprot':
         required_args = ['--query']
         ensembler.cli.validate_args(args, required_args)
-        ensembler.initproject.gather_templates_from_uniprot(args['--query'], uniprot_domain_regex=args['--uniprot_domain_regex'], structure_dirs=structure_paths)
+        ensembler.initproject.gather_templates_from_uniprot(args['--query'], uniprot_domain_regex=args['--uniprot_domain_regex'], structure_dirs=structure_paths, loglevel=loglevel)
 
     elif args['--gather_from'].lower() == 'pdb':
-        required_args = ['--query', '--uniprot_domain_regex']
+        required_args = ['--query']
         ensembler.cli.validate_args(args, required_args)
 
         pdbids = args['--query'].split(',')
@@ -121,7 +129,7 @@ def dispatch(args):
         else:
             chainids = None
 
-        ensembler.initproject.gather_templates_from_pdb(pdbids, uniprot_domain_regex=args['--uniprot_domain_regex'], chainids=chainids, structure_dirs=structure_paths)
+        ensembler.initproject.gather_templates_from_pdb(pdbids, uniprot_domain_regex=args['--uniprot_domain_regex'], chainids=chainids, structure_dirs=structure_paths, loglevel=loglevel)
 
     else:
         raise Exception('--gather_from flag must be set to any of %r' % gather_from_options)

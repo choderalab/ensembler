@@ -7,10 +7,10 @@ Usage:
   ensembler -h | --help
   ensembler init [-h | --help] [--project_dir <dir>]
   ensembler gather_targets [-h | --help] [--gather_from <method>] [--query <query>]
-      [--dbapi_uri <uri>] [--uniprot_domain_regex <regex>]
+      [--dbapi_uri <uri>] [--uniprot_domain_regex <regex>] [-v | --verbose]
   ensembler gather_templates [-h | --help] [--gather_from <method>] [--query <query>]
       [--dbapi_uri <uri>] [--uniprot_domain_regex <regex>] [--chainids <chainids>]
-      [--structure_paths <path>]
+      [--structure_paths <path>] [-v | --verbose]
   ensembler loopmodel [-h | --help] [--templates <templates>] [--overwrite_structures]
       [-v | --verbose]
   ensembler align [-h | --help] [--targets <targets>] [--targetsfile <targetsfile>]
