@@ -216,7 +216,7 @@ def write_loop_file(template, missing_residues):
         loop_end = residue_number + nresidues + loop_residues_added + 1   # 1-based, one residue after the loop
         loop_residues_added += nresidues
         # Note that missing residues at termini (which cannot be modeled by Rosetta loopmodel) have already been removed from the PDBFixer.missingResidues dictionary
-        loop_file_text += 'LOOP%4d%4d - - 1\n' % (loop_begin, loop_end)
+        loop_file_text += 'LOOP {0} {1} - - 1\n'.format(loop_begin, loop_end)
     loop_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.id + '.loop')
     with open(loop_filepath, 'w') as loop_file:
         loop_file.write(loop_file_text)
