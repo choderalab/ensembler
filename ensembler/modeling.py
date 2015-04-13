@@ -112,7 +112,7 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
             resi3 = Bio.SeqUtils.seq3(r).upper()
             seq_obj.residues.append(resi3)
         fixer.structure.sequences.append(seq_obj)
-        tmp = fixer.findMissingResidues()
+        fixer.findMissingResidues()
         remove_missing_residues_at_termini(fixer, len_full_seq=len(template_full_seq.seq))
         if not overwrite_structures:
             if os.path.exists(template_pdbfixed_filepath):

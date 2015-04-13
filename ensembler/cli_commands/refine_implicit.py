@@ -25,7 +25,8 @@ helpstring_unique_options = [
                                     [default: 1].""",
 
     """\
-  --simlength <simlength>           Simulation length (ps) [default: 100.0].""",
+  --simlength <simlength>           Simulation length (specify units)
+                                    [default: 100 picoseconds].""",
 
     """\
   --retry_failed_runs               Retry simulation runs which previously failed, e.g. due to bad
@@ -92,10 +93,7 @@ def dispatch(args):
     else:
         gpupn = 1
 
-    if args['--simlength']:
-        sim_length = eval_quantity_string(args['--simlength'])
-    else:
-        sim_length = 100.0 * unit.picoseconds
+    sim_length = eval_quantity_string(args['--simlength'])
 
     if args['--verbose']:
         loglevel = 'debug'
