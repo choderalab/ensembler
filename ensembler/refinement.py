@@ -30,7 +30,7 @@ def refine_implicit_md(
         cutoff=None,                                  # nonbonded cutoff
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
-        pH=7.0,
+        ph=7.0,
         retry_failed_runs=False,
         cpu_platform_threads=1):
     # TODO - refactor
@@ -83,7 +83,7 @@ def refine_implicit_md(
 
         # Add missing protons.
         modeller = app.Modeller(pdb.topology, pdb.positions)
-        modeller.addHydrogens(forcefield, pH=pH, variants=variants)
+        modeller.addHydrogens(forcefield, pH=ph, variants=variants)
         topology = modeller.getTopology()
         positions = modeller.getPositions()
 
@@ -200,7 +200,7 @@ def refine_implicit_md(
 
         # Add missing protons.
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
-        variants = modeller.addHydrogens(forcefield, pH=pH)
+        variants = modeller.addHydrogens(forcefield, pH=ph)
         if verbose:
             print "Reference variants extracted:"
             if variants != None:
