@@ -480,25 +480,33 @@ def construct_fasta_str(id, seq):
 
 
 def get_targets():
-    targets_dir = os.path.abspath('targets')
-    targets_fasta_filename = os.path.join(targets_dir, 'targets.fa')
+    targets_fasta_filename = os.path.abspath(os.path.join(
+        ensembler.core.default_project_dirnames.targets, 'targets.fa'
+    ))
     targets = list(Bio.SeqIO.parse(targets_fasta_filename, 'fasta'))
     return targets
 
 
-def get_templates():
-    templates_dir = os.path.abspath('templates')
-    templates_resolved_seq_fasta_filename = os.path.join(templates_dir, 'templates-resolved-seq.fa')
+def get_templates_resolved_seq():
+    templates_resolved_seq_fasta_filename = os.path.abspath(os.path.join(
+        ensembler.core.default_project_dirnames.templates, 'templates-resolved-seq.fa'
+    ))
     templates_resolved_seq = list(Bio.SeqIO.parse(templates_resolved_seq_fasta_filename, 'fasta'))
-    templates_full_seq_fasta_filename = os.path.join(templates_dir, 'templates-full-seq.fa')
+    return templates_resolved_seq
+
+
+def get_templates_full_seq():
+    templates_full_seq_fasta_filename = os.path.abspath(os.path.join(
+        ensembler.core.default_project_dirnames.templates, 'templates-full-seq.fa'
+    ))
     templates_full_seq = list(Bio.SeqIO.parse(templates_full_seq_fasta_filename, 'fasta'))
-    return templates_resolved_seq, templates_full_seq
+    return templates_full_seq
 
 
 def get_targets_and_templates():
     targets = get_targets()
-    templates_resolved_seq, templates_full_seq = get_templates()
-    return targets, templates_resolved_seq, templates_full_seq
+    templates_resolved_seq = get_templates_resolved_seq()
+    return targets, templates_resolved_seq
 
 
 def find_loopmodel_executable():

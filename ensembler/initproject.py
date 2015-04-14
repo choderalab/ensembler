@@ -155,7 +155,7 @@ def gen_targetexplorer_metadata(dbapi_uri, search_string):
 
 
 class GatherTargetsFromUniProt(GatherTargets):
-    def __init__(self, uniprot_query_string, uniprot_domain_regex='', save_uniprot_xml=False, loglevel=None, run_main=True):
+    def __init__(self, uniprot_query_string, uniprot_domain_regex=None, save_uniprot_xml=False, loglevel=None, run_main=True):
         ensembler.utils.loglevel_setter(logger, loglevel)
         super(GatherTargetsFromUniProt, self).__init__()
         self.uniprot_query_string = uniprot_query_string
@@ -176,7 +176,7 @@ class GatherTargetsFromUniProt(GatherTargets):
 
         logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
         log_unique_domain_names(self.uniprot_query_string, uniprotxml)
-        if self.uniprot_domain_regex is not None:
+        if self.uniprot_domain_regex:
             log_unique_domain_names_selected_by_regex(self.uniprot_domain_regex, uniprotxml)
         fasta_ofilepath = os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')
         self.targets = self._extract_targets_from_uniprot_xml(uniprotxml)
@@ -188,26 +188,28 @@ class GatherTargetsFromUniProt(GatherTargets):
         for entry in uniprotxml.findall('entry'):
             entry_name = entry.find('name').text
             fullseq = ensembler.core.sequnwrap(entry.find('sequence').text)
-            if self.uniprot_domain_regex is not None:
+            if self.uniprot_domain_regex:
                 selected_domains = entry.xpath(
                     'feature[@type="domain"][match_regex(@description, "%s")]' % self.uniprot_domain_regex,
                     extensions={(None, 'match_regex'): ensembler.core.xpath_match_regex_case_sensitive}
                 )
-            else:
-                selected_domains = entry.findall('feature[@type="domain"]')
 
-            domain_iter = 0
-            for domain in selected_domains:
-                targetid = '%s_D%d' % (entry_name, domain_iter)
-                # domain span override
-                if targetid in self.manual_overrides.target.domain_spans:
-                    start, end = [int(x) - 1 for x in self.manual_overrides.target.domain_spans[targetid].split('-')]
-                else:
-                    start, end = [int(domain.find('location/begin').get('position')) - 1,
-                                  int(domain.find('location/end').get('position')) - 1]
-                targetseq = fullseq[start:end + 1]
-                targets.append(SeqRecord(Seq(targetseq), id=targetid, description=targetid))
-                domain_iter += 1
+                domain_iter = 0
+                for domain in selected_domains:
+                    targetid = '%s_D%d' % (entry_name, domain_iter)
+                    # domain span override
+                    if targetid in self.manual_overrides.target.domain_spans:
+                        start, end = [int(x) - 1 for x in self.manual_overrides.target.domain_spans[targetid].split('-')]
+                    else:
+                        start, end = [int(domain.find('location/begin').get('position')) - 1,
+                                      int(domain.find('location/end').get('position')) - 1]
+                    targetseq = fullseq[start:end + 1]
+                    targets.append(SeqRecord(Seq(targetseq), id=targetid, description=targetid))
+                    domain_iter += 1
+
+            else:
+                targetid = entry_name
+                targets.append(SeqRecord(Seq(fullseq), id=targetid, description=targetid))
 
         return targets
 

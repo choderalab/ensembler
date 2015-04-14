@@ -42,7 +42,7 @@ def refine_implicit_md(
 
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
-    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
 
     if process_only_these_templates:
         selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
@@ -353,7 +353,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
-    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
 
     if process_only_these_templates:
         selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
@@ -477,7 +477,7 @@ def determine_nwaters(process_only_these_targets=None,
     if mpistate.rank == 0:
         models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
-        targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+        targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
 
         if process_only_these_templates:
             selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
@@ -613,7 +613,7 @@ def refine_explicit_md(
 
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
-    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
 
     if process_only_these_templates:
         selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]

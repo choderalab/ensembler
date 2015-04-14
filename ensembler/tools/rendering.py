@@ -59,7 +59,7 @@ png {IMG_FILEPATH}
 
 class Rendering(object):
     def __init__(self):
-        self.targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+        self.targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
         self.templates = templates_resolved_seq
 
     def render_template_structure_resolved(self, templateid):

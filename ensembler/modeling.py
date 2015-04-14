@@ -18,11 +18,13 @@ import Bio
 import Bio.SeqIO
 import Bio.pairwise2
 import Bio.SubsMat.MatrixInfo
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 import modeller
 import modeller.automodel
 import mdtraj
 import msmbuilder.cluster
-from ensembler.core import get_targets_and_templates
+from ensembler.core import get_targets_and_templates, get_templates_full_seq
 from ensembler.core import mpistate, logger
 try:
     import subprocess32 as subprocess
@@ -60,17 +62,23 @@ def model_template_loops(process_only_these_templates=None, overwrite_structures
     :return:
     """
     ensembler.utils.loglevel_setter(logger, loglevel)
-    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
+    templates_full_seq = get_templates_full_seq()
     missing_residues_list = pdbfix_templates(templates_full_seq, process_only_these_templates=process_only_these_templates, overwrite_structures=overwrite_structures)
-    loopmodel_templates(templates_full_seq, missing_residues_list, process_only_these_templates=process_only_these_templates, overwrite_structures=overwrite_structures)
+    loopmodel_templates(templates_resolved_seq, missing_residues_list, process_only_these_templates=process_only_these_templates, overwrite_structures=overwrite_structures)
 
 
 def pdbfix_templates(templates_full_seq, process_only_these_templates=None, overwrite_structures=False):
     """
-    :param templates_full_seq: list of BioPython SeqRecord
-    :param process_only_these_templates: list of str
-    :param overwrite_structures: bool
-    :return: missing_residues_list: list of list of OpenMM Residue
+    Parameters
+    ----------
+    templates_full_seq: list of BioPython SeqRecord
+        full UniProt sequence for span of the template (including unresolved residues)
+    process_only_these_templates: list of str
+    overwrite_structures: bool
+    Returns
+    -------
+    missing_residues_list: list of list of OpenMM Residue
     """
     missing_residues_sublist = []
     ntemplates = len(templates_full_seq)
@@ -96,15 +104,30 @@ def pdbfix_templates(templates_full_seq, process_only_these_templates=None, over
 
 def pdbfix_template(template_full_seq, overwrite_structures=False):
     """
-    :param template_full_seq: BioPython SeqRecord
-    :param overwrite_structures: bool
-    :return: fixer.missingResidues
+    Parameters
+    ----------
+    template_full_seq: BioPython SeqRecord
+        full UniProt sequence for span of the template (including unresolved residues)
+    overwrite_structures: bool
+    Returns
+    -------
+    fixer.missingResidues
     """
     try:
-        template_pdbfixed_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template_full_seq.id + '-pdbfixed.pdb')
+        template_pdbfixed_filepath = os.path.join(
+            ensembler.core.default_project_dirnames.templates_structures_modeled_loops,
+            template_full_seq.id + '-pdbfixed.pdb'
+        )
+        seq_pdbfixed_filepath = os.path.join(
+            ensembler.core.default_project_dirnames.templates_structures_modeled_loops,
+            template_full_seq.id + '-pdbfixed.fasta'
+        )
         import pdbfixer
         import simtk.openmm.app
-        template_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, template_full_seq.id + '.pdb')
+        template_filepath = os.path.join(
+            ensembler.core.default_project_dirnames.templates_structures_resolved,
+            template_full_seq.id + '.pdb'
+        )
         fixer = pdbfixer.PDBFixer(filename=template_filepath)
         chainid = fixer.structureChains[0].chain_id
         seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(chainid)
@@ -114,21 +137,31 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
         fixer.structure.sequences.append(seq_obj)
         fixer.findMissingResidues()
         remove_missing_residues_at_termini(fixer, len_full_seq=len(template_full_seq.seq))
-        if not overwrite_structures:
-            if os.path.exists(template_pdbfixed_filepath):
-                return fixer.missingResidues
+        if not overwrite_structures and os.path.exists(template_pdbfixed_filepath):
+            return fixer.missingResidues
         fixer.findMissingAtoms()
         (newTopology, newPositions, newAtoms, existingAtomMap) = fixer._addAtomsToTopology(True, True)
         fixer.topology = newTopology
         fixer.positions = newPositions
         with open(template_pdbfixed_filepath, 'w') as template_pdbfixed_file:
-            simtk.openmm.app.PDBFile.writeFile(fixer.topology, fixer.positions, file=template_pdbfixed_file)
+            simtk.openmm.app.PDBFile.writeFile(
+                fixer.topology, fixer.positions, file=template_pdbfixed_file
+            )
+
+        # Write sequence to file
+        seq_pdbfixed = ''.join([Bio.SeqUtils.seq1(r.name) for r in fixer.topology.residues()])
+        seq_record_pdbfixed = SeqRecord(Seq(seq_pdbfixed), id=template_full_seq.id, description=template_full_seq.id)
+        Bio.SeqIO.write([seq_record_pdbfixed], seq_pdbfixed_filepath, 'fasta')
+
         return fixer.missingResidues
     except (KeyboardInterrupt, ImportError):
         raise
     except Exception as e:
         trbk = traceback.format_exc()
-        log_filepath = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template_full_seq.id + '-pdbfixer-log.yaml'))
+        log_filepath = os.path.abspath(os.path.join(
+            ensembler.core.default_project_dirnames.templates_structures_modeled_loops,
+            template_full_seq.id + '-pdbfixer-log.yaml'
+        ))
         logfile = ensembler.core.LogFile(log_filepath)
         logfile.log({
             'templateid': str(template_full_seq.id),
@@ -136,7 +169,10 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
             'traceback': ensembler.core.literal_str(trbk),
             'mpi_rank': mpistate.rank,
         })
-        logger.error('MPI rank %d pdbfixer error for template %s - see logfile' % (mpistate.rank, template_full_seq.id))
+        logger.error(
+            'MPI rank %d pdbfixer error for template %s - see logfile' %
+            (mpistate.rank, template_full_seq.id)
+        )
 
 
 def remove_missing_residues_at_termini(fixer, len_full_seq):
@@ -158,9 +194,13 @@ def remove_missing_residues_at_termini(fixer, len_full_seq):
 
 def loopmodel_templates(templates, missing_residues, process_only_these_templates=None, overwrite_structures=False):
     """
-    :param templates:  list of BioPython SeqRecord
-    :param missing_residues: list of list of OpenMM Residue
-    :param overwrite_structures: bool
+    Parameters
+    ----------
+    templates:  list of BioPython SeqRecord
+        only the id is used
+    missing_residues: list of list of OpenMM Residue
+    process_only_these_templates: bool
+    overwrite_structures: bool
     """
     for template_index in range(mpistate.rank, len(templates), mpistate.size):
         template = templates[template_index]
@@ -301,7 +341,7 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
     :return:
     """
     ensembler.utils.loglevel_setter(logger, loglevel)
-    targets, templates_resolved_seq, templates_full_seq = ensembler.core.get_targets_and_templates()
+    targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
     ntemplates = len(templates_resolved_seq)
     nselected_templates = len(process_only_these_templates) if process_only_these_templates else ntemplates
     for target in targets:
@@ -316,19 +356,22 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
         seq_identity_data_sublist = []
 
         for template_index in range(mpistate.rank, ntemplates, mpistate.size):
-            template = templates_full_seq[template_index]
-            if not os.path.exists(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template.id + '.pdb')):
+            template_id = templates_resolved_seq[template_index].id
+            if os.path.exists(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template_id + '.pdb')):
+                remodeled_seq_filepath = os.path.join(ensembler.core.default_installation_dirnames.templates_structures_modeled_loops, template_id + '.fasta')
+                template = list(Bio.SeqIO.parse(remodeled_seq_filepath, 'fasta'))[0]
+            else:
                 template = templates_resolved_seq[template_index]
 
-            if process_only_these_templates and template.id not in process_only_these_templates: continue
+            if process_only_these_templates and template_id not in process_only_these_templates: continue
 
-            model_dir = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.models, target.id, template.id))
+            model_dir = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.models, target.id, template_id))
             ensembler.utils.create_dir(model_dir)
             aln = align_target_template(target, template)
             aln_filepath = os.path.join(model_dir, 'alignment.pir')
             write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
             seq_identity_data_sublist.append({
-                'templateid': template.id,
+                'templateid': template_id,
                 'seq_identity': calculate_seq_identity(aln),
             })
 
@@ -392,7 +435,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     # in parallel, it is likely that occasional exceptions will occur, due to concurrent processes
     # making os.chdir calls.
     ensembler.utils.loglevel_setter(logger, loglevel)
-    targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
+    targets, templates_resolved_seq = get_targets_and_templates()
 
     if process_only_these_templates:
         selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
@@ -411,9 +454,8 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
 
         for template_index in range(mpistate.rank, ntemplates_selected, mpistate.size):
             template_resolved_seq = templates_resolved_seq[selected_template_indices[template_index]]
-            template_full_seq = templates_full_seq[selected_template_indices[template_index]]
             if process_only_these_templates and template_resolved_seq.id not in process_only_these_templates: continue
-            build_model(target, template_resolved_seq, template_full_seq, target_setup_data,
+            build_model(target, template_resolved_seq, target_setup_data,
                         write_modeller_restraints_file=write_modeller_restraints_file,
                         loglevel=loglevel)
         write_build_models_metadata(target, target_setup_data, process_only_these_targets,
@@ -421,7 +463,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
                                     write_modeller_restraints_file)
 
 
-def build_model(target, template_resolved_seq, template_full_seq, target_setup_data,
+def build_model(target, template_resolved_seq, target_setup_data,
                 write_modeller_restraints_file=False, loglevel=None):
     """Uses Modeller to build a homology model for a given target and
     template.
@@ -445,10 +487,17 @@ def build_model(target, template_resolved_seq, template_full_seq, target_setup_d
     """
     ensembler.utils.loglevel_setter(logger, loglevel)
 
-    template_structure_dir = os.path.abspath(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
-    template = template_full_seq
-    if not os.path.exists(os.path.join(template_structure_dir, template_resolved_seq.id + '.pdb')):
-        template_structure_dir = os.path.abspath(ensembler.core.default_project_dirnames.templates_structures_resolved)
+    template_structure_dir = os.path.abspath(
+        ensembler.core.default_project_dirnames.templates_structures_modeled_loops
+    )
+
+    if os.path.exists(os.path.join(template_structure_dir, template_resolved_seq.id + '.pdb')):
+        remodeled_seq_filepath = os.path.join(
+            ensembler.core.default_installation_dirnames.templates_structures_modeled_loops,
+            template_resolved_seq.id + '.fasta'
+        )
+        template = list(Bio.SeqIO.parse(remodeled_seq_filepath, 'fasta'))[0]
+    else:
         template = template_resolved_seq
 
     model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
@@ -461,7 +510,10 @@ def build_model(target, template_resolved_seq, template_full_seq, target_setup_d
     model_pdbfilepath_uncompressed = model_pdbfilepath[:-3]
 
     if check_all_model_files_present(model_dir):
-        logger.debug("Output files already exist for target '%s' // template '%s'; files were not overwritten." % (target.id, template.id))
+        logger.debug(
+            "Output files already exist for target '%s' // template '%s'; files were not overwritten." %
+            (target.id, template.id)
+        )
         return
 
     logger.info(
@@ -707,7 +759,7 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
     '''
     # TODO refactor
     ensembler.utils.loglevel_setter(logger, loglevel)
-    targets, templates_resolved_seq, templates_full_seq = get_targets_and_templates()
+    targets, templates_resolved_seq = get_targets_and_templates()
     templates = templates_resolved_seq
 
     for target in targets:
@@ -755,13 +807,18 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
             os.unlink(f)
 
         CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']
-        unique_templateids = models_regular_spatial_clustering(valid_templateids, traj, atom_indices=CAatoms, cutoff=cutoff)
+        unique_templateids = models_regular_spatial_clustering(
+            valid_templateids, traj, atom_indices=CAatoms, cutoff=cutoff
+        )
         write_unique_by_clustering_files(unique_templateids, models_target_dir)
 
         with open(os.path.join(models_target_dir, 'unique-models.txt'), 'w') as uniques_file:
             for u in unique_templateids:
                 uniques_file.write(u+'\n')
-            logger.info('%d unique models (from original set of %d) using cutoff of %.3f nm' % (len(unique_templateids), len(valid_templateids), cutoff))
+            logger.info(
+                '%d unique models (from original set of %d) using cutoff of %.3f nm' %
+                        (len(unique_templateids), len(valid_templateids), cutoff)
+            )
 
         for template in templates:
             model_dir = os.path.join(models_target_dir, template.id)
@@ -773,7 +830,9 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         # Metadata
         # ========
 
-        project_metadata = ensembler.core.ProjectMetadata(project_stage='cluster_models', target_id=target.id)
+        project_metadata = ensembler.core.ProjectMetadata(
+            project_stage='cluster_models', target_id=target.id
+        )
         datestamp = ensembler.core.get_utcnow_formatted()
 
         timedelta = datetime.datetime.utcnow() - starttime
