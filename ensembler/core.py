@@ -370,47 +370,6 @@ class ProjectMetadata:
                     yaml.dump(subdict, ofile, default_flow_style=False, Dumper=YamlDumper)
 
 
-class DeprecatedProjectMetadata:
-    # TODO deprecate
-    def __init__(self, data):
-        self.data = data
-
-    def write(self, ofilepath):
-        with open(ofilepath, 'w') as ofile:
-            for stage in project_stages:
-                if stage in self.data.keys():
-                    subdict = {stage: self.data[stage]}
-                    yaml.dump(subdict, ofile, default_flow_style=False, Dumper=YamlDumper)
-
-
-def write_metadata(new_metadata_dict, ensembler_stage, target_id=None):
-    # TODO deprecate
-    if ensembler_stage == 'init':
-        metadata_dict = {}
-    else:
-        prev_ensembler_stage = project_stages[project_stages.index(ensembler_stage) - 1]
-        prev_metadata_filepath = metadata_file_mapper(prev_ensembler_stage, target_id=target_id)
-        with open(prev_metadata_filepath) as prev_metadata_file:
-            metadata_dict = yaml.load(prev_metadata_file, Loader=YamlLoader)
-
-    metadata_dict.update(new_metadata_dict)
-    metadata = ProjectMetadata(metadata_dict)
-    metadata.write(metadata_file_mapper(ensembler_stage, target_id=target_id))
-
-
-def metadata_file_mapper(ensembler_stage, target_id=None):
-    # TODO deprecate
-    metadata_file_dict = {
-        'init': 'meta.yaml',
-        'gather_targets': os.path.join('targets', 'meta.yaml'),
-        'gather_templates': os.path.join('templates', 'meta.yaml'),
-    }
-    if ensembler_stage in metadata_file_dict:
-        return metadata_file_dict[ensembler_stage]
-    elif ensembler_stage in ['build_models', 'cluster_models', 'refine_implicit_md', 'solvate_models', 'determine_nwaters', 'refine_explicit_md']:
-        return os.path.join('models', target_id, 'meta.yaml')
-
-
 def encode_url_query(uniprot_query):
     def replace_all(text, replace_dict):
         for i, j in replace_dict.iteritems():

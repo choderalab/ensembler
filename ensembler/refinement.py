@@ -759,7 +759,6 @@ def refine_explicit_md(
 
         return [positions, topology]
 
-
     def simulate_explicit_md():
         # Choose platform.
         platform = openmm.Platform.getPlatformByName(openmm_platform)

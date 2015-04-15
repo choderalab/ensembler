@@ -9,20 +9,6 @@ import ensembler
 import ensembler.core
 from lxml import etree
 
-# This dict converts family information listed in UniProt in the similarity comments to codes similar to those used in the kinase.com poster
-# Note that a UniProt "family" is equivalent to a Manning et al. "group". Also, there are a few additional families annotated in UniProt.
-kinase_family_uniprot_similarity_text = {
-'AGC Ser/Thr protein kinase family' : 'AGC',
-'CAMK Ser/Thr protein kinase family' : 'CAMK',
-'CMGC Ser/Thr protein kinase family' : 'CMGC',
-'CK1 Ser/Thr protein kinase family' : 'CK1',
-'STE Ser/Thr protein kinase family' : 'STE',
-'TKL Ser/Thr protein kinase family' : 'TKL',
-'Tyr protein kinase family' : 'TK',
-'NEK Ser/Thr protein kinase family' : 'NEK',
-'RIO-type Ser/Thr kinase family' : 'RIO-type'
-}
-
 
 def query_uniprot(search_string, maxreadlength=100000000):
     '''
@@ -51,6 +37,9 @@ def build_uniprot_query_string_from_acs(acs):
 
 def get_uniprot_xml(uniprot_query_string, write_to_filepath=None):
     uniprotxmlstring = query_uniprot(uniprot_query_string)
+    if len(uniprotxmlstring) == 0:
+        raise Exception('UniProt query returned empty string. Query string may have failed to match'
+                        ' any UniProt entries, or may have been malformed.')
     if write_to_filepath:
         with open(write_to_filepath, 'w') as ofile:
             ofile.write(uniprotxmlstring)
