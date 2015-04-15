@@ -358,7 +358,7 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
         for template_index in range(mpistate.rank, ntemplates, mpistate.size):
             template_id = templates_resolved_seq[template_index].id
             if os.path.exists(os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template_id + '.pdb')):
-                remodeled_seq_filepath = os.path.join(ensembler.core.default_installation_dirnames.templates_structures_modeled_loops, template_id + '.fasta')
+                remodeled_seq_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_modeled_loops, template_id + '.fasta')
                 template = list(Bio.SeqIO.parse(remodeled_seq_filepath, 'fasta'))[0]
             else:
                 template = templates_resolved_seq[template_index]
@@ -493,7 +493,7 @@ def build_model(target, template_resolved_seq, target_setup_data,
 
     if os.path.exists(os.path.join(template_structure_dir, template_resolved_seq.id + '.pdb')):
         remodeled_seq_filepath = os.path.join(
-            ensembler.core.default_installation_dirnames.templates_structures_modeled_loops,
+            ensembler.core.default_project_dirnames.templates_structures_modeled_loops,
             template_resolved_seq.id + '.fasta'
         )
         template = list(Bio.SeqIO.parse(remodeled_seq_filepath, 'fasta'))[0]
