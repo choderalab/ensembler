@@ -760,14 +760,14 @@ def refine_explicit_md(
         return [positions, topology]
 
     def simulate_explicit_md():
-        # Choose platform.
+        # Set up Platform
         platform = openmm.Platform.getPlatformByName(openmm_platform)
-
-        # Set GPU id.
-        if openmm_platform == 'CUDA':
-            platform.setPropertyDefaultValue('CudaDeviceIndex', '%d' % gpuid)
-        elif openmm_platform == 'OpenCL':
-            platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
+        if 'CUDA_VISIBLE_DEVICES' not in os.environ:
+            # Set GPU id.
+            if openmm_platform == 'CUDA':
+                platform.setPropertyDefaultValue('CudaDeviceIndex', '%d' % gpuid)
+            elif openmm_platform == 'OpenCL':
+                platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
 
         if verbose: print "Constructing System object..."
         system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod, constraints=app.HBonds)
