@@ -499,6 +499,9 @@ def build_model(target, template_resolved_seq, target_setup_data,
         template = list(Bio.SeqIO.parse(remodeled_seq_filepath, 'fasta'))[0]
     else:
         template = template_resolved_seq
+        template_structure_dir = os.path.abspath(
+            ensembler.core.default_project_dirnames.templates_structures_resolved
+        )
 
     model_dir = os.path.abspath(os.path.join(target_setup_data.models_target_dir, template.id))
     if not os.path.exists(model_dir):

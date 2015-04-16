@@ -245,9 +245,6 @@ def gen_metadata_filename(ensembler_stage, metadata_file_index):
 
 
 class ProjectMetadata:
-    # TODO - have metadata files output as follows
-    # models/SRC_HUMAN_D0/build_models-meta.yaml
-    # models/SRC_HUMAN_D0/implicit_refinement-meta.yaml
     """
     Examples
     --------
