@@ -19,6 +19,13 @@ Options:"""
 helpstring_unique_options = [
     """\
   --padding <padding>          Padding distance for solvation (Angstroms) (default: 10 Angstroms).""",
+
+    """\
+  --select_nwaters_at_percentile <value>  Models are first solvated individually with a given
+                                          padding distance. This parameter selects a percentile
+                                          along the distribution of the number of waters in each
+                                          solvated model, with which to re-solvate all models so
+                                          they have the same number of waters.""",
 ]
 
 helpstring_nonunique_options = [
@@ -74,6 +81,13 @@ def dispatch(args):
 
     padding = ensembler.utils.set_arg_with_default(args['--padding'], default_arg=10.0)
 
+    if args['--select_nwaters_at_percentile']:
+        select_nwaters_at_percentile = float(args['--select_nwaters_at_percentile'])
+        if select_nwaters_at_percentile > 100 or select_nwaters_at_percentile < 0:
+            raise Exception('--select_nwaters_at_percentile requires a number between 0 and 100')
+    else:
+        select_nwaters_at_percentile = None
+
     if args['--verbose']:
         loglevel = 'debug'
     else:
@@ -92,5 +106,6 @@ def dispatch(args):
         process_only_these_targets=targets,
         process_only_these_templates=templates,
         template_seqid_cutoff=template_seqid_cutoff,
-        verbose=args['--verbose']
+        select_at_percentile=select_nwaters_at_percentile,
+        verbose=args['--verbose'],
     )
