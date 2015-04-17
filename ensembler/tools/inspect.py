@@ -35,11 +35,8 @@ class ProjectCounts(object):
         ]
 
     def _count_templates(self):
-        templateid = []
         root, dirnames, filenames = next(os.walk(self.models_target_dir))
-        for dirname in dirnames:
-            if re.match(ensembler.core.template_id_regex, dirname):
-                templateid.append(dirname)
+        templateid = dirnames
         self.df['templateid'] = templateid
 
     def _count_models(self):
@@ -484,7 +481,7 @@ class ModelingLogs(object):
         self.target_models_dir = os.path.join(self.project_dir, ensembler.core.default_project_dirnames.models, self.targetid)
         log_data = {}
         root, dirs, files = next(os.walk(self.target_models_dir))
-        templateids = [dirname for dirname in dirs if re.match(ensembler.core.template_id_regex, dirname)]
+        templateids = [dirname for dirname in dirs]
         logfilepaths = [os.path.join(self.target_models_dir, templateid, self.logfilename) for templateid in templateids]
         valid_logfilepaths = [logfilepath for logfilepath in logfilepaths if os.path.exists(logfilepath)]
 

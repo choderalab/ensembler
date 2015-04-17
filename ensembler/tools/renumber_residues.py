@@ -12,10 +12,7 @@ class RenumberResidues(object):
     def __init__(self, targetid, project_dir='.', log_level=None):
         ensembler.core.check_project_toplevel_dir()
         ensembler.utils.loglevel_setter(logger, log_level)
-        if re.match(ensembler.core.target_id_regex, targetid):
-            self.targetid = targetid
-        else:
-            raise Exception('targetid "{0}" is not a valid targetid'.format(targetid))
+        self.targetid = targetid
         self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
         self.uniprot_mnemonic = '_'.join(self.targetid.split('_')[0:2])
@@ -32,16 +29,15 @@ class RenumberResidues(object):
         for dirname in dirnames:
             if 'implicit' in self.model and 'explicit' in self.model:
                 break
-            if re.match(ensembler.core.template_id_regex, dirname):
-                if 'implicit' not in self.model:
-                    implicit_model_filename = os.path.join(self.models_target_dir, dirname, 'implicit-refined.pdb.gz')
-                    if os.path.exists(implicit_model_filename):
-                        self.model['implicit'] = mdtraj.load_pdb(implicit_model_filename)
+            if 'implicit' not in self.model:
+                implicit_model_filename = os.path.join(self.models_target_dir, dirname, 'implicit-refined.pdb.gz')
+                if os.path.exists(implicit_model_filename):
+                    self.model['implicit'] = mdtraj.load_pdb(implicit_model_filename)
 
-                if 'explicit' not in self.model:
-                    explicit_model_filename = os.path.join(self.models_target_dir, dirname, 'explicit-refined.pdb.gz')
-                    if os.path.exists(explicit_model_filename):
-                        self.model['explicit'] = mdtraj.load_pdb(explicit_model_filename)
+            if 'explicit' not in self.model:
+                explicit_model_filename = os.path.join(self.models_target_dir, dirname, 'explicit-refined.pdb.gz')
+                if os.path.exists(explicit_model_filename):
+                    self.model['explicit'] = mdtraj.load_pdb(explicit_model_filename)
 
     def _get_model_seqs(self):
         self.model_seq = ''.join([Bio.SeqUtils.seq1(r.name) for r in self.model['implicit'].top.residues])

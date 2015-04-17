@@ -797,6 +797,10 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
 
         logger.info('Constructing a trajectory containing all valid models...')
 
+        if len(valid_templateids) == 0:
+            logger.info('No models found for target {0}.'.format(target.id))
+            continue
+
         traj = mdtraj.load(model_pdbfilenames)
 
         # =============================
@@ -806,7 +810,7 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         logger.info('Conducting RMSD-based clustering...')
 
         # Remove any existing unique_by_clustering files
-        for f in glob.glob( models_target_dir+'/*_PK_*/unique_by_clustering' ):
+        for f in glob.glob(models_target_dir+'/*_PK_*/unique_by_clustering'):
             os.unlink(f)
 
         CAatoms = [a.index for a in traj.topology.atoms if a.name == 'CA']

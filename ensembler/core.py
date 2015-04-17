@@ -74,8 +74,8 @@ logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
 # metadata_filename_regex = re.compile('(^|.*)(meta)([0-9]+)\.yaml')
 
-target_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}$')
-template_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}_[A-Z0-9]{4}_[A-Z0-9]$')
+# target_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}$')
+# template_id_regex = re.compile('^[A-Z0-9]{2,5}_[A-Z0-9]{2,5}_D[0-9]{1,3}_[A-Z0-9]{4}_[A-Z0-9]$')
 
 model_filenames_by_ensembler_stage = {
     'build_models': 'model.pdb.gz',
@@ -271,8 +271,11 @@ class ProjectMetadata:
 
     def add_prev_metadata(self, project_stage):
         latest_metadata_filepath = self.determine_latest_metadata_filepath(project_stage)
-        with open(latest_metadata_filepath) as latest_metadata_file:
-            prev_metadata = yaml.load(latest_metadata_file, Loader=YamlLoader)
+        if os.path.exists(latest_metadata_filepath):
+            with open(latest_metadata_filepath) as latest_metadata_file:
+                prev_metadata = yaml.load(latest_metadata_file, Loader=YamlLoader)
+        else:
+            prev_metadata = {project_stage: None}
         self.add_data(prev_metadata[project_stage], project_stage=project_stage)
 
     def determine_latest_metadata_filepath(self, project_stage):
@@ -326,7 +329,8 @@ class ProjectMetadata:
     def add_data(self, data, project_stage=None):
         """
         Add metadata to the ProjectMetadata object.
-        If project_stage is not passed as an argument, it is set to ProjectMetadata.project_stage (which is itself set during object initialization).
+        If project_stage is not passed as an argument, it is set to ProjectMetadata.project_stage
+        (which is itself set during object initialization).
 
         Parameters
         ----------
@@ -473,7 +477,7 @@ def find_loopmodel_executable():
         for filename in os.listdir(path):
             if len(filename) >= 10 and filename[0: 10] == 'loopmodel.':
                 if filename[-5:] == 'debug':
-                    warnings.warn('loopmodel debug version (%s) will be ignored - runs extremely slow' % filename)
+                    warnings.warn('loopmodel debug version (%s) will be ignored, as it runs extremely slowly' % filename)
                     continue
                 return os.path.join(path, filename)
     raise Exception('Loopmodel executable not found in PATH')
@@ -483,14 +487,13 @@ def check_ensembler_modeling_stage_first_model_file_exists(ensembler_stage, targ
     models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
     root, dirnames, filenames = next(os.walk(models_target_dir))
     for dirname in dirnames:
-        if re.match(ensembler.core.template_id_regex, dirname):
-            model_filepath = os.path.join(
-                models_target_dir,
-                dirname,
-                ensembler.core.model_filenames_by_ensembler_stage[ensembler_stage]
-            )
-            if os.path.exists(model_filepath):
-                return True
+        model_filepath = os.path.join(
+            models_target_dir,
+            dirname,
+            ensembler.core.model_filenames_by_ensembler_stage[ensembler_stage]
+        )
+        if os.path.exists(model_filepath):
+            return True
     return False
 
 
