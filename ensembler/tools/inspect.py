@@ -183,9 +183,8 @@ class ModelSimilarities(object):
 
     def _get_templateids_and_model_filepaths(self):
 
-        root, dirnames, filenames = os.walk(self.models_target_dir).next()
+        root, templateids, filenames = os.walk(self.models_target_dir).next()
 
-        templateids = [dirname for dirname in dirnames if '_D' in dirname]
         template_dirpaths = []
         has_model = []
         model_filepaths = []
