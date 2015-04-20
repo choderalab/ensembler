@@ -155,6 +155,17 @@ def gen_targetexplorer_metadata(dbapi_uri, search_string):
 
 
 class GatherTargetsFromUniProt(GatherTargets):
+    """Gathers target data from UniProt.
+
+    Attributes
+    ----------
+    targets: list of Bio.SeqRecord.SeqRecord
+        Target ids and sequences
+    residue spans: list of [start, end]
+        0-based numbering in coordinates of UniProt canonical sequence
+    uniprotxml: lxml.etree.Element
+        XML returned from UniProt query
+    """
     def __init__(self, uniprot_query_string, uniprot_domain_regex=None, save_uniprot_xml=False, loglevel=None, run_main=True):
         ensembler.utils.loglevel_setter(logger, loglevel)
         super(GatherTargetsFromUniProt, self).__init__()
@@ -165,27 +176,30 @@ class GatherTargetsFromUniProt(GatherTargets):
             self._gather_targets()
 
     @ensembler.utils.notify_when_done
-    def _gather_targets(self):
+    def _gather_targets(self, write_output_files=True):
         logger.info('Querying UniProt web server...')
 
         get_uniprot_xml_args = {}
         if self._save_uniprot_xml:
             get_uniprot_xml_args['write_to_filepath'] = 'targets-uniprot.xml'
 
-        uniprotxml = ensembler.UniProt.get_uniprot_xml(self.uniprot_query_string, **get_uniprot_xml_args)
+        self.uniprotxml = ensembler.UniProt.get_uniprot_xml(self.uniprot_query_string, **get_uniprot_xml_args)
 
-        logger.info('Number of entries returned from initial UniProt search: %r\n' % len(uniprotxml))
-        log_unique_domain_names(self.uniprot_query_string, uniprotxml)
+        logger.info('Number of entries returned from initial UniProt search: %r\n' % len(self.uniprotxml))
+        log_unique_domain_names(self.uniprot_query_string, self.uniprotxml)
         if self.uniprot_domain_regex:
-            log_unique_domain_names_selected_by_regex(self.uniprot_domain_regex, uniprotxml)
+            log_unique_domain_names_selected_by_regex(self.uniprot_domain_regex, self.uniprotxml)
         fasta_ofilepath = os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')
-        self.targets = self._extract_targets_from_uniprot_xml(uniprotxml)
-        Bio.SeqIO.write(self.targets, fasta_ofilepath, 'fasta')
-        self._write_metadata()
+        self._extract_targets_from_uniprot_xml()
+        if write_output_files:
+            Bio.SeqIO.write(self.targets, fasta_ofilepath, 'fasta')
+            self._write_metadata()
 
-    def _extract_targets_from_uniprot_xml(self, uniprotxml):
+    def _extract_targets_from_uniprot_xml(self):
         targets = []
-        for entry in uniprotxml.findall('entry'):
+        residue_spans = []
+        domain_descriptions = []
+        for entry in self.uniprotxml.findall('entry'):
             entry_name = entry.find('name').text
             fullseq = ensembler.core.sequnwrap(entry.find('sequence').text)
             if self.uniprot_domain_regex:
@@ -205,13 +219,18 @@ class GatherTargetsFromUniProt(GatherTargets):
                                       int(domain.find('location/end').get('position')) - 1]
                     targetseq = fullseq[start:end + 1]
                     targets.append(SeqRecord(Seq(targetseq), id=targetid, description=targetid))
+                    residue_spans.append([start, end])
+                    domain_descriptions.append(domain.get('description'))
                     domain_iter += 1
 
             else:
                 targetid = entry_name
                 targets.append(SeqRecord(Seq(fullseq), id=targetid, description=targetid))
+                residue_spans.append([0, len(fullseq)-1])
 
-        return targets
+        self.targets = targets
+        self.residue_spans = residue_spans
+        self.domain_descriptions = domain_descriptions
 
     def _write_metadata(self):
         uniprot_metadata = gen_uniprot_metadata(self.uniprot_query_string, self.uniprot_domain_regex)
