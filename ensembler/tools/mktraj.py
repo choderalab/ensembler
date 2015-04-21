@@ -6,7 +6,7 @@ import ensembler
 from ensembler.core import logger, check_ensembler_modeling_stage_complete
 
 
-def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=None, models_data_filepath=None, process_only_these_templates=None):
+def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=None, models_data_filepath=None, process_only_these_templates=None, loglevel=None):
     """Makes a trajectory for a given target, using mdtraj. The trajectory can be used with other
     software, e.g. for visualization with PyMOL or VMD.
 
@@ -33,6 +33,7 @@ def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=No
     df : pandas.DataFrame
         models data (e.g. sequence identities):
     """
+    ensembler.utils.loglevel_setter(logger, loglevel)
     ensembler.core.check_project_toplevel_dir()
     models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
 
@@ -79,7 +80,8 @@ def mktraj(targetid, ensembler_stage=None, traj_filepath=None, topol_filepath=No
     # construct traj
     traj = mdtraj.load_pdb(df.model_filepath[0])
 
-    for model_filepath in df.model_filepath[1:]:
+    for m, model_filepath in enumerate(df.model_filepath[1:]):
+        logger.debug('Working on model {0}/{1}'.format(m+1, len(df.model_filepath)))
         traj += mdtraj.load_pdb(model_filepath)
 
     # superpose structured C-alphas
