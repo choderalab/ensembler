@@ -785,6 +785,8 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
             model_dir = os.path.join(models_target_dir, template.id)
             model_pdbfilename = os.path.join(model_dir, 'model.pdb')
             if not os.path.exists(model_pdbfilename):
+                if os.path.getsize(model_pdbfilename) == 0:
+                    os.remove(model_pdbfilename)
                 model_pdbfilename_compressed = os.path.join(model_dir, 'model.pdb.gz')
                 if not os.path.exists(model_pdbfilename_compressed):
                     continue
