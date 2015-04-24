@@ -26,8 +26,8 @@ helpstring_unique_options = [
                                "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 
     """\
-  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
-                               Comment targets out with "#".""",
+  --templatesfile <templatesfile>  File containing a list of template IDs to work on (newline-separated).
+                               Comment templates out with "#".""",
 ]
 
 helpstring_nonunique_options = [
