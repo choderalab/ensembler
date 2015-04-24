@@ -215,7 +215,6 @@ def package_for_fah(process_only_these_targets=None,
             unique_by_clustering = os.path.exists(os.path.join(models_target_dir, template.id, 'unique_by_clustering'))
             if not unique_by_clustering:
                 is_valid = False
-            # TODO: Exclude if final potential energies from explicit solvent equilibration are too high.
 
             # Append if valid.
             if is_valid:

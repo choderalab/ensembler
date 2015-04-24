@@ -55,6 +55,10 @@ helpstring_nonunique_options = [
                                "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 
     """\
+  --templatesfile <templatesfile>  File containing a list of template IDs to work on (newline-separated).
+                               Comment targets out with "#".""",
+
+    """\
   --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
                                "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
@@ -78,7 +82,10 @@ def dispatch(args):
     else:
         targets = False
 
-    if args['--templates']:
+    if args['--templatesfile']:
+        with open(args['--templatesfile'], 'r') as templatesfile:
+            templates = [line.strip() for line in templatesfile.readlines() if line[0] != '#']
+    elif args['--templates']:
         templates = args['--templates'].split(',')
     else:
         templates = False

@@ -24,6 +24,10 @@ helpstring_unique_options = [
     """\
   --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
                                "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
+
+    """\
+  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
+                               Comment targets out with "#".""",
 ]
 
 helpstring_nonunique_options = [
@@ -53,7 +57,10 @@ def dispatch(args):
     else:
         targets = False
 
-    if args['--templates']:
+    if args['--templatesfile']:
+        with open(args['--templatesfile'], 'r') as templatesfile:
+            templates = [line.strip() for line in templatesfile.readlines() if line[0] != '#']
+    elif args['--templates']:
         templates = args['--templates'].split(',')
     else:
         templates = False
