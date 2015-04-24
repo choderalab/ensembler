@@ -49,6 +49,10 @@ helpstring_nonunique_options = [
                                     "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
+  --templatesfile <templatesfile>   File containing a list of template IDs to work on (newline-separated).
+                                    Comment targets out with "#".""",
+
+    """\
   --ff <ffname>                     OpenMM force field name [default: amber99sbildn]
                                     See OpenMM documentation for other ff options""",
 
@@ -80,7 +84,10 @@ def dispatch(args):
     else:
         targets = False
 
-    if args['--templates']:
+    if args['--templatesfile']:
+        with open(args['--templatesfile'], 'r') as templatesfile:
+            templates = [line.strip() for line in templatesfile.readlines() if line[0] != '#']
+    elif args['--templates']:
         templates = args['--templates'].split(',')
     else:
         templates = False

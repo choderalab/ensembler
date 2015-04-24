@@ -16,6 +16,10 @@ helpstring_unique_options = [
                                "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
+  --templatesfile <templatesfile>   File containing a list of template IDs to work on (newline-separated).
+                                    Comment templates out with "#".""",
+
+    """\
   --overwrite_structures       Overwrite structure files""",
 ]
 
@@ -34,7 +38,10 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    if args['--templates']:
+    if args['--templatesfile']:
+        with open(args['--templatesfile'], 'r') as templatesfile:
+            templates = [line.strip() for line in templatesfile.readlines() if line[0] != '#']
+    elif args['--templates']:
         templates = args['--templates'].split(',')
     else:
         templates = False

@@ -18,25 +18,25 @@ Options:"""
 
 helpstring_unique_options = [
     """\
-  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
-                               Comment targets out with "#".""",
+  --targetsfile <targetsfile>       File containing a list of target IDs to work on (newline-separated).
+                                    Comment targets out with "#".""",
 
     """\
-  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
-                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
-
-    """\
-  --templatesfile <templatesfile>  File containing a list of template IDs to work on (newline-separated).
-                               Comment templates out with "#".""",
+  --targets <target>                Define one or more target IDs to work on (comma-separated), e.g.
+                                    "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 ]
 
 helpstring_nonunique_options = [
     """\
-  --templates <template>       Define one or more template IDs to work on (comma-separated), e.g.
-                               "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+  --templates <template>            Define one or more template IDs to work on (comma-separated), e.g.
+                                    "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
-  -v --verbose                 """,
+  --templatesfile <templatesfile>   File containing a list of template IDs to work on (newline-separated).
+                                    Comment templates out with "#".""",
+
+    """\
+  -v --verbose                      """,
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
