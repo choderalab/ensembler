@@ -518,6 +518,14 @@ def check_ensembler_modeling_stage_complete(ensembler_stage, targetid):
     return True
 
 
+def get_most_advanced_ensembler_modeling_stage(targetid):
+    for stagename in ['refine_explicit_md', 'refine_implicit_md', 'build_models']:
+        if check_ensembler_modeling_stage_complete(stagename, targetid):
+            return stagename
+
+    raise Exception('Models have not yet been built for this Ensembler project.')
+
+
 def select_templates_by_seqid_cutoff(targetid, seqid_cutoff=None):
     """
     :param seqid_cutoff:
