@@ -11,7 +11,7 @@ class RenumberResidues(object):
     # TODO: note somewhere that this will not work with targets with sequences which do not match the UniProt seq (e.g. mutatations, insertions, deletions)
     def __init__(self, targetid, project_dir='.', log_level=None):
         ensembler.core.check_project_toplevel_dir()
-        ensembler.utils.loglevel_setter(logger, log_level)
+        ensembler.utils.set_loglevel(log_level)
         self.targetid = targetid
         self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir

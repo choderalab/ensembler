@@ -97,7 +97,7 @@ class GatherTargets(object):
 
 class GatherTargetsFromTargetExplorer(GatherTargets):
     def __init__(self, dbapi_uri, search_string='', loglevel=None, run_main=True):
-        ensembler.utils.loglevel_setter(logger, loglevel)
+        ensembler.utils.set_loglevel(loglevel)
         super(GatherTargetsFromTargetExplorer, self).__init__()
         self.dbapi_uri = dbapi_uri
         self.search_string = search_string
@@ -167,7 +167,7 @@ class GatherTargetsFromUniProt(GatherTargets):
         XML returned from UniProt query
     """
     def __init__(self, uniprot_query_string, uniprot_domain_regex=None, save_uniprot_xml=False, loglevel=None, run_main=True):
-        ensembler.utils.loglevel_setter(logger, loglevel)
+        ensembler.utils.set_loglevel(loglevel)
         super(GatherTargetsFromUniProt, self).__init__()
         self.uniprot_query_string = uniprot_query_string
         self.uniprot_domain_regex = uniprot_domain_regex
@@ -308,7 +308,7 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
     To select all domains within the database:
     search_string=''
     """
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
     manual_overrides = ensembler.core.ManualOverrides()
     templates_json = get_targetexplorer_templates_json(dbapi_uri, search_string)
     selected_pdbchains = extract_template_pdbchains_from_targetexplorer_json(templates_json, manual_overrides=manual_overrides)
@@ -325,7 +325,7 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
 def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex=None, structure_dirs=None, pdbids=None, chainids=None, loglevel=None):
     """# Searches UniProt for a set of template proteins with a user-defined
     query string, then saves IDs, sequences and structures."""
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
     manual_overrides = ensembler.core.ManualOverrides()
     selected_pdbchains = None
     if mpistate.rank == 0:
@@ -356,7 +356,7 @@ def gather_templates_from_pdb(pdbids, uniprot_domain_regex=None, chainids=None, 
     :param structure_dirs: list of str
     :return:
     """
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
     manual_overrides = ensembler.core.ManualOverrides()
     selected_pdbchains = None
     if mpistate.rank == 0:

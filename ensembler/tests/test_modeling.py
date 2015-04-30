@@ -37,7 +37,7 @@ def test_build_model():
         shutil.copy(template_filepath, ensembler.core.default_project_dirnames.templates_structures_resolved)
         shutil.copy(aln_filepath, os.path.join(model_dir, 'alignment.pir'))
 
-        ensembler.modeling.build_model(target, template, template, target_setup_data=target_setup_data)
+        ensembler.modeling.build_model(target, template, target_setup_data=target_setup_data)
 
         # Example model.pdb.gz contents (not testing this as it may be dependent
         # upon Modeller version as well as modelling stochasticity):

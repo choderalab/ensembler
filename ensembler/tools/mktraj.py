@@ -36,7 +36,7 @@ class MkTraj(object):
         df : pandas.DataFrame
             models data (e.g. sequence identities):
         """
-        ensembler.utils.loglevel_setter(logger, loglevel)
+        ensembler.utils.set_loglevel(loglevel)
         ensembler.core.check_project_toplevel_dir()
         self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
 

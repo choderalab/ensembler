@@ -13,7 +13,7 @@ import warnings
 
 class ProjectCounts(object):
     def __init__(self, targetid, project_dir='.', ofile_basepath=None, log_level=None):
-        ensembler.utils.loglevel_setter(logger, log_level)
+        ensembler.utils.set_loglevel(log_level)
         self.targetid = targetid
         self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
@@ -160,7 +160,7 @@ class ProjectCounts(object):
 class ModelSimilarities(object):
     def __init__(self, targetid, ensembler_stage=None, project_dir='.', log_level=None):
         ensembler.core.check_project_toplevel_dir()
-        ensembler.utils.loglevel_setter(logger, log_level)
+        ensembler.utils.set_loglevel(log_level)
         self.targetid = targetid
         self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir
@@ -272,7 +272,7 @@ class ModelSimilarities(object):
 class AnalyzeEnergies(object):
     def __init__(self, targetid, ensembler_stage=None, project_dir='.', log_level=None):
         ensembler.core.check_project_toplevel_dir()
-        ensembler.utils.loglevel_setter(logger, log_level)
+        ensembler.utils.set_loglevel(log_level)
         self.targetid = targetid
         self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, self.targetid)
         self.project_dir = project_dir

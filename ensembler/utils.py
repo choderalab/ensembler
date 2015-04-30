@@ -4,9 +4,7 @@ import logging
 import functools
 import shutil
 import tempfile
-from ensembler.core import mpistate
-
-logger = logging.getLogger('info')
+from ensembler.core import logger, mpistate
 
 
 def nonefn():
@@ -65,7 +63,17 @@ def file_exists_and_not_empty(filepath):
     return False
 
 
-def loglevel_setter(logger, loglevel):
+def set_loglevel(loglevel):
+    """
+    Set minimum level for logging
+    >>> set_loglevel('info')   # log all messages except debugging messages. This is generally the default.
+    >>> set_loglevel('debug')   # log all messages, including debugging messages
+
+    Parameters
+    ----------
+    loglevel: str
+        {debug|info|warning|error|critical}
+    """
     if loglevel is not None:
         loglevel_obj = getattr(logging, loglevel.upper())
         logger.setLevel(loglevel_obj)

@@ -61,7 +61,7 @@ def model_template_loops(process_only_these_templates=None, overwrite_structures
     :param loglevel: str
     :return:
     """
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
     targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
     templates_full_seq = get_templates_full_seq()
     missing_residues_list = pdbfix_templates(templates_full_seq, process_only_these_templates=process_only_these_templates, overwrite_structures=overwrite_structures)
@@ -340,7 +340,7 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
     :param loglevel:
     :return:
     """
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
     targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
     ntemplates = len(templates_resolved_seq)
     nselected_templates = len(process_only_these_templates) if process_only_these_templates else ntemplates
@@ -434,7 +434,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
     # to define where these files are written, other than to chdir beforehand. If running this routine
     # in parallel, it is likely that occasional exceptions will occur, due to concurrent processes
     # making os.chdir calls.
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
     targets, templates_resolved_seq = get_targets_and_templates()
 
     if process_only_these_templates:
@@ -485,7 +485,7 @@ def build_model(target, template_resolved_seq, target_setup_data,
         large, e.g. ~300KB per model for a protein kinase domain target.
     loglevel : bool
     """
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
 
     template_structure_dir = os.path.abspath(
         ensembler.core.default_project_dirnames.templates_structures_modeled_loops
@@ -749,7 +749,7 @@ def write_build_models_metadata(target, target_setup_data, process_only_these_ta
 @ensembler.utils.mpirank0only_and_end_with_barrier
 @ensembler.utils.notify_when_done
 def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
-    '''Cluster models based on RMSD, and filter out non-unique models as
+    """Cluster models based on RMSD, and filter out non-unique models as
     determined by a given cutoff.
 
     Parameters
@@ -759,9 +759,9 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
         Minimum distance cutoff for RMSD clustering (nm)
 
     Runs serially.
-    '''
+    """
     # TODO refactor
-    ensembler.utils.loglevel_setter(logger, loglevel)
+    ensembler.utils.set_loglevel(loglevel)
     targets, templates_resolved_seq = get_targets_and_templates()
     templates = templates_resolved_seq
 
@@ -779,23 +779,23 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
 
         logger.debug('Building a list of valid models...')
 
-        model_pdbfilenames = []
-        valid_templateids = []
-        for t, template in enumerate(templates):
-            model_dir = os.path.join(models_target_dir, template.id)
-            model_pdbfilename = os.path.join(model_dir, 'model.pdb')
-            if not os.path.exists(model_pdbfilename):
-                if os.path.getsize(model_pdbfilename) == 0:
-                    os.remove(model_pdbfilename)
-                model_pdbfilename_compressed = os.path.join(model_dir, 'model.pdb.gz')
-                if not os.path.exists(model_pdbfilename_compressed):
-                    continue
-                else:
-                    with gzip.open(model_pdbfilename_compressed) as model_pdbfile_compressed:
-                        with open(model_pdbfilename, 'w') as model_pdbfile:
-                            model_pdbfile.write(model_pdbfile_compressed.read())
-            model_pdbfilenames.append(model_pdbfilename)
-            valid_templateids.append(template.id)
+        model_pdbfilenames_compressed = {
+            template.id: os.path.join(models_target_dir, template.id, 'model.pdb.gz') for template in templates
+        }
+        model_pdbfilenames_uncompressed = {
+            template.id: os.path.join(models_target_dir, template.id, 'model.pdb') for template in templates
+        }
+        valid_templateids = [
+            templateid for templateid in model_pdbfilenames_compressed
+            if os.path.exists(model_pdbfilenames_compressed[templateid])
+        ]
+
+        # Write uncompressed model.pdb files from model.pdb.gz if necessary
+        for templateid in valid_templateids:
+            if not os.path.exists(model_pdbfilenames_uncompressed[templateid]) or os.path.getsize(model_pdbfilenames_uncompressed[templateid]) == 0:
+                with gzip.open(model_pdbfilenames_compressed[templateid]) as model_pdbfile_compressed:
+                    with open(model_pdbfilenames_uncompressed[templateid], 'w') as model_pdbfile:
+                        model_pdbfile.write(model_pdbfile_compressed.read())
 
         logger.info('Constructing a trajectory containing all valid models...')
 
@@ -803,7 +803,11 @@ def cluster_models(process_only_these_targets=None, cutoff=0.06, loglevel=None):
             logger.info('No models found for target {0}.'.format(target.id))
             continue
 
-        traj = mdtraj.load(model_pdbfilenames)
+        valid_model_pdbfilenames_uncompressed = [
+            model_pdbfilenames_uncompressed[templateid] for templateid in valid_templateids
+        ]
+
+        traj = mdtraj.load(valid_model_pdbfilenames_uncompressed)
 
         # =============================
         # Clustering
