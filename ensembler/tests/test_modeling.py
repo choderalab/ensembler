@@ -12,7 +12,6 @@ import ensembler.cli_commands
 from ensembler.utils import enter_temp_dir
 
 
-@attr('unit')
 @attr('non_conda_dependencies')
 def test_build_model():
     template_filepath = get_installed_resource_filename(os.path.join('resources',  'mock_template.pdb'))

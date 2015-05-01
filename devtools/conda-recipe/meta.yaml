@@ -24,7 +24,17 @@ requirements:
     - numpy
     - lxml
     - pyyaml
+    - docopt
+    - mock
     - subprocess32
+
+test:
+  requires:
+    - nose
+  imports:
+    - ensembler
+  commands:
+    - nosetests ensembler -v -a '!slow' -a '!non_conda_dependencies'
 
 about:
   home: https://github.com/choderalab/ensembler
