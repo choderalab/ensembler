@@ -131,16 +131,6 @@ setup(
     },
     entry_points = {'console_scripts':
         [
-            'EnsemblerInit = ensembler.scripts.EnsemblerInit:main',
-            'EnsemblerGatherTargets = ensembler.scripts.EnsemblerGatherTargets:main',
-            'EnsemblerGatherTemplates = ensembler.scripts.EnsemblerGatherTemplates:main',
-            'EnsemblerBuildModels = ensembler.scripts.EnsemblerBuildModels:main',
-            'EnsemblerSortAndCluster = ensembler.scripts.EnsemblerSortAndCluster:main',
-            'EnsemblerRefineImplicitMD = ensembler.scripts.EnsemblerRefineImplicitMD:main',
-            'EnsemblerSolvate = ensembler.scripts.EnsemblerSolvate:main',
-            'EnsemblerRefineExplicitMD = ensembler.scripts.EnsemblerRefineExplicitMD:main',
-            'EnsemblerPackageModels = ensembler.scripts.EnsemblerPackageModels:main',
-            'EnsemblerInspect = ensembler.scripts.EnsemblerInspect:main',
             'ensembler = ensembler.cli:main'
         ]
     },
