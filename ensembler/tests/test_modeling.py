@@ -1,22 +1,22 @@
 import os
 import shutil
 import datetime
-
 from mock import Mock
 from nose.plugins.attrib import attr
-
 import ensembler
 import ensembler.tests
 import ensembler.modeling
-from ensembler.tests.integration_test_utils import integration_test_context
+from ensembler.tests.utils import get_installed_resource_filename
+from ensembler.tests.integrationtest_utils import integrationtest_context
 import ensembler.cli_commands
 from ensembler.utils import enter_temp_dir
 
 
 @attr('unit')
+@attr('non_conda_dependencies')
 def test_build_model():
-    template_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template.pdb'))
-    aln_filepath = os.path.abspath(os.path.join('tests', 'resources', 'mock_template-alignment.pir'))
+    template_filepath = get_installed_resource_filename(os.path.join('resources',  'mock_template.pdb'))
+    aln_filepath = get_installed_resource_filename(os.path.join('resources', 'mock_template-alignment.pir'))
 
     with enter_temp_dir():
         target = Mock()
@@ -53,15 +53,17 @@ def test_build_model():
         assert os.path.getsize(model_filepath) > 0
 
 
-@attr('integration')
+@attr('unit')
 def test_align_command():
-    ref_resources_dirpath = os.path.abspath(os.path.join('tests', 'integration_test_resources'))
-    with integration_test_context(set_up_project_stage='templates_modeled_loops'):
+    ref_resources_dirpath = get_installed_resource_filename('example_project')
+    with integrationtest_context(set_up_project_stage='templates_modeled_loops'):
         targets = ['KC1D_HUMAN_D0', 'EGFR_HUMAN_D0']
         templates = ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']
         args = {
             '--targets': ','.join(targets),
+            '--targetsfile': False,
             '--templates': ','.join(templates),
+            '--templatesfile': False,
             '--verbose': False,
         }
 
@@ -86,14 +88,16 @@ def test_align_command():
             assert seqid_file_text == ref_seqid_file_text
 
 
-@attr('integration')
+@attr('slow')
+@attr('non_conda_dependencies')
 def test_build_models_command():
-    with integration_test_context(set_up_project_stage='aligned'):
+    with integrationtest_context(set_up_project_stage='aligned'):
         args = {
             '--targets': 'EGFR_HUMAN_D0',
             '--targetsfile': None,
             '--template_seqid_cutoff': None,
             '--templates': ','.join(['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']),
+            '--templatesfile': None,
             '--write_modeller_restraints_file': None,
             '--verbose': False,
             '--help': False,
@@ -107,12 +111,12 @@ def test_build_models_command():
 
 @attr('unit')
 def test_cluster_models():
-    with integration_test_context(set_up_project_stage='modeled'):
+    with integrationtest_context(set_up_project_stage='modeled'):
         ensembler.modeling.cluster_models()
 
 @attr('unit')
 def test_cluster_models_command():
-    with integration_test_context(set_up_project_stage='modeled'):
+    with integrationtest_context(set_up_project_stage='modeled'):
         args = {
             '--targetsfile': False,
             '--targets': False,

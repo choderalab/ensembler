@@ -12,7 +12,8 @@ import ensembler.core
 import ensembler.UniProt
 from ensembler.utils import enter_temp_dir
 
-from ensembler.tests.integration_test_utils import integration_test_context
+from ensembler.tests.utils import get_installed_resource_filename
+from ensembler.tests.integrationtest_utils import integrationtest_context
 
 
 @attr('unit')
@@ -102,7 +103,7 @@ def test_extract_targets_from_targetexplorer_json():
 @attr('unit')
 def test_attempt_symlink_structure_files():
     pdbid = '4CFE'
-    structure_paths = [os.path.abspath(os.path.join('tests', 'resources'))]
+    structure_paths = [get_installed_resource_filename(os.path.join('resources'))]
     with enter_temp_dir():
         os.mkdir('pdb')
         project_pdb_filepath = os.path.join('pdb', pdbid + '.pdb.gz')
@@ -113,15 +114,19 @@ def test_attempt_symlink_structure_files():
 
 @attr('unit')
 def test_log_unique_domain_names():
-    with open(os.path.join('tests', 'resources', 'uniprot-CK1-kinases.xml')) as uniprotxml_file:
+    with open(
+        get_installed_resource_filename(
+            os.path.join('resources', 'uniprot-CK1-kinases.xml')
+        )
+    ) as uniprotxml_file:
         uniprotxml_string = ensembler.UniProt.remove_uniprot_xmlns(uniprotxml_file.read())
         uniprotxml = etree.fromstring(uniprotxml_string)
     ensembler.initproject.log_unique_domain_names('domain:"Protein kinase" AND reviewed:yes AND family:"CK1" AND taxonomy:9606', uniprotxml)
 
 
-@attr('integration')
+@attr('network')
 def test_command_gather_targets_from_uniprot():
-    with integration_test_context(set_up_project_stage='init'):
+    with integrationtest_context(set_up_project_stage='init'):
         ref_fasta = """\
 >EGFR_HUMAN_D0
 FKKIKVLGSGAFGTVYKGLWIPEGEKVKIPVAIKELREATSPKANKEILDEAYVMASVDN
@@ -140,7 +145,9 @@ ATYLNFCRSLRFDDKPDYSYLRQLFRNLF
         args = {
             '--gather_from': 'uniprot',
             '--query': 'mnemonic:EGFR_HUMAN OR mnemonic:KC1D_HUMAN',
+            '--dbapi_uri': False,
             '--uniprot_domain_regex': '^Protein kinase',
+            '--verbose': False,
             '--help': False,
         }
         ensembler.cli_commands.gather_targets.dispatch(args)
@@ -148,7 +155,7 @@ ATYLNFCRSLRFDDKPDYSYLRQLFRNLF
         assert test_fasta == ref_fasta
 
 
-@attr('integration')
+@attr('network')
 def test_gather_templates_from_pdb():
     ref_templates_resolved_seq = """\
 >KC1D_HUMAN_D0_4KB8_A
@@ -164,7 +171,7 @@ GKKGNLVYIIDFGLAKKYRDAQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGY
 VLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFD
 DKPDYSYLRQLFRNLF
 """
-    with integration_test_context(set_up_project_stage='targets'):
+    with integrationtest_context(set_up_project_stage='targets'):
         pdbids = ['4KB8']
         chainids = {'4KB8': ['A', 'D']}
         uniprot_domain_regex = '^Protein kinase'

@@ -4,12 +4,12 @@ import shutil
 import distutils.dir_util
 import contextlib
 import ensembler.initproject
-
-integration_test_resources_dir = os.path.join(ensembler.core.installation_toplevel_dir, ensembler.core.default_installation_dirnames.tests_integration_test_resources)
+from ensembler.core import default_project_dirnames
+from ensembler.tests.utils import get_installed_resource_filename
 
 
 @contextlib.contextmanager
-def integration_test_context(set_up_project_stage='init'):
+def integrationtest_context(set_up_project_stage='init'):
     temp_dir = tempfile.mkdtemp()
     ensembler.initproject.InitProject(temp_dir)
     cwd = os.getcwd()
@@ -32,28 +32,56 @@ class SetUpSampleProject:
 
     def init(self):
         ensembler.initproject.InitProject(self.project_dir)
-        shutil.copy(os.path.join(integration_test_resources_dir, 'meta0.yaml'), self.project_dir)
+        shutil.copy(get_installed_resource_filename(os.path.join('example_project', 'meta0.yaml')), self.project_dir)
 
     def targets(self):
         self.init()
-        distutils.dir_util.copy_tree(os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.targets), os.path.join(self.project_dir, ensembler.core.default_project_dirnames.targets))
+        distutils.dir_util.copy_tree(
+            get_installed_resource_filename(os.path.join('example_project', default_project_dirnames.targets)),
+            os.path.join(self.project_dir, default_project_dirnames.targets)
+        )
 
     def templates_resolved(self):
         self.targets()
-        shutil.copy(os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.templates, 'meta0.yaml'), os.path.join(self.project_dir, ensembler.core.default_project_dirnames.templates))
-        shutil.copy(os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.templates, 'templates-resolved-seq.fa'), os.path.join(self.project_dir, ensembler.core.default_project_dirnames.templates))
-        shutil.copy(os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.templates, 'templates-full-seq.fa'), os.path.join(self.project_dir, ensembler.core.default_project_dirnames.templates))
-        distutils.dir_util.copy_tree(os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.templates_structures_resolved), os.path.join(self.project_dir, ensembler.core.default_project_dirnames.templates_structures_resolved))
+        shutil.copy(
+            get_installed_resource_filename(
+                os.path.join('example_project', default_project_dirnames.templates, 'meta0.yaml')
+            ),
+            os.path.join(self.project_dir, default_project_dirnames.templates))
+        shutil.copy(
+            get_installed_resource_filename(
+                os.path.join('example_project', default_project_dirnames.templates, 'templates-resolved-seq.fa')
+            ),
+            os.path.join(self.project_dir, default_project_dirnames.templates))
+        shutil.copy(
+            get_installed_resource_filename(
+                os.path.join('example_project', default_project_dirnames.templates, 'templates-full-seq.fa')
+            ),
+            os.path.join(self.project_dir, default_project_dirnames.templates)
+        )
+        distutils.dir_util.copy_tree(
+            get_installed_resource_filename(
+                os.path.join('example_project', default_project_dirnames.templates_structures_resolved)
+            ),
+            os.path.join(self.project_dir, default_project_dirnames.templates_structures_resolved)
+        )
 
     def templates_modeled_loops(self):
         self.templates_resolved()
-        distutils.dir_util.copy_tree(os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.templates_structures_modeled_loops), os.path.join(self.project_dir, ensembler.core.default_project_dirnames.templates_structures_modeled_loops))
+        distutils.dir_util.copy_tree(
+            get_installed_resource_filename(
+                os.path.join('example_project', default_project_dirnames.templates_structures_modeled_loops)
+            ),
+            os.path.join(self.project_dir, default_project_dirnames.templates_structures_modeled_loops)
+        )
 
     def aligned(self):
         self.templates_modeled_loops()
         for target in self.targets_list:
             for template in self.templates_list:
-                ensembler.utils.create_dir(os.path.join(self.project_dir, ensembler.core.default_project_dirnames.models, target, template))
+                ensembler.utils.create_dir(
+                    os.path.join(self.project_dir, default_project_dirnames.models, target, template)
+                )
         self._copy_modeling_files(
             target_level_files=[
                 'sequence-identities.txt'
@@ -138,12 +166,12 @@ class SetUpSampleProject:
         for target in self.targets_list:
             for filename in target_level_files:
                 shutil.copy(
-                    os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, filename),
-                    os.path.join(self.project_dir, ensembler.core.default_project_dirnames.models, target)
+                    get_installed_resource_filename(os.path.join('example_project', default_project_dirnames.models, target, filename)),
+                    os.path.join(self.project_dir, default_project_dirnames.models, target)
                 )
             for template in self.templates_list:
                 for filename in template_level_files:
                     shutil.copy(
-                        os.path.join(integration_test_resources_dir, ensembler.core.default_project_dirnames.models, target, template, filename),
-                        os.path.join(self.project_dir, ensembler.core.default_project_dirnames.models, target, template)
+                        get_installed_resource_filename(os.path.join('example_project', default_project_dirnames.models, target, template, filename)),
+                        os.path.join(self.project_dir, default_project_dirnames.models, target, template)
                     )

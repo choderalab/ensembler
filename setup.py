@@ -101,7 +101,7 @@ def find_package_data():
     basepath = os.path.join('ensembler', 'tests')
     dirs_to_search = [
         os.path.join('ensembler', 'tests', 'resources'),
-        os.path.join('ensembler', 'tests', 'integration_test_resources')
+        os.path.join('ensembler', 'tests', 'example_project')
     ]
     for dir_to_search in dirs_to_search:
         for dir, subdirs, files in os.walk(dir_to_search):
@@ -121,14 +121,22 @@ setup(
     version = __version__,
     author = 'Daniel L Parton',
     author_email = 'daniel.parton@choderalab.org',
-    description = 'Generation of diverse protein structural ensembles, for the initialization of molecular dynamics simulations and subsequent construction of Markov state models. ',
+    description = 'Software pipeline for automating omics-scale protein modeling and simulation setup',
     license='GPLv2',
     long_description = read_readme('README.md'),
-    packages = find_packages(),
-    package_dir = {'ensembler.scripts': 'scripts'},
-    package_data = {
-        'ensembler.tests': find_package_data(),
-    },
+    packages = [
+        'ensembler',
+        'ensembler.cli_commands',
+        'ensembler.tools',
+        'ensembler.tests',
+    ],
+    package_data = {'ensembler.tests': find_package_data()},
+
+    # packages = find_packages(),
+    # package_dir = {'ensembler.scripts': 'scripts'},
+    # package_data = {
+    #     'ensembler.tests': find_package_data(),
+    # },
     entry_points = {'console_scripts':
         [
             'ensembler = ensembler.cli:main'

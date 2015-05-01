@@ -20,12 +20,15 @@ import Bio.pairwise2
 import Bio.SubsMat.MatrixInfo
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-import modeller
-import modeller.automodel
 import mdtraj
 import msmbuilder.cluster
 from ensembler.core import get_targets_and_templates, get_templates_full_seq
 from ensembler.core import mpistate, logger
+try:
+    import modeller
+    import modeller.automodel
+except ImportError:
+    pass
 try:
     import subprocess32 as subprocess
     loopmodel_subprocess_kwargs = {'timeout': 10800}   # 3 hour timeout - used for loopmodel call

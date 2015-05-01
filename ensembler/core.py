@@ -58,14 +58,6 @@ default_project_dirnames = ProjectDirNames(
     templates_structures_modeled_loops=os.path.join('templates', 'structures-modeled-loops'),
 )
 
-installation_dirtypes = [
-    'tests_integration_test_resources'
-]
-InstallationDirNames = namedtuple('InstallationDirNames', installation_dirtypes)
-default_installation_dirnames = InstallationDirNames(
-    tests_integration_test_resources=os.path.join('tests', 'integration_test_resources'),
-)
-
 logger = logging.getLogger('info')
 default_loglevel = 'info'
 loglevel_obj = getattr(logging, default_loglevel.upper())
@@ -151,10 +143,10 @@ def check_project_toplevel_dir(raise_exception=True):
             continue
         dirpath = getattr(default_project_dirnames, dirtype)
         if not os.path.exists(dirpath):
-            warnings.warn('Directory %s not found' % dirpath)
             if raise_exception:
-                raise Exception('This is not the top-level directory of an Ensembler project.')
+                raise Exception('Directory {0} is not the top-level directory of an Ensembler project'.format(dirpath))
             else:
+                logger.debug('Directory %s not found' % dirpath)
                 return False
     return True
 
