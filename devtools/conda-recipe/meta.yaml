@@ -21,6 +21,7 @@ requirements:
     - msmbuilder
     - biopython
     - openmm
+    - pdbfixer
     - numpy
     - lxml
     - pyyaml
