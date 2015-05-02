@@ -78,23 +78,8 @@ if not release:
         a.close()
 
 ##########################
-# Find packages
+# Find package data
 ##########################
-
-def find_packages():
-    """Find all of ensembler's python packages.
-    Adapted from IPython's setupbase.py. Copyright IPython
-    contributors, licensed under the BSD license.
-    """
-    packages = ['ensembler.scripts']
-    for dir, subdirs, files in os.walk('ensembler'):
-        package = dir.replace(os.path.sep, '.')
-        if '__init__.py' not in files:
-            # not a package
-            continue
-        packages.append(package)
-    return packages
-
 
 def find_package_data():
     package_data = []
@@ -132,11 +117,6 @@ setup(
     ],
     package_data = {'ensembler.tests': find_package_data()},
 
-    # packages = find_packages(),
-    # package_dir = {'ensembler.scripts': 'scripts'},
-    # package_data = {
-    #     'ensembler.tests': find_package_data(),
-    # },
     entry_points = {'console_scripts':
         [
             'ensembler = ensembler.cli:main'
