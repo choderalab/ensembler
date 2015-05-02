@@ -35,7 +35,7 @@ test:
   imports:
     - ensembler
   commands:
-    - nosetests ensembler -v -a '!slow' -a '!non_conda_dependencies'
+    - nosetests ensembler -v -a 'unit'
 
 about:
   home: https://github.com/choderalab/ensembler
