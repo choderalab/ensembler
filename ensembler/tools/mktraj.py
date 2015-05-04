@@ -108,11 +108,31 @@ class MkTraj(object):
         self.df.reset_index(drop=True, inplace=True)
 
     def _construct_traj(self):
-        self.traj = mdtraj.load_pdb(self.df.model_filepath[0])
+        traj = mdtraj.load_pdb(self.df.model_filepath[0])
+        self._remove_disulfide_bonds(traj)
+        self.traj = traj
 
         for m, model_filepath in enumerate(self.df.model_filepath[1:]):
             logger.debug('Working on model {0}/{1}'.format(m+1, len(self.df.model_filepath)))
-            self.traj += mdtraj.load_pdb(model_filepath)
+            traj = mdtraj.load_pdb(model_filepath)
+            self._remove_disulfide_bonds(traj)
+            self.traj += traj
+
+    def _remove_disulfide_bonds(self, traj):
+        """remove any disulfide bonds; mdtraj calculates these based on distance, not
+        the protonation state in the topology, so this can result in different model trajectory
+        objects having different topologies
+        """
+        remove_bond_indices = []
+        for b, bond in enumerate(traj.top._bonds):
+            atom0, atom1 = bond
+            if (
+                (atom0.residue.name == 'CYS' and atom1.residue.name == 'CYS')
+                and (atom0.residue.index != atom1.residue.index)
+                and (atom0.name == 'SG' and atom0.name == 'SG')
+                ):
+                remove_bond_indices.append(b)
+        [traj.top._bonds.pop(b) for b in remove_bond_indices]
 
     def _superpose(self):
         """
