@@ -78,6 +78,7 @@ class MkTraj(object):
             self.df.to_csv(self.models_data_filepath, columns=['templateid', 'seqid'])
             self._construct_traj()
             self._superpose()
+            self._write_traj()
 
     def _gen_df(self):
         model_filename = ensembler.core.model_filenames_by_ensembler_stage[self.ensembler_stage]
