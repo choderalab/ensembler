@@ -1,0 +1,17 @@
+language: python
+
+branches:
+  only:
+    - master
+
+install:
+  - source devtools/ci/install.sh
+  - export PYTHONUNBUFFERED=true
+
+script:
+  # this builds the binary, unpacks it, and runs the tests
+  - conda build devtools/conda-recipe
+
+env:
+  matrix:
+    - python=2.7  CONDA_PY=27
