@@ -3,6 +3,7 @@ Ensembler
 
 [![Binstar Badge](https://binstar.org/omnia/ensembler/badges/version.svg)](https://binstar.org/omnia/ensembler)
 [![Documentation Status](https://readthedocs.org/projects/ensembler/badge/?version=latest)](http://ensembler.readthedocs.org/en/latest/)
+[![Build Status](https://travis-ci.org/choderalab/ensembler.svg)](https://travis-ci.org/choderalab/ensembler)
 
 Software pipeline for automating omics-scale protein modeling and simulation setup.
 
