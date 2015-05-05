@@ -114,7 +114,7 @@ class MkTraj(object):
         self.traj = traj
 
         for m, model_filepath in enumerate(self.df.model_filepath[1:]):
-            logger.debug('Working on model {0}/{1}'.format(m+1, len(self.df.model_filepath)))
+            logger.debug('Working on model {0} ({1}/{2})'.format(self.df.templateid.iloc[m+1], m+1, len(self.df.model_filepath)))
             traj = mdtraj.load_pdb(model_filepath)
             self._remove_disulfide_bonds(traj)
             self.traj += traj
