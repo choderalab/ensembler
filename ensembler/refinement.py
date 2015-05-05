@@ -81,8 +81,11 @@ def refine_implicit_md(
             elif openmm_platform == 'OpenCL':
                 platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
 
-        # Add missing protons.
+        # Construct Modeller object and set bond topology to same as ref structure
+        # (necessary to keep disulfide bonds consistent)
         modeller = app.Modeller(pdb.topology, pdb.positions)
+        set_openmm_topology_bonds_from_atom_indices(modeller.topology, reference_bonds)
+        # Add missing protons.
         modeller.addHydrogens(forcefield, pH=ph, variants=reference_variants)
         topology = modeller.getTopology()
         positions = modeller.getPositions()
@@ -200,6 +203,7 @@ def refine_implicit_md(
 
         # Build OpenMM Modeller object and add missing protons.
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
+        reference_bonds = openmm_topology_bonds_atom_objs_to_atom_indices(modeller.topology)
         reference_variants = modeller.addHydrogens(forcefield, pH=ph)
         if verbose:
             print "Reference variants extracted:"
