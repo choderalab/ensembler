@@ -83,7 +83,7 @@ def refine_implicit_md(
 
         # Add missing protons.
         modeller = app.Modeller(pdb.topology, pdb.positions)
-        modeller.addHydrogens(forcefield, pH=ph, variants=variants)
+        modeller.addHydrogens(forcefield, pH=ph, variants=reference_variants)
         topology = modeller.getTopology()
         positions = modeller.getPositions()
 
@@ -198,17 +198,17 @@ def refine_implicit_md(
         if not reference_pdb_found:
             print 'ERROR: reference PDB model not found at path'
 
-        # Add missing protons.
+        # Build OpenMM Modeller object and add missing protons.
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
-        variants = modeller.addHydrogens(forcefield, pH=ph)
+        reference_variants = modeller.addHydrogens(forcefield, pH=ph)
         if verbose:
             print "Reference variants extracted:"
-            if variants != None:
-                for (residue_index, residue) in enumerate(variants):
+            if reference_variants != None:
+                for (residue_index, residue) in enumerate(reference_variants):
                     if residue != None:
                         print "%8d %s" % (residue_index+1, residue)
                 print ""
-            else: print variants
+            else: print reference_variants
 
         if template_seqid_cutoff:
             process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
@@ -320,6 +320,34 @@ def refine_implicit_md(
     mpistate.comm.Barrier()
     if mpistate.rank == 0:
         print 'Done.'
+
+
+def openmm_topology_bonds_atom_objs_to_atom_indices(topology):
+    """
+    Parameters
+    ----------
+    topology: simtk.openmm.app.Modeller.topology
+
+    Returns
+    -------
+    bonds_by_atom_indices: list of 2-tuples of ints
+    """
+    atoms = [a for a in topology.atoms()]
+    bonds_by_atom_indices = [(atoms.index(bond[0]), atoms.index(bond[1])) for bond in topology._bonds]
+    return bonds_by_atom_indices
+
+
+def set_openmm_topology_bonds_from_atom_indices(topology, bonds_by_atom_indices):
+    """
+    Modifies topology in-place.
+
+    Parameters
+    ----------
+    topology: simtk.openmm.app.Modeller.topology
+    bonds_by_atom_indices: list of 2-tuples of ints
+    """
+    atoms = [a for a in topology.atoms()]
+    topology._bonds = [(atoms[bond[0]], atoms[bond[1]]) for bond in bonds_by_atom_indices]
 
 
 def auto_select_openmm_platform():
