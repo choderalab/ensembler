@@ -109,6 +109,7 @@ class MkTraj(object):
         self.df.reset_index(drop=True, inplace=True)
 
     def _construct_traj(self):
+        logger.debug('Working on model {0} ({1}/{2})'.format(self.df.templateid.iloc[0], 0, len(self.df.model_filepath)))
         traj = mdtraj.load_pdb(self.df.model_filepath[0])
         self._remove_disulfide_bonds(traj)
         self.traj = traj
