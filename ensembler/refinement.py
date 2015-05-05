@@ -81,10 +81,10 @@ def refine_implicit_md(
             elif openmm_platform == 'OpenCL':
                 platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
 
-        # Construct Modeller object and set bond topology to same as ref structure
+        # Construct Modeller object with same topology as ref structure
         # (necessary to keep disulfide bonds consistent)
-        modeller = app.Modeller(pdb.topology, pdb.positions)
-        set_openmm_topology_bonds_from_atom_indices(modeller.topology, reference_bonds)
+        modeller = app.Modeller(reference_topology, pdb.positions)
+        # set_openmm_topology_bonds_from_atom_indices(modeller.topology, reference_bonds)
         # Add missing protons.
         modeller.addHydrogens(forcefield, pH=ph, variants=reference_variants)
         topology = modeller.getTopology()
@@ -203,7 +203,7 @@ def refine_implicit_md(
 
         # Build OpenMM Modeller object and add missing protons.
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
-        reference_bonds = openmm_topology_bonds_atom_objs_to_atom_indices(modeller.topology)
+        reference_topology = modeller.topology
         reference_variants = modeller.addHydrogens(forcefield, pH=ph)
         if verbose:
             print "Reference variants extracted:"
@@ -326,6 +326,7 @@ def refine_implicit_md(
         print 'Done.'
 
 
+# TODO - deprecate
 def openmm_topology_bonds_atom_objs_to_atom_indices(topology):
     """
     Parameters
@@ -341,6 +342,7 @@ def openmm_topology_bonds_atom_objs_to_atom_indices(topology):
     return bonds_by_atom_indices
 
 
+# TODO - deprecate
 def set_openmm_topology_bonds_from_atom_indices(topology, bonds_by_atom_indices):
     """
     Modifies topology in-place.
