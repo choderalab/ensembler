@@ -171,7 +171,7 @@ class RenderOnGrid(object):
                 # font = ImageFont.truetype("HelveticaNeueLight.ttf", fontsize)
                 font = ImageFont.load_default()
                 draw = ImageDraw.Draw(image)
-                print label
+                print(label)
                 draw.text((fontsize, 0), label, (0,0,0), font=font)
             imgs.append(image)
 

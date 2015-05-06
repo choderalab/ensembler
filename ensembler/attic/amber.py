@@ -23,7 +23,7 @@ def get_last_good_chunk(model_dir, destructive=False, verbose=False):
 
     last_good_chunk_index = -1
 
-    if verbose: print 'prev_chunk_indices for model_dir %s:' % model_dir, prev_chunk_indices
+    if verbose: print('prev_chunk_indices for model_dir %s:' % model_dir, prev_chunk_indices)
 
     # If previous chunks exist, iterate through them in reverse order until finding one with a .rst file in good condition
     if len(prev_chunk_indices) > 0:
@@ -93,7 +93,7 @@ def test_rst_file(chunk_dir, natoms, verbose=False):
 
     if not os.path.exists(rst_file_path):
         if verbose:
-            print 'WARNING for chunk_dir %s: file "md.rst" not found.' % chunk_dir
+            print('WARNING for chunk_dir %s: file "md.rst" not found.' % chunk_dir)
         return False
 
     rst_nlines = int( subprocess.check_output(['wc', '-l', rst_file_path]).split()[0] )
@@ -102,7 +102,7 @@ def test_rst_file(chunk_dir, natoms, verbose=False):
 
     if rst_nlines != expected_rst_nlines:
         if verbose:
-            print 'WARNING for chunk_dir %s: only %d lines found in md.rst - expected %d lines from the number of atoms listed in amber.crd' % (chunk_dir, rst_nlines, expected_rst_nlines)
+            print('WARNING for chunk_dir %s: only %d lines found in md.rst - expected %d lines from the number of atoms listed in amber.crd' % (chunk_dir, rst_nlines, expected_rst_nlines))
         return False
     else:
         return True
@@ -166,7 +166,7 @@ def createAmberInputFiles(topology, system, state, nproteinatoms, openmm_forcefi
     from simtk import unit
     
     # Create box and center protein
-    if verbose: print "Creating box and centering protein in unit cell..."
+    if verbose: print("Creating box and centering protein in unit cell...")
     integrator = openmm.VerletIntegrator(1.0 * unit.femtoseconds)
     platform = openmm.Platform.getPlatformByName('Reference')
     context = openmm.Context(system, integrator, platform)
@@ -212,7 +212,7 @@ quit
 ''' % vars()
 
     # Write LEaP input file.
-    if verbose: print "Writing LEaP input file..."
+    if verbose: print("Writing LEaP input file...")
     leap_filename = 'setup.leap.in'
     outfile = open(leap_filename, 'w')
     outfile.write(leap_template)
@@ -257,7 +257,7 @@ quit
 
         if len(resName) > 3:
             resName = resName[1:]
-        print >>outfile, "ATOM  %5d %-4s %3s %s%4d    %8.3f%8.3f%8.3f  1.00  0.00" % (atomIndex%100000, atomName, resName, chainName, (resIndex+1)%10000, positions[index,0]/unit.angstrom, positions[index,1]/unit.angstrom, positions[index,2]/unit.angstrom)
+        outfile.write("ATOM  %5d %-4s %3s %s%4d    %8.3f%8.3f%8.3f  1.00  0.00\n" % (atomIndex%100000, atomName, resName, chainName, (resIndex+1)%10000, positions[index,0]/unit.angstrom, positions[index,1]/unit.angstrom, positions[index,2]/unit.angstrom))
         index += 1
     outfile.close()
 
@@ -267,9 +267,9 @@ quit
     try:
         output = subprocess.check_output(command, shell=True, executable=shell, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        print e, 'with output:\n' + e.output
+        print(e, 'with output:\n' + e.output)
         raise e
-    if verbose: print output
+    if verbose: print(output)
 
     # Write periodic AMBER .crd file.
     overwrite_crd = True
@@ -301,9 +301,9 @@ quit
         try:
             output = subprocess.check_output(command, shell=True, executable=shell, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
-            print e, 'with output:\n' + e.output
+            print(e, 'with output:\n' + e.output)
             raise e
-        print output
+        print(output)
 
     return
 
@@ -449,10 +449,10 @@ def run_sander(verbose=False, restart=False, overwrite_mdin=False):
 
     # Run sander.
     import deprecated_commands
-    print "Running sander..."
+    print("Running sander...")
     command = 'sander -O -i md.sander.in -o md.sander.out -p amber.prmtop -c amber.crd -r md.rst -x md.nc -e md.ene'
     output = deprecated_commands.getoutput(command)
-    print output
+    print(output)
 
     return
 
@@ -464,7 +464,7 @@ def run_pmemd(ncpus=1, shell='/bin/tcsh', verbose=False, restart=False, overwrit
     import subprocess
     command = "setenv AMBERHOME $AMBERHOME_CPU; $AMBERHOME/bin/pmemd -O -i md.sander.in -o md.sander.out -p amber.prmtop -c amber.crd -inf amber.mdinfo -x amber.nc -r amber.restrt" % vars() 
     output = subprocess.check_output(command, shell=True, executable=shell)
-    if verbose: print output
+    if verbose: print(output)
 
     return
 
@@ -493,7 +493,7 @@ If restarting a trajectory, set restart to the name of the restart file to be us
         command = "setenv AMBERHOME $AMBERHOME_GPU; setenv CUDA_VISIBLE_DEVICES %(cuda_visible_devices)s; $AMBERHOME/bin/pmemd.cuda -O -i md.start.in -p ../amber.prmtop -c ../amber.crd -o md.out -inf md.mdinfo -x md.nc -r md.rst" % vars() 
 
     output = subprocess.check_output(command, shell=True, executable=shell)
-    if verbose: print output
+    if verbose: print(output)
 
     return
 

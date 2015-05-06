@@ -66,7 +66,7 @@ def retrieve_sifts(pdb_id):
     try:
         response = urllib2.urlopen(url)
     except urllib2.URLError:
-        print 'ERROR downloading SIFTS file with PDB ID: %s' % pdb_id
+        print('ERROR downloading SIFTS file with PDB ID: %s' % pdb_id)
         raise
 
     sifts_page = response.read(100000000) # Max 100MB

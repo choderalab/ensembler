@@ -104,9 +104,9 @@ def debug_method(fn):
         try:
             fn(*args, **kwargs)
         except Exception as e:
-            print e
+            print(e)
             import traceback
-            print traceback.format_exc()
+            print(traceback.format_exc())
             import ipdb; ipdb.set_trace()
     return wrapper
 

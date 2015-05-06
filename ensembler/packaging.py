@@ -43,7 +43,7 @@ def package_for_fah(process_only_these_targets=None,
         run (int) - run index
         """
 
-        if verbose: print "Building RUN %d" % run
+        if verbose: print("Building RUN %d" % run)
      
         try:
             import os, shutil
@@ -160,8 +160,8 @@ def package_for_fah(process_only_these_targets=None,
 
         except Exception as e:
             import traceback
-            print traceback.format_exc()
-            print str(e)    
+            print(traceback.format_exc())
+            print(str(e))
 
         return
 
@@ -184,16 +184,16 @@ def package_for_fah(process_only_these_targets=None,
         mpistate.comm.Barrier()
 
         if mpistate.rank == 0:
-            print "-------------------------------------------------------------------------"
-            print "Building FAH OpenMM project for target %s" % target.id
-            print "-------------------------------------------------------------------------"
+            print("-------------------------------------------------------------------------")
+            print("Building FAH OpenMM project for target %s" % target.id)
+            print("-------------------------------------------------------------------------")
 
         # ========
         # Build a list of valid templates
         # ========
 
         # Process all templates.
-        if verbose: print "Building list of valid templates..."
+        if verbose: print("Building list of valid templates...")
         valid_templates = list()
 
         if template_seqid_cutoff:
@@ -221,13 +221,13 @@ def package_for_fah(process_only_these_targets=None,
                 valid_templates.append(template)
 
         nvalid = len(valid_templates)
-        if verbose: print "%d valid unique initial starting conditions found" % nvalid
+        if verbose: print("%d valid unique initial starting conditions found" % nvalid)
 
         # ========
         # Sort by sequence identity
         # ========
 
-        if verbose: print "Sorting templates in order of decreasing sequence identity..."
+        if verbose: print("Sorting templates in order of decreasing sequence identity...")
         sequence_identities = np.zeros([nvalid], np.float32)
         for (template_index, template) in enumerate(valid_templates):
             filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
@@ -238,8 +238,8 @@ def package_for_fah(process_only_these_targets=None,
         sorted_indices = np.argsort(-sequence_identities)
         valid_templates = [ valid_templates[index] for index in sorted_indices ]
         if verbose: 
-            print "Sorted"
-            print sequence_identities[sorted_indices]
+            print("Sorted")
+            print(sequence_identities[sorted_indices])
 
         # ========
         # Create project directory
@@ -256,11 +256,11 @@ def package_for_fah(process_only_these_targets=None,
         # Build runs in parallel
         # ========
 
-        if verbose: print "Building RUNs in parallel..."
+        if verbose: print("Building RUNs in parallel...")
         for run_index in range(mpistate.rank, len(valid_templates), mpistate.size):
-            print "-------------------------------------------------------------------------"
-            print "Building RUN for template %s" % valid_templates[run_index].id
-            print "-------------------------------------------------------------------------"
+            print("-------------------------------------------------------------------------")
+            print("Building RUN for template %s" % valid_templates[run_index].id)
+            print("-------------------------------------------------------------------------")
 
             source_dir = os.path.join(models_target_dir, valid_templates[run_index].id)
             generateRun(run_index)
@@ -303,7 +303,7 @@ def package_for_fah(process_only_these_targets=None,
 
     mpistate.comm.Barrier()
     if mpistate.rank == 0:
-        print 'Done.'
+        print('Done.')
 
 
 def package_for_transfer(process_only_these_targets=None):

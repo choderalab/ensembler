@@ -91,8 +91,8 @@ def test_align_command():
                 seqid_file_text = seqid_file.read()
             with open(ref_seqid_filepath) as ref_seqid_file:
                 ref_seqid_file_text = ref_seqid_file.read()
-            print seqid_file_text
-            print ref_seqid_file_text
+            print(seqid_file_text)
+            print(ref_seqid_file_text)
             assert seqid_file_text == ref_seqid_file_text
 
 

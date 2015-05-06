@@ -110,13 +110,13 @@ class QuickModel(object):
         if seqid_cutoff is None:
             for cutoff in range(0, 101, 10):
                 ntemplates = len(df[df.seqids > cutoff])
-                print 'Number of templates with seqid > %d: %d' % (cutoff, ntemplates)
+                print('Number of templates with seqid > %d: %d' % (cutoff, ntemplates))
 
             seqid_cutoff_chosen = False
             while not seqid_cutoff_chosen:
                 seqid_cutoff = float(raw_input('Choose a sequence identity cutoff for target %s (confirm at next step): ' % targetid))
                 ntemplates = len(df[df.seqids > seqid_cutoff])
-                print 'Number of templates chosen by sequence identity cutoff (%.1f): %d' % (seqid_cutoff, ntemplates)
+                print('Number of templates chosen by sequence identity cutoff (%.1f): %d' % (seqid_cutoff, ntemplates))
                 confirm_seqid_cutoff = raw_input('Use this sequence identity cutoff? (y|N): ')
                 if confirm_seqid_cutoff.lower() in ['y', 'yes']:
                     seqid_cutoff_chosen = True

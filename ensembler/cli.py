@@ -24,7 +24,7 @@ def validate_args(args, required_args):
 def main():
     args = docopt(docopt_full_helpstring, help=False)
 
-    # print args
+    # print(args)
 
     command_dispatched = False
 
@@ -32,7 +32,7 @@ def main():
         if args[command_str]:
             if args['--help']:
                 command = getattr(ensembler.cli_commands, command_str)
-                print command.helpstring
+                print(command.helpstring)
             else:
                 if not args['init'] and not args['testrun_pipeline'] and not args['quickmodel']:
                     ensembler.core.check_project_toplevel_dir()
@@ -41,5 +41,5 @@ def main():
             command_dispatched = True
 
     if not command_dispatched and args['--help']:
-        print '\n'.join([ensembler.cli_commands.general.helpstring_header, ensembler.cli_commands.general.ensembler_helpstring])
+        print('\n'.join([ensembler.cli_commands.general.helpstring_header, ensembler.cli_commands.general.ensembler_helpstring]))
         pass

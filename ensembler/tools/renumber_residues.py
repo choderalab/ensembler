@@ -3,7 +3,7 @@ import re
 import Bio.SeqUtils
 import mdtraj
 import ensembler
-import ensembler.UniProt
+import ensembler.uniprot
 from ensembler.core import logger
 
 
@@ -44,7 +44,7 @@ class RenumberResidues(object):
 
     def _get_uniprot_seq(self):
         uniprot_query_string = 'mnemonic: {0}'.format(self.uniprot_mnemonic)
-        self._uniprot_xml = ensembler.UniProt.get_uniprot_xml(uniprot_query_string)
+        self._uniprot_xml = ensembler.uniprot.get_uniprot_xml(uniprot_query_string)
         seq_rawtext = self._uniprot_xml.find('entry/sequence').text
         self.uniprot_seq = ''.join(seq_rawtext.split())
 
