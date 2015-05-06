@@ -12,6 +12,7 @@ import ensembler.cli_commands
 from ensembler.utils import enter_temp_dir
 
 
+@attr('modeller')
 @attr('non_conda_dependencies')
 def test_build_model():
     # TODO may be possible to have Travis install Modeller binary

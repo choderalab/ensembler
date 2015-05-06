@@ -16,3 +16,6 @@ conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
 source activate $python
 conda install --yes conda-build
+
+wget https://salilab.org/modeller/9.14/modeller-9.14-1.x86_64.rpm
+env KEY_MODELLER=MODELIRANJE rpm -Uvh modeller-9.14-1.x86_64.rpm
