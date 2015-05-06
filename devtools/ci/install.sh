@@ -11,7 +11,6 @@ PIP_ARGS="-U"
 export PATH=$HOME/miniconda/bin:$PATH
 
 sudo apt-get update
-sudo apt-get install -qq -y g++ gfortran csh g++-multilib gcc-multilib openbabel   # TODO remove?
 
 conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
