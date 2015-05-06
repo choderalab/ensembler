@@ -2,8 +2,8 @@ package:
   name: ensembler
   version: !!str dev
 
-source:
-   git_url: https://github.com/choderalab/ensembler
+#source:
+#   git_url: https://github.com/choderalab/ensembler
 
 build:
   preserve_egg_dir: True
