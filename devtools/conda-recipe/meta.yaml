@@ -6,6 +6,8 @@ source:
    git_url: https://github.com/choderalab/ensembler
 
 build:
+  preserve_egg_dir: True
+  number: 0
   entry_points:
     - ensembler = ensembler.cli:main
 
