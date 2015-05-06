@@ -14,4 +14,4 @@ script:
 
 env:
   matrix:
-    - python=2.7  CONDA_PY=27  PYTHONPATH=/bin/modeller9.14/modlib:/bin/modeller9.14/lib/x86_64-intel8/python2.5  LD_LIBRARY_PATH=/bin/modeller9.14/lib/x86_64-intel8
+    - python=2.7  CONDA_PY=27  PYTHONPATH=/home/travis/bin/modeller9.14/modlib:/home/travis/bin/modeller9.14/lib/x86_64-intel8/python2.5  LD_LIBRARY_PATH=/home/travis/bin/modeller9.14/lib/x86_64-intel8

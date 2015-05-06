@@ -15,10 +15,7 @@ sudo apt-get update
 conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
 source activate $python
-conda install --yes conda-build
-
-wget https://salilab.org/modeller/9.14/modeller-9.14.tar.gz
-env KEY_MODELLER=MODELIRANJE rpm -Uvh modeller-9.14-1.x86_64.rpm
+conda install --yes conda-build jinja2
 
 wget https://salilab.org/modeller/9.14/modeller-9.14.tar.gz
 tar -xvf modeller-9.14.tar.gz
