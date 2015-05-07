@@ -22,9 +22,9 @@ tar -xvf modeller-9.14.tar.gz
 
 cd modeller-9.14
 ./Install << EOF
-3
 
-MODELIRANJE
+
+$modeller_key
 
 EOF
 cd ..

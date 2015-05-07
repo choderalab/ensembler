@@ -1,7 +1,7 @@
 import os
 import StringIO
 from ensembler.tests.utils import get_installed_resource_filename
-import ensembler.pdb
+import ensembler.p_d_b
 from mock import Mock
 from nose.plugins.attrib import attr
 
@@ -14,7 +14,7 @@ def test_extract_residues_by_resnum_from_4CFE():
     template.chainid= 'A'
     template.resolved_pdbresnums = [str(x) for x in range(16, 269)]
     ofile = StringIO.StringIO()
-    ensembler.pdb.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
+    ensembler.p_d_b.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile.close()
 
 
@@ -28,7 +28,7 @@ def test_extract_residues_by_resnum_from_3HLL():
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
     ofile = StringIO.StringIO()
-    ensembler.pdb.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
+    ensembler.p_d_b.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile.close()
 
 
@@ -41,7 +41,7 @@ def test_extract_residues_by_resnum_output():
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
     ofile = StringIO.StringIO()
-    ensembler.pdb.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
+    ensembler.p_d_b.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile_text = ofile.getvalue()
     first_line = ofile_text[0: ofile_text.index('\n')]
     assert first_line == 'ATOM    175  N   TYR A  24      50.812  43.410  19.390  1.00 38.55           N  '

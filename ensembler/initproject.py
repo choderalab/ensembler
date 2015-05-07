@@ -14,7 +14,7 @@ import ensembler.version
 import ensembler
 import ensembler.target_explorer
 import ensembler.uni_prot
-import ensembler.pdb
+import ensembler.p_d_b
 from ensembler.utils import file_exists_and_not_empty
 from ensembler.core import mpistate, logger
 
@@ -444,14 +444,14 @@ def download_structure_file(pdbid, project_structure_filepath, structure_type='p
 
 def download_pdb_file(pdbid, project_pdb_filepath):
     logger.info('Downloading PDB file for: %s' % pdbid)
-    pdbgz_page = ensembler.pdb.retrieve_pdb(pdbid, compressed='yes')
+    pdbgz_page = ensembler.p_d_b.retrieve_pdb(pdbid, compressed='yes')
     with open(project_pdb_filepath, 'w') as pdbgz_file:
         pdbgz_file.write(pdbgz_page)
 
 
 def download_sifts_file(pdbid, project_sifts_filepath):
     logger.info('Downloading sifts file for: %s', pdbid)
-    sifts_page = ensembler.pdb.retrieve_sifts(pdbid)
+    sifts_page = ensembler.p_d_b.retrieve_sifts(pdbid)
     with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file:
         project_sifts_file.write(sifts_page)
 
@@ -592,7 +592,7 @@ def extract_template_structures_from_pdb_files(selected_templates):
     for template in selected_templates:
         pdb_filename = os.path.join(ensembler.core.default_project_dirnames.structures_pdb, template.pdbid + '.pdb.gz')
         template_resolved_filename = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
-        ensembler.pdb.extract_residues_by_resnum(template_resolved_filename, pdb_filename, template)
+        ensembler.p_d_b.extract_residues_by_resnum(template_resolved_filename, pdb_filename, template)
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
@@ -796,5 +796,5 @@ def extract_uniprot_acs_from_sifts_files(pdbids):
         sifts_filepath = os.path.join(ensembler.core.default_project_dirnames.structures_sifts, pdbid + '.xml.gz')
         parser = etree.XMLParser(huge_tree=True)
         siftsxml = etree.parse(sifts_filepath, parser).getroot()
-        uniprot_acs += ensembler.pdb.extract_uniprot_acs_from_sifts_xml(siftsxml)
+        uniprot_acs += ensembler.p_d_b.extract_uniprot_acs_from_sifts_xml(siftsxml)
     return list(set(uniprot_acs))
