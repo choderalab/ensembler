@@ -18,7 +18,7 @@ requirements:
 
   run:
     - python
-    - mpi4py
+    - mpi4py # [py2k]
     - mdtraj
     - msmbuilder
     - biopython
@@ -29,7 +29,7 @@ requirements:
     - pyyaml
     - docopt
     - mock
-    - subprocess32
+    - subprocess32 # [py2k]
 
 test:
   requires:
@@ -37,7 +37,7 @@ test:
   imports:
     - ensembler
   commands:
-    - nosetests ensembler -v --exe -a unit -a modeller
+    - nosetests ensembler -v --exe -a unit
 
 about:
   home: https://github.com/choderalab/ensembler
