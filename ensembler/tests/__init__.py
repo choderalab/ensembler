@@ -1,2 +1,2 @@
-import utils
-import integrationtest_utils
+from . import utils
+from . import integrationtest_utils

@@ -14,17 +14,17 @@ command_list = [
     'quickmodel',
 ]
 
-import general
-import testrun_pipeline
-import init
-import gather_targets
-import gather_templates
-import loopmodel
-import align
-import build_models
-import cluster
-import refine_implicit
-import solvate
-import refine_explicit
-import package_models
-import quickmodel
+from . import general
+from . import testrun_pipeline
+from . import init
+from . import gather_targets
+from . import gather_templates
+from . import loopmodel
+from . import align
+from . import build_models
+from . import cluster
+from . import refine_implicit
+from . import solvate
+from . import refine_explicit
+from . import package_models
+from . import quickmodel

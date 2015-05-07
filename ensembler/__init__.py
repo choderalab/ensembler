@@ -1,2 +1,2 @@
-import core
-import utils
+from . import core
+from . import utils
