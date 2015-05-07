@@ -307,4 +307,4 @@ def package_for_fah(process_only_these_targets=None,
 
 
 def package_for_transfer(process_only_these_targets=None):
-    raise Exception, 'Not implemented yet.'
+    raise Exception('Not implemented yet.')

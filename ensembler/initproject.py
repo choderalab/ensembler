@@ -12,7 +12,7 @@ from Bio.SeqRecord import SeqRecord
 import ensembler.version
 
 import ensembler
-import ensembler.TargetExplorer
+import ensembler.target_explorer
 import ensembler.uniprot
 import ensembler.pdb
 from ensembler.utils import file_exists_and_not_empty
@@ -106,7 +106,7 @@ class GatherTargetsFromTargetExplorer(GatherTargets):
 
     @ensembler.utils.notify_when_done
     def _gather_targets(self):
-        targetexplorer_json = ensembler.TargetExplorer.get_targetexplorer_json(self.dbapi_uri, self.search_string, return_data='domain_seqs,seqs')
+        targetexplorer_json = ensembler.target_explorer.get_targetexplorer_json(self.dbapi_uri, self.search_string, return_data='domain_seqs,seqs')
         self.targets = self._extract_targets_from_json(targetexplorer_json)
         fasta_ofilepath = os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')
         Bio.SeqIO.write(self.targets, fasta_ofilepath, 'fasta')
@@ -141,7 +141,7 @@ class GatherTargetsFromTargetExplorer(GatherTargets):
 
 
 def gen_targetexplorer_metadata(dbapi_uri, search_string):
-    db_metadata = ensembler.TargetExplorer.get_targetexplorer_metadata(dbapi_uri)
+    db_metadata = ensembler.target_explorer.get_targetexplorer_metadata(dbapi_uri)
     metadata = {
         'method': 'TargetExplorer',
         'gather_from_targetexplorer': {
@@ -385,7 +385,7 @@ def get_targetexplorer_templates_json(dbapi_uri, search_string):
     """
     targetexplorer_json = None
     if mpistate.rank == 0:
-        targetexplorer_jsonstr = ensembler.TargetExplorer.query_targetexplorer(
+        targetexplorer_jsonstr = ensembler.target_explorer.query_targetexplorer(
             dbapi_uri, search_string, return_data='pdb_data'
         )
         targetexplorer_json = json.loads(targetexplorer_jsonstr)
