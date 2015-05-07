@@ -9,7 +9,7 @@ import ensembler.cli_commands
 import ensembler.initproject
 import ensembler.tests
 import ensembler.core
-import ensembler.uniprot
+import ensembler.uni_prot
 from ensembler.utils import enter_temp_dir
 
 from ensembler.tests.utils import get_installed_resource_filename
@@ -119,7 +119,7 @@ def test_log_unique_domain_names():
             os.path.join('resources', 'uniprot-CK1-kinases.xml')
         )
     ) as uniprotxml_file:
-        uniprotxml_string = ensembler.uniprot.remove_uniprot_xmlns(uniprotxml_file.read())
+        uniprotxml_string = ensembler.uni_prot.remove_uniprot_xmlns(uniprotxml_file.read())
         uniprotxml = etree.fromstring(uniprotxml_string)
     ensembler.initproject.log_unique_domain_names('domain:"Protein kinase" AND reviewed:yes AND family:"CK1" AND taxonomy:9606', uniprotxml)
 

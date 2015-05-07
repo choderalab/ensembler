@@ -13,7 +13,7 @@ import ensembler.version
 
 import ensembler
 import ensembler.target_explorer
-import ensembler.uniprot
+import ensembler.uni_prot
 import ensembler.pdb
 from ensembler.utils import file_exists_and_not_empty
 from ensembler.core import mpistate, logger
@@ -183,7 +183,7 @@ class GatherTargetsFromUniProt(GatherTargets):
         if self._save_uniprot_xml:
             get_uniprot_xml_args['write_to_filepath'] = 'targets-uniprot.xml'
 
-        self.uniprotxml = ensembler.uniprot.get_uniprot_xml(self.uniprot_query_string, **get_uniprot_xml_args)
+        self.uniprotxml = ensembler.uni_prot.get_uniprot_xml(self.uniprot_query_string, **get_uniprot_xml_args)
 
         logger.info('Number of entries returned from initial UniProt search: %r\n' % len(self.uniprotxml))
         log_unique_domain_names(self.uniprot_query_string, self.uniprotxml)
@@ -329,7 +329,7 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex=Non
     manual_overrides = ensembler.core.ManualOverrides()
     selected_pdbchains = None
     if mpistate.rank == 0:
-        uniprotxml = ensembler.uniprot.get_uniprot_xml(uniprot_query_string)
+        uniprotxml = ensembler.uni_prot.get_uniprot_xml(uniprot_query_string)
         log_unique_domain_names(uniprot_query_string, uniprotxml)
         if uniprot_domain_regex is not None:
             log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
@@ -364,8 +364,8 @@ def gather_templates_from_pdb(pdbids, uniprot_domain_regex=None, chainids=None, 
             get_pdb_and_sifts_files(pdbid, structure_dirs)
         uniprot_acs = extract_uniprot_acs_from_sifts_files(pdbids)
         logger.debug('Extracted UniProt ACs: {0}'.format(uniprot_acs))
-        uniprot_ac_query_string = ensembler.uniprot.build_uniprot_query_string_from_acs(uniprot_acs)
-        uniprotxml = ensembler.uniprot.get_uniprot_xml(uniprot_ac_query_string)
+        uniprot_ac_query_string = ensembler.uni_prot.build_uniprot_query_string_from_acs(uniprot_acs)
+        uniprotxml = ensembler.uni_prot.get_uniprot_xml(uniprot_ac_query_string)
         selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=uniprot_domain_regex, manual_overrides=manual_overrides, specified_pdbids=pdbids, specified_chainids=chainids)
 
     selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
@@ -680,7 +680,7 @@ def dep_extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_r
 
                 for PDB_chain_span_node in pdb_chain_span_nodes:
                     chain_span_string = PDB_chain_span_node.get('value')
-                    chain_spans = ensembler.uniprot.parse_uniprot_pdbref_chains(chain_span_string)
+                    chain_spans = ensembler.uni_prot.parse_uniprot_pdbref_chains(chain_span_string)
 
                     for chainid in chain_spans.keys():
                         if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
@@ -737,7 +737,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
 
                     for pdb_chain_span_node in pdb_chain_span_nodes:
                         chain_span_string = pdb_chain_span_node.get('value')
-                        chain_spans = ensembler.uniprot.parse_uniprot_pdbref_chains(chain_span_string)
+                        chain_spans = ensembler.uni_prot.parse_uniprot_pdbref_chains(chain_span_string)
 
                         for chainid in chain_spans.keys():
                             if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
@@ -768,7 +768,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
 
                 for pdb_chain_span_node in pdb_chain_span_nodes:
                     chain_span_string = pdb_chain_span_node.get('value')
-                    chain_spans = ensembler.uniprot.parse_uniprot_pdbref_chains(chain_span_string)
+                    chain_spans = ensembler.uni_prot.parse_uniprot_pdbref_chains(chain_span_string)
 
                     for chainid in chain_spans.keys():
                         if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
