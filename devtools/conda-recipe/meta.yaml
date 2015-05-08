@@ -18,7 +18,7 @@ requirements:
 
   run:
     - python
-    - mpi4py # [py2k]
+    - mpi4py
     - mdtraj
     - msmbuilder
     - biopython

@@ -19,7 +19,10 @@ def test_pdbfix_KC1D_HUMAN_D0_4KB8_D():
         ensembler.utils.create_dir(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
         with gzip.open(template_pdb_gz_filepath) as template_pdb_gz_file:
             with open(template_pdb_filepath, 'w') as template_pdb_file:
-                template_pdb_file.write(template_pdb_gz_file.read())
+                contents = template_pdb_gz_file.read()
+                if type(contents) == bytes:
+                    contents = contents.decode('utf-8')
+                template_pdb_file.write(contents)
         template = Mock()
         template.id = 'KC1D_HUMAN_D0_4KB8_D'
         template.seq = 'LRVGNRYRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFRNLFHRQGFSYDYVFDWNMLKFGASRAADDAERERRDREERLRH'
@@ -43,7 +46,10 @@ def test_pdbfix_ABL1_HUMAN_D0_2E2B_B():
         ensembler.utils.create_dir(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
         with gzip.open(template_pdb_gz_filepath) as template_pdb_gz_file:
             with open(template_pdb_filepath, 'w') as template_pdb_file:
-                template_pdb_file.write(template_pdb_gz_file.read())
+                contents = template_pdb_gz_file.read()
+                if type(contents) == bytes:
+                    contents = contents.decode('utf-8')
+                template_pdb_file.write(contents)
         template = Mock()
         template.id = 'ABL1_HUMAN_D0_2E2B_B'
         template.seq = 'ITMKHKLGGGQYGEVYEGVWKKYSLTVAVKTLKEDTMEVEEFLKEAAVMKEIKHPNLVQLLGVCTREPPFYIITEFMTYGNLLDYLRECNRQEVNAVVLLYMATQISSAMEYLEKKNFIHRDLAARNCLVGENHLVKVADFGLSRLMTGDTYTAHAGAKFPIKWTAPESLAYNKFSIKSDVWAFGVLLWEIATYGMSPYPGIDLSQVYELLEKDYRMERPEGCPEKVYELMRACWQWNPSDRPSFAEIHQAFETMFQESSISDEVEKELGKQ'
@@ -68,10 +74,16 @@ def test_pdbfix_templates():
         ensembler.utils.create_dir(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
         with gzip.open(template1_pdb_gz_filepath) as template1_pdb_gz_file:
             with open(template1_pdb_filepath, 'w') as template1_pdb_file:
-                template1_pdb_file.write(template1_pdb_gz_file.read())
+                contents = template1_pdb_gz_file.read()
+                if type(contents) == bytes:
+                    contents = contents.decode('utf-8')
+                template1_pdb_file.write(contents)
         with gzip.open(template2_pdb_gz_filepath) as template2_pdb_gz_file:
             with open(template2_pdb_filepath, 'w') as template2_pdb_file:
-                template2_pdb_file.write(template2_pdb_gz_file.read())
+                contents = template2_pdb_gz_file.read()
+                if type(contents) == bytes:
+                    contents = contents.decode('utf-8')
+                template2_pdb_file.write(contents)
 
         template1 = Mock()
         template1.id = 'KC1D_HUMAN_D0_4KB8_D'

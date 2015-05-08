@@ -29,14 +29,17 @@ try:
     import modeller.automodel
 except ImportError:
     pass
-try:
-    import subprocess32 as subprocess
-    loopmodel_subprocess_kwargs = {'timeout': 10800}   # 3 hour timeout - used for loopmodel call
-except ImportError:
-    warnings.warn('subprocess32 module not available. Falling back to subprocess module, without timeout functionality.')
+if sys.version_info < (3,0):
+    try:
+        import subprocess32 as subprocess
+        loopmodel_subprocess_kwargs = {'timeout': 10800}   # 3 hour timeout - used for loopmodel call
+    except ImportError:
+        warnings.warn('subprocess32 module not available. Falling back to subprocess module, without timeout functionality.')
+        import subprocess
+        loopmodel_subprocess_kwargs = {}
+else:
     import subprocess
-    loopmodel_subprocess_kwargs = {}
-
+    loopmodel_subprocess_kwargs = {'timeout': 10800}   # 3 hour timeout - used for loopmodel call
 
 TargetSetupData = namedtuple(
     'TargetSetupData',
