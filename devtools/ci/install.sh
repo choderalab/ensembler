@@ -14,6 +14,7 @@ sudo apt-get update
 
 conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
+conda config --add channels http://conda.binstar.org/mpi4py
 source activate $python
 conda install --yes conda-build jinja2
 

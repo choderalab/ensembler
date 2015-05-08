@@ -1,8 +1,9 @@
-# Methods for retrieving data from the PDB
-#
-# Daniel L. Parton <daniel.parton@choderalab.org> - 16 Feb 2013
-
-import urllib2
+import sys
+if sys.version_info > (3, 0):
+    from urllib.request import urlopen
+    from urllib.error import URLError
+else:
+    from urllib2 import urlopen, URLError
 
 
 def extract_residues_by_resnum(output_file, pdb_input_file, template):
@@ -64,8 +65,8 @@ def retrieve_sifts(pdb_id):
     sifts_download_base_url='ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/'
     url = sifts_download_base_url + pdb_id.lower() + '.xml.gz'
     try:
-        response = urllib2.urlopen(url)
-    except urllib2.URLError:
+        response = urlopen(url)
+    except URLError:
         print('ERROR downloading SIFTS file with PDB ID: %s' % pdb_id)
         raise
 
@@ -93,13 +94,13 @@ def retrieve_sifts(pdb_id):
 
 
 def retrieve_pdb(pdb_id,compressed='no'):
-    '''Retrieves a PDB file, given a PDB ID. Works by modifying the PDB download URL.
-    '''
+    """Retrieves a PDB file, given a PDB ID. Works by modifying the PDB download URL.
+    """
     pdb_download_base_url='http://www.rcsb.org/pdb/files/'
     url = pdb_download_base_url + pdb_id + '.pdb'
     if compressed == 'yes':
         url += '.gz'
-    response = urllib2.urlopen(url)
+    response = urlopen(url)
     pdb_file = response.read(10000000) # Max 10MB
     return pdb_file
 

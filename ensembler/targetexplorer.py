@@ -1,4 +1,8 @@
-import urllib2
+import sys
+if sys.version_info > (3, 0):
+    from urllib.request import urlopen
+else:
+    from urllib2 import urlopen
 import json
 
 
@@ -27,7 +31,7 @@ def query_targetexplorer(dbapi_uri, search_string, return_data=None, maxreadleng
     search_string_encoded = ensembler.core.encode_url_query(search_string)
     return_data_string = '&return=' + ','.join(return_data)
     query_uri = base_uri + search_string_encoded + return_data_string
-    response = urllib2.urlopen(query_uri)
+    response = urlopen(query_uri)
     page = response.read(maxreadlength)
     return page
 
@@ -52,7 +56,7 @@ def get_targetexplorer_metadata(dbapi_uri, maxreadlength=100000):
     """
 
     full_uri = dbapi_uri + '/get_metadata'
-    response = urllib2.urlopen(full_uri)
+    response = urlopen(full_uri)
     page = response.read(maxreadlength)
 
     return json.loads(page)

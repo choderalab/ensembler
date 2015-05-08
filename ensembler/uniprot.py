@@ -1,18 +1,14 @@
-import os
-import urllib
-import urllib2
-import tempfile
-import subprocess
-import shutil
-from core import logger
+import sys
+if sys.version_info > (3, 0):
+    from urllib.request import urlopen
+else:
+    from urllib2 import urlopen
 import ensembler
-import ensembler.core
 from lxml import etree
 
 
 def query_uniprot(search_string, maxreadlength=100000000):
-    '''
-    Searches the UniProt database given a search string, and retrieves an XML
+    """Searches the UniProt database given a search string, and retrieves an XML
     file, which is returned as a string.
     maxreadlength is the maximum size in bytes which will be read from the website
     (default 100MB)
@@ -20,11 +16,11 @@ def query_uniprot(search_string, maxreadlength=100000000):
 
     The function also removes the xmlns attribute from <uniprot> tag, as this
     makes xpath searching annoying
-    '''
+    """
     base_url = 'http://www.uniprot.org/uniprot/?query='
     search_string_encoded = ensembler.core.encode_url_query(search_string.replace('=', ':'))
     query_url = base_url + search_string_encoded + '&format=xml'
-    response = urllib2.urlopen(query_url)
+    response = urlopen(query_url)
     page = response.read(maxreadlength)
     page = remove_uniprot_xmlns(page)
     return page
@@ -53,12 +49,12 @@ def remove_uniprot_xmlns(uniprot_xml_string):
 
 
 def parse_uniprot_pdbref_chains(chains_span_str):
-    '''
+    """
     Examples of pdbref chains entries to be parsed:
     A=65-119             => {'A':[65,119]}
     A/C/E/G=64-121       => {'A':[64,121], 'B':[64,121], 'C':[64,121], 'D':[64,121]}
     A=458-778, B=764-778 => {'A':[458,778],'B':[764,778]}
-    '''
+    """
     comma_sep = chains_span_str.split(',')
     chains_span = dict()
     for s in comma_sep:

@@ -12,9 +12,9 @@ from Bio.SeqRecord import SeqRecord
 import ensembler.version
 
 import ensembler
-import ensembler.target_explorer
-import ensembler.uni_prot
-import ensembler.p_d_b
+import ensembler.targetexplorer
+import ensembler.uniprot
+import ensembler.pdb
 from ensembler.utils import file_exists_and_not_empty
 from ensembler.core import mpistate, logger
 
@@ -106,7 +106,7 @@ class GatherTargetsFromTargetExplorer(GatherTargets):
 
     @ensembler.utils.notify_when_done
     def _gather_targets(self):
-        targetexplorer_json = ensembler.target_explorer.get_targetexplorer_json(self.dbapi_uri, self.search_string, return_data='domain_seqs,seqs')
+        targetexplorer_json = ensembler.targetexplorer.get_targetexplorer_json(self.dbapi_uri, self.search_string, return_data='domain_seqs,seqs')
         self.targets = self._extract_targets_from_json(targetexplorer_json)
         fasta_ofilepath = os.path.join(ensembler.core.default_project_dirnames.targets, 'targets.fa')
         Bio.SeqIO.write(self.targets, fasta_ofilepath, 'fasta')
@@ -141,7 +141,7 @@ class GatherTargetsFromTargetExplorer(GatherTargets):
 
 
 def gen_targetexplorer_metadata(dbapi_uri, search_string):
-    db_metadata = ensembler.target_explorer.get_targetexplorer_metadata(dbapi_uri)
+    db_metadata = ensembler.targetexplorer.get_targetexplorer_metadata(dbapi_uri)
     metadata = {
         'method': 'TargetExplorer',
         'gather_from_targetexplorer': {
@@ -183,7 +183,7 @@ class GatherTargetsFromUniProt(GatherTargets):
         if self._save_uniprot_xml:
             get_uniprot_xml_args['write_to_filepath'] = 'targets-uniprot.xml'
 
-        self.uniprotxml = ensembler.uni_prot.get_uniprot_xml(self.uniprot_query_string, **get_uniprot_xml_args)
+        self.uniprotxml = ensembler.uniprot.get_uniprot_xml(self.uniprot_query_string, **get_uniprot_xml_args)
 
         logger.info('Number of entries returned from initial UniProt search: %r\n' % len(self.uniprotxml))
         log_unique_domain_names(self.uniprot_query_string, self.uniprotxml)
@@ -329,7 +329,7 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex=Non
     manual_overrides = ensembler.core.ManualOverrides()
     selected_pdbchains = None
     if mpistate.rank == 0:
-        uniprotxml = ensembler.uni_prot.get_uniprot_xml(uniprot_query_string)
+        uniprotxml = ensembler.uniprot.get_uniprot_xml(uniprot_query_string)
         log_unique_domain_names(uniprot_query_string, uniprotxml)
         if uniprot_domain_regex is not None:
             log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
@@ -364,8 +364,8 @@ def gather_templates_from_pdb(pdbids, uniprot_domain_regex=None, chainids=None, 
             get_pdb_and_sifts_files(pdbid, structure_dirs)
         uniprot_acs = extract_uniprot_acs_from_sifts_files(pdbids)
         logger.debug('Extracted UniProt ACs: {0}'.format(uniprot_acs))
-        uniprot_ac_query_string = ensembler.uni_prot.build_uniprot_query_string_from_acs(uniprot_acs)
-        uniprotxml = ensembler.uni_prot.get_uniprot_xml(uniprot_ac_query_string)
+        uniprot_ac_query_string = ensembler.uniprot.build_uniprot_query_string_from_acs(uniprot_acs)
+        uniprotxml = ensembler.uniprot.get_uniprot_xml(uniprot_ac_query_string)
         selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=uniprot_domain_regex, manual_overrides=manual_overrides, specified_pdbids=pdbids, specified_chainids=chainids)
 
     selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
@@ -385,7 +385,7 @@ def get_targetexplorer_templates_json(dbapi_uri, search_string):
     """
     targetexplorer_json = None
     if mpistate.rank == 0:
-        targetexplorer_jsonstr = ensembler.target_explorer.query_targetexplorer(
+        targetexplorer_jsonstr = ensembler.targetexplorer.query_targetexplorer(
             dbapi_uri, search_string, return_data='pdb_data'
         )
         targetexplorer_json = json.loads(targetexplorer_jsonstr)
@@ -444,14 +444,14 @@ def download_structure_file(pdbid, project_structure_filepath, structure_type='p
 
 def download_pdb_file(pdbid, project_pdb_filepath):
     logger.info('Downloading PDB file for: %s' % pdbid)
-    pdbgz_page = ensembler.p_d_b.retrieve_pdb(pdbid, compressed='yes')
+    pdbgz_page = ensembler.pdb.retrieve_pdb(pdbid, compressed='yes')
     with open(project_pdb_filepath, 'w') as pdbgz_file:
         pdbgz_file.write(pdbgz_page)
 
 
 def download_sifts_file(pdbid, project_sifts_filepath):
     logger.info('Downloading sifts file for: %s', pdbid)
-    sifts_page = ensembler.p_d_b.retrieve_sifts(pdbid)
+    sifts_page = ensembler.pdb.retrieve_sifts(pdbid)
     with gzip.open(project_sifts_filepath, 'wb') as project_sifts_file:
         project_sifts_file.write(sifts_page)
 
@@ -592,7 +592,7 @@ def extract_template_structures_from_pdb_files(selected_templates):
     for template in selected_templates:
         pdb_filename = os.path.join(ensembler.core.default_project_dirnames.structures_pdb, template.pdbid + '.pdb.gz')
         template_resolved_filename = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, template.templateid + '.pdb')
-        ensembler.p_d_b.extract_residues_by_resnum(template_resolved_filename, pdb_filename, template)
+        ensembler.pdb.extract_residues_by_resnum(template_resolved_filename, pdb_filename, template)
 
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
@@ -680,7 +680,7 @@ def dep_extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_r
 
                 for PDB_chain_span_node in pdb_chain_span_nodes:
                     chain_span_string = PDB_chain_span_node.get('value')
-                    chain_spans = ensembler.uni_prot.parse_uniprot_pdbref_chains(chain_span_string)
+                    chain_spans = ensembler.uniprot.parse_uniprot_pdbref_chains(chain_span_string)
 
                     for chainid in chain_spans.keys():
                         if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
@@ -737,7 +737,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
 
                     for pdb_chain_span_node in pdb_chain_span_nodes:
                         chain_span_string = pdb_chain_span_node.get('value')
-                        chain_spans = ensembler.uni_prot.parse_uniprot_pdbref_chains(chain_span_string)
+                        chain_spans = ensembler.uniprot.parse_uniprot_pdbref_chains(chain_span_string)
 
                         for chainid in chain_spans.keys():
                             if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
@@ -768,7 +768,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
 
                 for pdb_chain_span_node in pdb_chain_span_nodes:
                     chain_span_string = pdb_chain_span_node.get('value')
-                    chain_spans = ensembler.uni_prot.parse_uniprot_pdbref_chains(chain_span_string)
+                    chain_spans = ensembler.uniprot.parse_uniprot_pdbref_chains(chain_span_string)
 
                     for chainid in chain_spans.keys():
                         if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
@@ -796,5 +796,5 @@ def extract_uniprot_acs_from_sifts_files(pdbids):
         sifts_filepath = os.path.join(ensembler.core.default_project_dirnames.structures_sifts, pdbid + '.xml.gz')
         parser = etree.XMLParser(huge_tree=True)
         siftsxml = etree.parse(sifts_filepath, parser).getroot()
-        uniprot_acs += ensembler.p_d_b.extract_uniprot_acs_from_sifts_xml(siftsxml)
+        uniprot_acs += ensembler.pdb.extract_uniprot_acs_from_sifts_xml(siftsxml)
     return list(set(uniprot_acs))
