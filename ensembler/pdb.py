@@ -2,8 +2,12 @@ import sys
 if sys.version_info > (3, 0):
     from urllib.request import urlopen
     from urllib.error import URLError
+    from io import StringIO
 else:
     from urllib2 import urlopen, URLError
+    from StringIO import StringIO
+import gzip
+import re
 
 
 def extract_residues_by_resnum(output_file, pdb_input_file, template):
@@ -13,7 +17,6 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
     output_file: string or gzip.file_like
     pdb_input_file: string or gzip.file_like
     """
-    import gzip
     if type(pdb_input_file) in [str, unicode]:
         with gzip.open(pdb_input_file, 'r') as pdb_file:
             pdbtext = pdb_file.readlines()
@@ -22,7 +25,6 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
 
     # list of resnum strings e.g. ['9', '29', '30B'] must be converted as follows to match the PDB format:
     # ['   9 ', '  29 ', '  30B']
-    import re
     desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.resolved_pdbresnums]
 
     if type(output_file) in [str, unicode]:
@@ -57,11 +59,9 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
 
 
 def retrieve_sifts(pdb_id):
-    '''Retrieves a SIFTS .xml file, given a PDB ID. Works by modifying the PDBe download URL.
+    """Retrieves a SIFTS .xml file, given a PDB ID. Works by modifying the PDBe download URL.
     Also removes annoying namespace stuff.
-    '''
-    import gzip
-    import StringIO
+    """
     sifts_download_base_url='ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/xml/'
     url = sifts_download_base_url + pdb_id.lower() + '.xml.gz'
     try:
@@ -72,7 +72,7 @@ def retrieve_sifts(pdb_id):
 
     sifts_page = response.read(100000000) # Max 100MB
     # Decompress string
-    sifts_page = gzip.GzipFile(fileobj=StringIO.StringIO(sifts_page)).read()
+    sifts_page = gzip.GzipFile(fileobj=StringIO(sifts_page)).read()
 
     # Removing all attribs from the entry tag, and the rdf tag and contents
     sifts_page_processed = ''

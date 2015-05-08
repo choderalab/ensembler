@@ -1,5 +1,9 @@
+import sys
 import os
-import StringIO
+if sys.version_info > (3, 0):
+    from io import StringIO
+else:
+    from StringIO import StringIO
 from ensembler.tests.utils import get_installed_resource_filename
 import ensembler.pdb
 from mock import Mock
@@ -13,7 +17,7 @@ def test_extract_residues_by_resnum_from_4CFE():
     template = Mock()
     template.chainid= 'A'
     template.resolved_pdbresnums = [str(x) for x in range(16, 269)]
-    ofile = StringIO.StringIO()
+    ofile = StringIO()
     ensembler.pdb.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile.close()
 
@@ -27,7 +31,7 @@ def test_extract_residues_by_resnum_from_3HLL():
     template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
-    ofile = StringIO.StringIO()
+    ofile = StringIO()
     ensembler.pdb.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile.close()
 
@@ -40,7 +44,7 @@ def test_extract_residues_by_resnum_output():
     template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
-    ofile = StringIO.StringIO()
+    ofile = StringIO()
     ensembler.pdb.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile_text = ofile.getvalue()
     first_line = ofile_text[0: ofile_text.index('\n')]
