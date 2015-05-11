@@ -529,7 +529,6 @@ def extract_pdb_template_seq(pdbchain):
     #     int(siftsxml.find('entity/segment/listResidue/residue/crossRefDb[@dbSource="UniProt"][@dbChainId="%s"][@dbResNum="%d"]/..' % (chainid, residue_span[1])).get('dbResNum')),
     # ]
 
-    # TODO once working, check whether this fills in all loops
     # An alternative approach would be to just take the UniProt sequence specified by the domain span
     selected_residues = siftsxml.xpath(
         'entity/segment/listResidue/residue/crossRefDb[@dbSource="PDB"][@dbChainId="%s"]'
@@ -700,6 +699,32 @@ def dep_extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_r
 
 
 def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=None, manual_overrides=None, specified_pdbids=None, specified_chainids=None):
+    """
+    Parameters
+    ----------
+    uniprotxml: lxml.etree.Element
+    uniprot_domain_regex: str
+    manual_overrides: ensembler.core.TemplateManualOverrides
+    specified_pdbids: list of str
+        ['2QR8', '4GU9']
+    specified_chainids: dict of list of str
+        {'2QR8': ['A'], '4GU9': ['A', 'B']}
+
+    Returns
+    -------
+    selected_pdbchains: list of dict
+        [
+            {
+                'templateid': str,
+                'pdbid': str,
+                'chainid': str,
+                'residue_span': [
+                    start (int),
+                    end (int)
+                ]
+            }
+        ]
+    """
     selected_pdbchains = []
     all_uniprot_entries = uniprotxml.findall('entry')
     for entry in all_uniprot_entries:

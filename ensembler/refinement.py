@@ -21,6 +21,7 @@ def refine_implicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
         process_only_these_templates=None, template_seqid_cutoff=None,
         verbose=False, write_trajectory=False,
+        include_disulfide_bonds=False,
         ff='amber99sbildn',
         implicit_water_model='amber99_obc',
         sim_length=100.0 * unit.picoseconds,
@@ -71,6 +72,9 @@ def refine_implicit_md(
         if verbose: print("Reading model...")
         with gzip.open(model_filename) as model_file:
             pdb = app.PDBFile(model_file)
+
+        if not include_disulfide_bonds:
+            remove_disulfide_bonds_from_topology(pdb.topology)
 
         # Set up Platform
         platform = openmm.Platform.getPlatformByName(openmm_platform)
@@ -189,6 +193,7 @@ def refine_implicit_md(
         with open(seqids_filepath, 'r') as seqids_file:
             seqids_data = [line.split() for line in seqids_file.readlines()]
 
+        # Find highest sequence identity model - topology will be used for all models
         reference_pdb_found = False
         for seqid_data in seqids_data:
             reference_template, reference_identity = seqid_data
@@ -208,7 +213,7 @@ def refine_implicit_md(
         if not reference_pdb_found:
             print('ERROR: reference PDB model not found at path')
 
-        # Build OpenMM Modeller object and add missing protons.
+        # Build topology for reference model
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
         reference_topology = modeller.topology
         reference_variants = modeller.addHydrogens(forcefield, pH=ph)
@@ -343,6 +348,24 @@ def auto_select_openmm_platform():
         except Exception:
             continue
     raise Exception('No OpenMM platform found')
+
+
+def remove_disulfide_bonds_from_topology(topology):
+    """
+
+    :param pdb:
+    :return:
+    """
+    remove_bond_indices = []
+    for b, bond in enumerate(topology._bonds):
+        atom0, atom1 = bond
+        if (
+            atom0.residue.name == 'CYS' and atom1.residue.name == 'CYS'
+            and (atom0.residue.index != atom1.residue.index)
+            and (atom0.name == 'SG' and atom0.name == 'SG')
+            ):
+            remove_bond_indices.append(b)
+    [topology._bonds.pop(b) for b in remove_bond_indices]
 
 
 def solvate_models(process_only_these_targets=None, process_only_these_templates=None,

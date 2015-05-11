@@ -379,34 +379,39 @@ def encode_url_query(uniprot_query):
     }
     return replace_all(uniprot_query, encoding_dict)
 
-def xpath_match_regex_case_sensitive(context, attrib_values, xpath_argument):
-    ''' To be used as an lxml XPath extension, for regex searches of attrib values.
-    '''
+def xpath_match_regex_case_sensitive(context, attrib_values, regex_str):
+    """To be used as an lxml XPath extension, for regex searches of attrib values.
+    Parameters
+    ----------
+    regex_str: str
+    """
     import re
     # If no attrib found
     if len(attrib_values) == 0:
         return False
     # If attrib found, then run match against regex
     else:
-        regex = re.compile(xpath_argument)
-        return bool( re.search(regex, attrib_values[0]) )
+        regex_str = re.compile(regex_str)
+        return bool(re.search(regex_str, attrib_values[0]))
 
-def xpath_match_regex_case_insensitive(context, attrib_values, xpath_argument):
-    ''' To be used as an lxml XPath extension, for regex searches of attrib values.
-    '''
+def xpath_match_regex_case_insensitive(context, attrib_values, regex_str):
+    """To be used as an lxml XPath extension, for regex searches of attrib values.
+    Parameters
+    ----------
+    regex_str: str
+    """
     import re
     # If no attrib found
     if len(attrib_values) == 0:
         return False
     # If attrib found, then run match against regex
     else:
-        regex = re.compile(xpath_argument, re.IGNORECASE)
-        return bool( re.search(regex, attrib_values[0]) )
+        regex = re.compile(regex_str, re.IGNORECASE)
+        return bool(re.search(regex, attrib_values[0]))
 
 def sequnwrap(sequence):
-    '''
-    Unwraps a wrapped sequence string
-    '''
+    """Unwraps a wrapped sequence string
+    """
     unwrapped = sequence.strip()
     unwrapped = ''.join(unwrapped.split('\n'))
     return unwrapped

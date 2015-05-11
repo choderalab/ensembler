@@ -56,7 +56,7 @@ def parse_uniprot_pdbref_chains(chains_span_str):
     A=458-778, B=764-778 => {'A':[458,778],'B':[764,778]}
     """
     comma_sep = chains_span_str.split(',')
-    chains_span = dict()
+    chains_span = {}
     for s in comma_sep:
         span = s.split('=')[1]
         begin = int(span.split('-')[0])
