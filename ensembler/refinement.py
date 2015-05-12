@@ -185,7 +185,7 @@ def refine_implicit_md(
 
         reference_model_id = get_highest_seqid_existing_model(models_target_dir=models_target_dir)
 
-        reference_model_path = os.path.join(models_target_dir, reference_model_id)
+        reference_model_path = os.path.join(models_target_dir, reference_model_id, 'model.pdb.gz')
         if not reference_model_path:
             continue
 
