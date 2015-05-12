@@ -74,9 +74,6 @@ def refine_implicit_md(
         with gzip.open(model_filename) as model_file:
             pdb = app.PDBFile(model_file)
 
-        if not include_disulfide_bonds:
-            remove_disulfide_bonds_from_topology(pdb.topology)
-
         # Set up Platform
         platform = openmm.Platform.getPlatformByName(openmm_platform)
         if 'CUDA_VISIBLE_DEVICES' not in os.environ:
@@ -196,6 +193,9 @@ def refine_implicit_md(
             reference_pdb = app.PDBFile(reference_pdb_file)
 
         logger.debug("Using %s as highest identity model" % (reference_model_id))
+
+        if not include_disulfide_bonds:
+            remove_disulfide_bonds_from_topology(reference_pdb.topology)
 
         # Build topology for reference model
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
