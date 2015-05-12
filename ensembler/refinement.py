@@ -5,6 +5,7 @@ import gzip
 import sys
 import subprocess
 import yaml
+import warnings
 from collections import deque
 import numpy as np
 import Bio
@@ -185,33 +186,16 @@ def refine_implicit_md(
         # Determine protonation state to use throughout
         # ========
 
-        # Determine highest-identity model.
-        seqids_filepath = os.path.join(models_target_dir, 'sequence-identities.txt')
-        if not os.path.exists(seqids_filepath):
-            print('ERROR: sequence-identities.txt file not found at path %s' % seqids_filepath)
+        reference_model_id = get_highest_seqid_existing_model(models_target_dir=models_target_dir)
+
+        reference_model_path = os.path.join(models_target_dir, reference_model_id)
+        if not reference_model_path:
             continue
-        with open(seqids_filepath, 'r') as seqids_file:
-            seqids_data = [line.split() for line in seqids_file.readlines()]
 
-        # Find highest sequence identity model - topology will be used for all models
-        reference_pdb_found = False
-        for seqid_data in seqids_data:
-            reference_template, reference_identity = seqid_data
-            reference_pdb_filepath = os.path.join(models_target_dir, reference_template, 'model.pdb.gz')
-            if not os.path.exists(reference_pdb_filepath):
-                continue
+        with gzip.open(reference_model_path) as reference_pdb_file:
+            reference_pdb = app.PDBFile(reference_pdb_file)
 
-            with gzip.open(reference_pdb_filepath) as reference_pdb_file:
-                reference_pdb = app.PDBFile(reference_pdb_file)
-
-            if verbose:
-                print("Using %s as highest identity model (%s%%)" % (reference_template, reference_identity))
-
-            reference_pdb_found = True
-            break
-
-        if not reference_pdb_found:
-            print('ERROR: reference PDB model not found at path')
+        logger.debug("Using %s as highest identity model" % (reference_model_id))
 
         # Build topology for reference model
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
@@ -350,11 +334,45 @@ def auto_select_openmm_platform():
     raise Exception('No OpenMM platform found')
 
 
-def remove_disulfide_bonds_from_topology(topology):
+def get_highest_seqid_existing_model(targetid=None, models_target_dir=None):
     """
+    Parameters
+    ----------
+    targetid: str
+    models_target_dir: str
 
-    :param pdb:
-    :return:
+    Returns
+    -------
+    reference_model_id: str
+        e.g. 'FAK1_HUMAN_D0_4KAB_B'
+    """
+    if not models_target_dir and targetid:
+        models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
+
+    seqids_filepath = os.path.join(models_target_dir, 'sequence-identities.txt')
+    if not os.path.exists(seqids_filepath):
+        warnings.warn('ERROR: sequence-identities.txt file not found at path %s' % seqids_filepath)
+        return None
+
+    with open(seqids_filepath, 'r') as seqids_file:
+        seqids_data = [line.split() for line in seqids_file.readlines()]
+
+    # Find highest sequence identity model - topology will be used for all models
+    for seqid_data in seqids_data:
+        reference_model_id, reference_identity = seqid_data
+        reference_pdb_filepath = os.path.join(models_target_dir, reference_model_id, 'model.pdb.gz')
+        if os.path.exists(reference_pdb_filepath):
+            return reference_model_id
+
+    warnings.warn('ERROR: reference PDB model not found at path')
+
+
+def remove_disulfide_bonds_from_topology(topology):
+    """Should work with topology object from OpenMM or mdtraj.
+
+    Parameters
+    ----------
+      topology: simtk.openmm.app.Topology or mdtraj.Topology
     """
     remove_bond_indices = []
     for b, bond in enumerate(topology._bonds):
@@ -374,10 +392,10 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
                    water_model='tip3p',
                    verbose=False,
                    padding=None):
-    '''Solvate models which have been subjected to MD refinement with implicit solvent.
+    """Solvate models which have been subjected to MD refinement with implicit solvent.
 
     MPI-enabled.
-    '''
+    """
     if padding is None:
         padding = 10.0 * unit.angstroms
     elif type(padding) is float:
