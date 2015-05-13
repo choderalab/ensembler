@@ -5,6 +5,7 @@ import gzip
 import sys
 import subprocess
 import yaml
+from yaml.scanner import ScannerError
 import warnings
 import socket
 from collections import deque
@@ -951,11 +952,19 @@ def refine_explicit_md(
             log_filepath = os.path.join(model_dir, 'explicit-log.yaml')
             if os.path.exists(log_filepath):
                 with open(log_filepath) as log_file:
-                    log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
-                    if log_data.get('successful') is True:
-                        continue
-                    if log_data.get('finished') is True and (retry_failed_runs is False and log_data.get('successful') is False):
-                        continue
+                    try:
+                        log_data = yaml.load(log_file, Loader=ensembler.core.YamlLoader)
+                        if log_data.get('successful') is True:
+                            continue
+                        if log_data.get('finished') is True and (retry_failed_runs is False and log_data.get('successful') is False):
+                            continue
+                    except ScannerError as e:
+                        trbk = traceback.format_exc()
+                        warnings.warn(
+                            '= WARNING start: template {0} MPI rank {1} hostname {2} gpuid {3} =\n{4}\n{5}\n= WARNING end: template {0} MPI rank {1} hostname {2} gpuid {3}'.format(
+                                template.id, mpistate.rank, socket.gethostname(), gpuid, e, trbk
+                            )
+                        )
 
             # Check to make sure the initial model file is present.
             model_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
