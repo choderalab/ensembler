@@ -180,7 +180,7 @@ def refine_implicit_md(
         mpistate.comm.Barrier()
 
         # ========
-        # Determine protonation state to use throughout
+        # Determine topology (including protonation state) to use throughout
         # ========
 
         reference_model_id = get_highest_seqid_existing_model(models_target_dir=models_target_dir)
@@ -251,7 +251,7 @@ def refine_implicit_md(
             # Open log file
             log_data = {
                 'mpi_rank': mpistate.rank,
-                'gpuid': gpuid,
+                'gpuid': gpuid if 'CUDA_VISIBLE_DEVICES' not in os.environ else os.environ['CUDA_VISIBLE_DEVICES'],
                 'openmm_platform': openmm_platform,
                 'sim_length': '%s' % sim_length,
                 'finished': False,
@@ -969,7 +969,7 @@ def refine_explicit_md(
             # Open log file
             log_data = {
                 'mpi_rank': mpistate.rank,
-                'gpuid': gpuid,
+                'gpuid': gpuid if 'CUDA_VISIBLE_DEVICES' not in os.environ else os.environ['CUDA_VISIBLE_DEVICES'],
                 'openmm_platform': openmm_platform,
                 'sim_length': '%s' % sim_length,
                 'finished': False,
