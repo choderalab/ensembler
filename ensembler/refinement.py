@@ -6,6 +6,7 @@ import sys
 import subprocess
 import yaml
 import warnings
+import socket
 from collections import deque
 import numpy as np
 import Bio
@@ -271,6 +272,11 @@ def refine_implicit_md(
                 log_file.log(new_log_data=log_data)
             except Exception as e:
                 trbk = traceback.format_exc()
+                warnings.warn(
+                    '= ERROR start: MPI rank {0} hostname {1} gpuid {2} =\n{3}\n{4}\n= ERROR end: MPI rank {0} hostname {1} gpuid {2}'.format(
+                        mpistate.rank, socket.gethostname(), gpuid, e, trbk
+                    )
+                )
                 timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
                     'exception': e,
@@ -996,6 +1002,11 @@ def refine_explicit_md(
 
             except Exception as e:
                 trbk = traceback.format_exc()
+                warnings.warn(
+                    '= ERROR start: MPI rank {0} hostname {1} gpuid {2} =\n{3}\n{4}\n= ERROR end: MPI rank {0} hostname {1} gpuid {2}'.format(
+                        mpistate.rank, socket.gethostname(), gpuid, e, trbk
+                    )
+                )
                 timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
                 log_data = {
                     'exception': e,
