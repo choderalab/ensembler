@@ -1003,8 +1003,8 @@ def refine_explicit_md(
             except Exception as e:
                 trbk = traceback.format_exc()
                 warnings.warn(
-                    '= ERROR start: MPI rank {0} hostname {1} gpuid {2} =\n{3}\n{4}\n= ERROR end: MPI rank {0} hostname {1} gpuid {2}'.format(
-                        mpistate.rank, socket.gethostname(), gpuid, e, trbk
+                    '= ERROR start: template {0} MPI rank {1} hostname {2} gpuid {3} =\n{4}\n{5}\n= ERROR end: template {0} MPI rank {1} hostname {2} gpuid {3}'.format(
+                        template.id, mpistate.rank, socket.gethostname(), gpuid, e, trbk
                     )
                 )
                 timing = ensembler.core.strf_timedelta(datetime.datetime.utcnow() - start)
