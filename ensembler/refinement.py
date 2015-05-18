@@ -652,6 +652,7 @@ def refine_explicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
         process_only_these_templates=None, template_seqid_cutoff=None,
         verbose=False, write_trajectory=False,
+        include_disulfide_bonds=False,
         ff='amber99sbildn',
         water_model='tip3p',
         sim_length=100.0 * unit.picoseconds,
@@ -997,6 +998,10 @@ def refine_explicit_md(
 
                 with gzip.open(model_filename) as model_file:
                     pdb = app.PDBFile(model_file)
+
+                if not include_disulfide_bonds:
+                    remove_disulfide_bonds_from_topology(pdb.topology)
+
                 [positions, topology] = solvate_pdb(pdb, nwaters)
 
                 simulate_explicit_md()

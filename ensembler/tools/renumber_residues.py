@@ -8,7 +8,13 @@ from ensembler.core import logger
 
 
 class RenumberResidues(object):
-    # TODO: note somewhere that this will not work with targets with sequences which do not match the UniProt seq (e.g. mutatations, insertions, deletions)
+    """Renumber residues according to the UniProt canonical sequence
+
+    Requires the target id to be of the format '[UniProt mnemonic]_D[domain index]'
+
+    Note that this will not work with targets with sequences which do not match the UniProt seq
+    (e.g. those with mutations, insertions, deletions)
+    """
     def __init__(self, targetid, project_dir='.', log_level=None):
         ensembler.core.check_project_toplevel_dir()
         ensembler.utils.set_loglevel(log_level)
