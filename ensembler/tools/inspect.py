@@ -438,7 +438,7 @@ class LoopmodelLogs(object):
                     nmissing_resis = 0
                     missing_resi_spans = []
                     for line in lines:
-                        words = line.split(' ')
+                        words = line.split()
                         loop_start = int(words[1])
                         loop_end = int(words[2])
                         missing_resi_span = loop_end - loop_start + 1
