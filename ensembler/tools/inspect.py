@@ -83,17 +83,6 @@ class ProjectCounts(object):
                 sequence_identity.append(None)
         self.df['sequence_identity'] = sequence_identity
 
-    def _get_sequence_identities_old(self):   # TODO delete
-        sequence_identity = []
-        for templateid in self.df.templateid:
-            seqid_path = os.path.join(self.models_target_dir, templateid, 'sequence-identity.txt')
-            if os.path.exists(seqid_path):
-                seqid = float(open(seqid_path).read().strip())
-                sequence_identity.append(seqid)
-            else:
-                sequence_identity.append(None)
-        self.df['sequence_identity'] = sequence_identity
-
     def save_df(self, ofilepath=None):
         if ofilepath is None:
             ofilepath = 'counts.csv'
@@ -445,14 +434,21 @@ class LoopmodelLogs(object):
             loopfile_path = os.path.join(self.project_dir, 'templates/structures-modeled-loops', templateid + '.loop')
             with open(loopfile_path) as loopfile:
                 lines = loopfile.readlines()
-                nmissing_resis = 0
-                missing_resi_spans = []
-                for line in lines:
-                    loop_start = int(line[4:8])
-                    loop_end = int(line[8:12])
-                    missing_resi_span = loop_end - loop_start + 1
-                    missing_resi_spans.append(missing_resi_span)
-                    nmissing_resis += missing_resi_span
+                try:
+                    nmissing_resis = 0
+                    missing_resi_spans = []
+                    for line in lines:
+                        words = line.split(' ')
+                        loop_start = int(words[1])
+                        loop_end = int(words[2])
+                        missing_resi_span = loop_end - loop_start + 1
+                        missing_resi_spans.append(missing_resi_span)
+                        nmissing_resis += missing_resi_span
+                except:
+                    logger.exception(
+                        'Error reading file {0}\nContents:\n{1}'.format(loopfile_path, '\n'.join(lines))
+                    )
+                    raise
             missing_resis_df.append({
                 'templateid': templateid,
                 'missing_resi_spans': missing_resi_spans,
