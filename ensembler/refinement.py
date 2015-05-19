@@ -34,6 +34,7 @@ def refine_implicit_md(
         cutoff=None,                                  # nonbonded cutoff
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
+        nsteps_per_iteration=500,
         ph=7.0,
         retry_failed_runs=False,
         cpu_platform_threads=1):
@@ -67,7 +68,6 @@ def refine_implicit_md(
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
 
-    nsteps_per_iteration = 500
     niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
     def simulate_implicit_md():
@@ -663,7 +663,8 @@ def refine_explicit_md(
         barostat_period=50,
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
-        write_solvated_model=False, careful_cleaning=True,
+        nsteps_per_iteration=500,
+        write_solvated_model=False,
         cpu_platform_threads=1,
         retry_failed_runs=False):
     '''Run MD refinement in explicit solvent.
@@ -697,7 +698,6 @@ def refine_explicit_md(
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
 
-    nsteps_per_iteration = 500
     niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
     def solvate_pdb(pdb, target_nwaters, water_model=water_model):
