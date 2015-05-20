@@ -4,6 +4,7 @@ import operator as op
 import simtk.unit
 
 unit_membernames = [name for name in simtk.unit.__dict__]
+safe_names = {'None': None, 'True': True, 'False': False}
 
 quantity_as_number_space_unit_regex = re.compile(
     '([0-9.]+) ?({0})'.format('|'.join(unit_membernames))
@@ -39,6 +40,8 @@ def parse_api_params_string(params_string):
             return node.s
         elif isinstance(node, ast.Name) and node.id in unit_membernames:   # <member of simtk.unit>
             return getattr(simtk.unit, node.id)
+        elif isinstance(node, ast.Name) and node.id in safe_names:   # None, True, False
+            return safe_names[node.id]
         elif isinstance(node, ast.BinOp):   # <left> <operator> <right>
             return valid_operators[type(node.op)](_eval_node(node.left), _eval_node(node.right))
         elif isinstance(node, ast.UnaryOp):   # <operator> <operand> e.g., -1
