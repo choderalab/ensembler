@@ -21,7 +21,7 @@ Usage:
   ensembler cluster [-h | --help] [--targets <target>] [--targetsfile <targetsfile>]
       [--cutoff <cutoff>] [-v | --verbose]
   ensembler refine_implicit [-h | --help] [--targets <target>] [--targetsfile <targetsfile>]
-      [--templates <template>] [--templatesfile <templatesfile] [--template_seqid_cutoff <cutoff>]
+      [--templates <template>] [--templatesfile <templatesfile>] [--template_seqid_cutoff <cutoff>]
       [--gpupn <gpupn>] [--openmm_platform <platform>] [--simlength <simlength>]
       [--retry_failed_runs] [--ff <ffname>] [--water_model <modelname>] [--api_params <params>]
       [-v | --verbose]

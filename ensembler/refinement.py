@@ -848,16 +848,6 @@ def refine_explicit_md(
         if verbose: print("Minimizing structure...")
         openmm.LocalEnergyMinimizer.minimize(context, minimization_tolerance, minimization_steps)
 
-        # TODO DEBUGGING
-        if serialize_at_start_of_each_sim:
-            with open(system_filename[: system_filename.index('.xml')]+'-start.xml', 'w') as system_file:
-                system_file.write(openmm.XmlSerializer.serialize(system))
-            with open(integrator_filename[: integrator_filename.index('.xml')]+'-start.xml', 'w') as integrator_file:
-                integrator_file.write(openmm.XmlSerializer.serialize(integrator))
-            state = context.getState(getPositions=True, getVelocities=True, getForces=True, getEnergy=True, getParameters=True, enforcePeriodicBox=True)
-            with open(state_filename[: state_filename.index('.xml')]+'-start.xml', 'w') as state_file:
-                state_file.write(openmm.XmlSerializer.serialize(state))
-
         if write_trajectory:
             # Open trajectory for writing.
             if verbose: print("Opening trajectory for writing...")
@@ -874,6 +864,17 @@ def refine_explicit_md(
         context.setVelocitiesToTemperature(temperature)
         import time
         initial_time = time.time()
+
+        # TODO DEBUGGING
+        if serialize_at_start_of_each_sim:
+            with open(system_filename[: system_filename.index('.xml')]+'-start.xml', 'w') as system_file:
+                system_file.write(openmm.XmlSerializer.serialize(system))
+            with open(integrator_filename[: integrator_filename.index('.xml')]+'-start.xml', 'w') as integrator_file:
+                integrator_file.write(openmm.XmlSerializer.serialize(integrator))
+            state = context.getState(getPositions=True, getVelocities=True, getForces=True, getEnergy=True, getParameters=True, enforcePeriodicBox=True)
+            with open(state_filename[: state_filename.index('.xml')]+'-start.xml', 'w') as state_file:
+                state_file.write(openmm.XmlSerializer.serialize(state))
+
         for iteration in range(niterations):
             # integrate dynamics
             integrator.step(nsteps_per_iteration)
