@@ -235,7 +235,7 @@ class MkTrajImplicitStart(MkTraj):
     def _gen_implicit_start_model(self, templateid):
         from simtk.openmm import app
 
-        input_model_filepath = os.path.join(self.models_target_dir, templateid)
+        input_model_filepath = os.path.join(self.models_target_dir, templateid, model_filenames_by_ensembler_stage['build_models'])
         output_model_filepath = os.path.join(self.models_target_dir, self.model_filename)
 
         with gzip.open(input_model_filepath) as model_file:
