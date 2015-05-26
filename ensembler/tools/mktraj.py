@@ -1,10 +1,11 @@
 import os
+import gzip
 import numpy as np
 import pandas as pd
 import mdtraj
 import ensembler
-from ensembler.core import logger, get_most_advanced_ensembler_modeling_stage
-from ensembler.refinement import remove_disulfide_bonds_from_topology
+from ensembler.core import logger, get_most_advanced_ensembler_modeling_stage, default_project_dirnames, model_filenames_by_ensembler_stage
+from ensembler.refinement import remove_disulfide_bonds_from_topology, get_highest_seqid_existing_model
 
 
 class MkTraj(object):
@@ -39,7 +40,7 @@ class MkTraj(object):
         """
         ensembler.utils.set_loglevel(loglevel)
         ensembler.core.check_project_toplevel_dir()
-        self.models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
+        self.models_target_dir = os.path.join(default_project_dirnames.models, targetid)
 
         logger.debug('Working on target %s' % targetid)
 
@@ -50,21 +51,21 @@ class MkTraj(object):
 
         if traj_filepath is None:
             self.traj_filepath = os.path.join(
-                self.models_target_dir, 'traj-{0}.xtc'.format(ensembler_stage)
+                self.models_target_dir, 'traj-{0}.xtc'.format(self.ensembler_stage)
             )
         else:
             self.traj_filepath = traj_filepath
 
         if topol_filepath is None:
             self.topol_filepath = os.path.join(
-                self.models_target_dir, 'traj-{0}-topol.pdb'.format(ensembler_stage)
+                self.models_target_dir, 'traj-{0}-topol.pdb'.format(self.ensembler_stage)
             )
         else:
             self.topol_filepath = topol_filepath
 
         if models_data_filepath is None:
             self.models_data_filepath = os.path.join(
-                self.models_target_dir, 'traj-{0}-data.csv'.format(ensembler_stage)
+                self.models_target_dir, 'traj-{0}-data.csv'.format(self.ensembler_stage)
             )
         else:
             self.models_data_filepath = models_data_filepath
@@ -81,8 +82,10 @@ class MkTraj(object):
             self._superpose()
             self._write_traj()
 
-    def _gen_df(self):
-        model_filename = ensembler.core.model_filenames_by_ensembler_stage[self.ensembler_stage]
+    def _gen_df(self, model_filename=None):
+        if model_filename is None:
+            model_filename = ensembler.core.model_filenames_by_ensembler_stage[self.ensembler_stage]
+
         valid_model_templateids = [
             templateid for templateid in self.templateids
             if os.path.exists(os.path.join(self.models_target_dir, templateid, model_filename))
@@ -139,3 +142,111 @@ class MkTraj(object):
         """
         self.traj[0].save(self.topol_filepath)
         self.traj.save(self.traj_filepath)
+
+
+class MkTrajImplicitStart(MkTraj):
+    def __init__(self, targetid, traj_filepath=None, topol_filepath=None,
+           models_data_filepath=None, process_only_these_templates=None, loglevel=None,
+           run_main=True):
+        """Quick hack.
+        """
+        ensembler.utils.set_loglevel(loglevel)
+        ensembler.core.check_project_toplevel_dir()
+        self.models_target_dir = os.path.join(default_project_dirnames.models, targetid)
+
+        logger.debug('Working on target %s' % targetid)
+
+        self.ensembler_stage = 'implicit-start'
+        self.model_filename = 'implicit-start.pdb.gz'
+
+        if traj_filepath is None:
+            self.traj_filepath = os.path.join(
+                self.models_target_dir, 'traj-{0}.xtc'.format(self.ensembler_stage)
+            )
+        else:
+            self.traj_filepath = traj_filepath
+
+        if topol_filepath is None:
+            self.topol_filepath = os.path.join(
+                self.models_target_dir, 'traj-{0}-topol.pdb'.format(self.ensembler_stage)
+            )
+        else:
+            self.topol_filepath = topol_filepath
+
+        if models_data_filepath is None:
+            self.models_data_filepath = os.path.join(
+                self.models_target_dir, 'traj-{0}-data.csv'.format(self.ensembler_stage)
+            )
+        else:
+            self.models_data_filepath = models_data_filepath
+
+        if process_only_these_templates:
+            self.templateids = process_only_these_templates
+        else:
+            self.templateids = os.walk(self.models_target_dir).next()[1]
+
+        if run_main:
+            self._gen_implicit_start_models()
+            self._gen_df(model_filename=self.model_filename)
+            self.df.to_csv(self.models_data_filepath, columns=['templateid', 'seqid'])
+            self._construct_traj()
+            self._superpose()
+            self._write_traj()
+
+    def _gen_implicit_start_models(
+            self,
+            ff='amber99sbildn.xml', implicit_water_model='amber99_obc.xml',
+            ph=8.0):
+
+        self.ph = ph
+        from simtk.openmm import app
+
+        valid_model_templateids = [
+            templateid for templateid in self.templateids
+            if os.path.exists(
+                os.path.join(
+                    self.models_target_dir, templateid,
+                    ensembler.core.model_filenames_by_ensembler_stage['refine_implicit_md']
+                )
+            )
+        ]
+
+        gen_model_templateids = [
+            templateid for templateid in valid_model_templateids
+            if not os.path.exists(
+                os.path.join(self.models_target_dir, templateid, self.model_filename)
+            )
+        ]
+
+        # make reference model
+        self.forcefield = app.ForceField(*[ff, implicit_water_model])
+        reference_model_id = get_highest_seqid_existing_model(models_target_dir=self.models_target_dir)
+        reference_model_path = os.path.join(self.models_target_dir, reference_model_id, model_filenames_by_ensembler_stage['build_models'])
+        with gzip.open(reference_model_path) as reference_pdb_file:
+            reference_pdb = app.PDBFile(reference_pdb_file)
+        remove_disulfide_bonds_from_topology(reference_pdb.topology)
+        modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
+        self.reference_topology = modeller.topology
+        self.reference_variants = modeller.addHydrogens(self.forcefield, pH=self.ph)
+
+        for templateid in gen_model_templateids:
+            self._gen_implicit_start_model(templateid)
+
+    def _gen_implicit_start_model(self, templateid):
+        from simtk.openmm import app
+
+        input_model_filepath = os.path.join(self.models_target_dir, templateid)
+        output_model_filepath = os.path.join(self.models_target_dir, self.model_filename)
+
+        with gzip.open(input_model_filepath) as model_file:
+            pdb = app.PDBFile(model_file)
+
+        modeller = app.Modeller(self.reference_topology, pdb.positions)
+        modeller.addHydrogens(self.forcefield, pH=self.ph, variants=self.reference_variants)
+        topology = modeller.getTopology()
+        positions = modeller.getPositions()
+
+        with gzip.open(output_model_filepath, 'w') as output_model_file:
+            app.PDBFile.writeHeader(topology, file=output_model_file)
+            app.PDBFile.writeFile(topology, positions, file=output_model_file)
+            app.PDBFile.writeFooter(topology, file=output_model_file)
