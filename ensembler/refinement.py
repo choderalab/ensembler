@@ -744,10 +744,10 @@ def refine_explicit_md(
         topology = modeller.getTopology()
         positions = modeller.getPositions()
         box_min = topology.getUnitCellDimensions()
-        natoms_min = len(positions) # minimal number of atoms
+        natoms_min = len(positions)   # minimal number of atoms
         nwaters_min = (natoms_min - natoms_initial) / natoms_per_solvent # minimal number of waters
         volume_min = box_min[0] * box_min[1] * box_min[2]
-        residues = [ r for r in topology.residues() ] # build a list of residues
+        residues = [ r for r in topology.residues() ]   # build a list of residues
         nresidues_min = len(residues) # number of residues
         if verbose: print("Minimally solvated system has %d atoms (%d waters)" % (natoms_min, nwaters_min))
 

@@ -219,7 +219,7 @@ class MkTrajImplicitStart(MkTraj):
         ]
 
         # make reference model
-        self.forcefield = app.ForceField(*[ff, implicit_water_model])
+        self.forcefield = app.ForceField(ff, implicit_water_model)
         reference_model_id = get_highest_seqid_existing_model(models_target_dir=self.models_target_dir)
         reference_model_path = os.path.join(self.models_target_dir, reference_model_id, model_filenames_by_ensembler_stage['build_models'])
         with gzip.open(reference_model_path) as reference_pdb_file:
@@ -235,16 +235,19 @@ class MkTrajImplicitStart(MkTraj):
     def _gen_implicit_start_model(self, templateid):
         from simtk.openmm import app
 
-        input_model_filepath = os.path.join(self.models_target_dir, templateid, model_filenames_by_ensembler_stage['build_models'])
-        output_model_filepath = os.path.join(self.models_target_dir, self.model_filename)
+        try:
+            input_model_filepath = os.path.join(self.models_target_dir, templateid, model_filenames_by_ensembler_stage['build_models'])
+            output_model_filepath = os.path.join(self.models_target_dir, self.model_filename)
 
-        with gzip.open(input_model_filepath) as model_file:
-            pdb = app.PDBFile(model_file)
+            with gzip.open(input_model_filepath) as model_file:
+                pdb = app.PDBFile(model_file)
 
-        modeller = app.Modeller(self.reference_topology, pdb.positions)
-        modeller.addHydrogens(self.forcefield, pH=self.ph, variants=self.reference_variants)
-        topology = modeller.getTopology()
-        positions = modeller.getPositions()
+            modeller = app.Modeller(self.reference_topology, pdb.positions)
+            modeller.addHydrogens(self.forcefield, pH=self.ph, variants=self.reference_variants)
+            topology = modeller.getTopology()
+            positions = modeller.getPositions()
+        except:
+            import ipdb; ipdb.set_trace()
 
         with gzip.open(output_model_filepath, 'w') as output_model_file:
             app.PDBFile.writeHeader(topology, file=output_model_file)
