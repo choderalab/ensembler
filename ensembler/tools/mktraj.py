@@ -225,14 +225,16 @@ class MkTrajImplicitStart(MkTraj):
         with gzip.open(reference_model_path) as reference_pdb_file:
             reference_pdb = app.PDBFile(reference_pdb_file)
         remove_disulfide_bonds_from_topology(reference_pdb.topology)
+        self.reference_topology = reference_pdb.topology
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
-        self.reference_topology = modeller.topology
         self.reference_variants = modeller.addHydrogens(self.forcefield, pH=self.ph)
 
         for templateid in gen_model_templateids:
             self._gen_implicit_start_model(templateid)
 
     def _gen_implicit_start_model(self, templateid):
+        logger.debug('Generating implicit-start model for {0})'.format(templateid))
+
         from simtk.openmm import app
 
         try:
@@ -242,11 +244,12 @@ class MkTrajImplicitStart(MkTraj):
             with gzip.open(input_model_filepath) as model_file:
                 pdb = app.PDBFile(model_file)
 
+            remove_disulfide_bonds_from_topology(pdb.topology)
             modeller = app.Modeller(self.reference_topology, pdb.positions)
             modeller.addHydrogens(self.forcefield, pH=self.ph, variants=self.reference_variants)
             topology = modeller.getTopology()
             positions = modeller.getPositions()
-        except:
+        except Exception as e:
             import ipdb; ipdb.set_trace()
 
         with gzip.open(output_model_filepath, 'w') as output_model_file:
