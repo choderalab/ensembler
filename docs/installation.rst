@@ -63,7 +63,7 @@ To use Ensembler, the following libraries and software will need to be installed
     `MSMBuilder <http://msmbuilder.org/>`_
         Statistical models for biomolecular dynamics.
 
-    `pdbfixer`
+    pdbfixer
 
     `BioPython <http://biopython.org/wiki/Main_Page>`_
         Collection of Python tools for computational biology and
@@ -81,7 +81,7 @@ To use Ensembler, the following libraries and software will need to be installed
     `docopt <http://docopt.org/>`_
         For building command-line interfaces.
 
-    `mock`
+    mock
 
 Optional packages:
 
