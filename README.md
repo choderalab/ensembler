@@ -56,11 +56,10 @@ Dependencies
 
 * OpenMM - https://simtk.org/home/openmm
 * Modeller - http://salilab.org/modeller/
-* mpi4py - http://mpi4py.scipy.org/
 * mdtraj - http://mdtraj.org/
 * MSMBuilder - http://msmbuilder.org/
 * Rosetta (optional, for template loop reconstruction) - https://www.rosettacommons.org/software
 * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
-* Other Python packages: BioPython, mpi4py, numpy, lxml, PyYAML
+* Other Python packages: pdbfixer, BioPython, mpi4py, numpy, lxml, PyYAML, docopt, mock, subprocess32
 
 Recommended approach is to install using conda (https://store.continuum.io/cshop/anaconda/). This will install all dependencies except for Modeller, which must be installed separately by the user.
