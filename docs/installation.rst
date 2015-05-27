@@ -63,6 +63,8 @@ To use Ensembler, the following libraries and software will need to be installed
     `MSMBuilder <http://msmbuilder.org/>`_
         Statistical models for biomolecular dynamics.
 
+    `pdbfixer`
+
     `BioPython <http://biopython.org/wiki/Main_Page>`_
         Collection of Python tools for computational biology and
         bioinformatics.
@@ -79,6 +81,8 @@ To use Ensembler, the following libraries and software will need to be installed
     `docopt <http://docopt.org/>`_
         For building command-line interfaces.
 
+    `mock`
+
 Optional packages:
 
     `MPI4Py <http://mpi4py.scipy.org/>`_
@@ -89,6 +93,7 @@ Optional packages:
         by Ensembler to reconstruct missing loops in template structures.
 
     `subprocess32 <https://pypi.python.org/pypi/subprocess32/>`_
+        (If running Python 2.)
         Backport of the Python 3 subprocess module for Python 2. Used to run
         command-line programs such as Rosetta loopmodel. Includes timeout
         functionality which is particularly useful for the template loop
