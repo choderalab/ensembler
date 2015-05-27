@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import mdtraj
 import ensembler
-from ensembler.core import logger, get_most_advanced_ensembler_modeling_stage, default_project_dirnames, model_filenames_by_ensembler_stage
+from ensembler.core import logger, get_most_advanced_ensembler_modeling_stage, default_project_dirnames, model_filenames_by_ensembler_stage, mpistate
 from ensembler.refinement import remove_disulfide_bonds_from_topology, get_highest_seqid_existing_model
 
 
@@ -229,8 +229,9 @@ class MkTrajImplicitStart(MkTraj):
         reference_modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
         reference_variants = reference_modeller.addHydrogens(forcefield, pH=self.ph)
 
-        for templateid in gen_model_templateids:
-            logger.debug('Generating implicit-start model for {0})'.format(templateid))
+        for template_index in range(mpistate.rank, len(gen_model_templateids), mpistate.size):
+            templateid = gen_model_templateids[template_index]
+            logger.debug('Generating implicit-start model for {0}'.format(templateid))
 
             try:
                 input_model_filepath = os.path.join(self.models_target_dir, templateid, model_filenames_by_ensembler_stage['build_models'])
