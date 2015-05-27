@@ -252,4 +252,5 @@ class MkTrajImplicitStart(MkTraj):
                     app.PDBFile.writeFooter(topology, file=output_model_file)
 
             except Exception as e:
-                import ipdb; ipdb.set_trace()
+                continue
+                # import ipdb; ipdb.set_trace()
