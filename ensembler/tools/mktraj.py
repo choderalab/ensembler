@@ -219,40 +219,36 @@ class MkTrajImplicitStart(MkTraj):
         ]
 
         # make reference model
-        self.forcefield = app.ForceField(ff, implicit_water_model)
+        forcefield = app.ForceField(ff, implicit_water_model)
         reference_model_id = get_highest_seqid_existing_model(models_target_dir=self.models_target_dir)
         reference_model_path = os.path.join(self.models_target_dir, reference_model_id, model_filenames_by_ensembler_stage['build_models'])
         with gzip.open(reference_model_path) as reference_pdb_file:
             reference_pdb = app.PDBFile(reference_pdb_file)
         remove_disulfide_bonds_from_topology(reference_pdb.topology)
-        self.reference_topology = reference_pdb.topology
-        modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
-        self.reference_variants = modeller.addHydrogens(self.forcefield, pH=self.ph)
+        reference_topology = reference_pdb.topology
+        reference_modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
+        reference_variants = reference_modeller.addHydrogens(forcefield, pH=self.ph)
 
         for templateid in gen_model_templateids:
-            self._gen_implicit_start_model(templateid)
+            logger.debug('Generating implicit-start model for {0})'.format(templateid))
 
-    def _gen_implicit_start_model(self, templateid):
-        logger.debug('Generating implicit-start model for {0})'.format(templateid))
+            try:
+                input_model_filepath = os.path.join(self.models_target_dir, templateid, model_filenames_by_ensembler_stage['build_models'])
+                output_model_filepath = os.path.join(self.models_target_dir, templateid, self.model_filename)
 
-        from simtk.openmm import app
+                with gzip.open(input_model_filepath) as pdb_file:
+                    pdb = app.PDBFile(pdb_file)
 
-        try:
-            input_model_filepath = os.path.join(self.models_target_dir, templateid, model_filenames_by_ensembler_stage['build_models'])
-            output_model_filepath = os.path.join(self.models_target_dir, self.model_filename)
+                remove_disulfide_bonds_from_topology(pdb.topology)
+                modeller = app.Modeller(reference_topology, pdb.positions)
+                modeller.addHydrogens(forcefield, pH=self.ph, variants=reference_variants)
+                topology = modeller.getTopology()
+                positions = modeller.getPositions()
 
-            with gzip.open(input_model_filepath) as model_file:
-                pdb = app.PDBFile(model_file)
+                with gzip.open(output_model_filepath, 'w') as output_model_file:
+                    app.PDBFile.writeHeader(topology, file=output_model_file)
+                    app.PDBFile.writeFile(topology, positions, file=output_model_file)
+                    app.PDBFile.writeFooter(topology, file=output_model_file)
 
-            remove_disulfide_bonds_from_topology(pdb.topology)
-            modeller = app.Modeller(self.reference_topology, pdb.positions)
-            modeller.addHydrogens(self.forcefield, pH=self.ph, variants=self.reference_variants)
-            topology = modeller.getTopology()
-            positions = modeller.getPositions()
-        except Exception as e:
-            import ipdb; ipdb.set_trace()
-
-        with gzip.open(output_model_filepath, 'w') as output_model_file:
-            app.PDBFile.writeHeader(topology, file=output_model_file)
-            app.PDBFile.writeFile(topology, positions, file=output_model_file)
-            app.PDBFile.writeFooter(topology, file=output_model_file)
+            except Exception as e:
+                import ipdb; ipdb.set_trace()
