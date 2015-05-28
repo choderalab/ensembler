@@ -113,13 +113,13 @@ class MkTraj(object):
         self.df.reset_index(drop=True, inplace=True)
 
     def _construct_traj(self):
-        logger.debug('Working on model {0} ({1}/{2})'.format(self.df.templateid.iloc[0], 0, len(self.df.model_filepath)))
+        logger.debug('Loading Trajectory object for model {0} ({1}/{2})'.format(self.df.templateid.iloc[0], 0, len(self.df.model_filepath)))
         traj = mdtraj.load_pdb(self.df.model_filepath[0])
         remove_disulfide_bonds_from_topology(traj.topology)
         self.traj = traj
 
         for m, model_filepath in enumerate(self.df.model_filepath[1:]):
-            logger.debug('Working on model {0} ({1}/{2})'.format(self.df.templateid.iloc[m+1], m+1, len(self.df.model_filepath)))
+            logger.debug('Loading Trajectory object for model {0} ({1}/{2})'.format(self.df.templateid.iloc[m+1], m+1, len(self.df.model_filepath)))
             traj = mdtraj.load_pdb(model_filepath)
             remove_disulfide_bonds_from_topology(traj.topology)
             self.traj += traj
@@ -252,5 +252,6 @@ class MkTrajImplicitStart(MkTraj):
                     app.PDBFile.writeFooter(topology, file=output_model_file)
 
             except Exception as e:
+                print 'Error for model {0}: {1}'.format(templateid, e)
                 continue
                 # import ipdb; ipdb.set_trace()
