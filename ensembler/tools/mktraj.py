@@ -221,6 +221,7 @@ class MkTrajImplicitStart(MkTraj):
         # make reference model
         forcefield = app.ForceField(ff, implicit_water_model)
         reference_model_id = get_highest_seqid_existing_model(models_target_dir=self.models_target_dir)
+        logger.debug('Using {0} as reference model'.format(reference_model_id))
         reference_model_path = os.path.join(self.models_target_dir, reference_model_id, model_filenames_by_ensembler_stage['build_models'])
         with gzip.open(reference_model_path) as reference_pdb_file:
             reference_pdb = app.PDBFile(reference_pdb_file)
