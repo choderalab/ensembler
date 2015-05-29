@@ -27,7 +27,7 @@ To install Ensembler with conda, use the following commands ::
 
 .. note:: ``conda`` will automatically install many of the tricky dependencies from binary packages automatically! The easiest way to get conda is with the `Anaconda python distribution <https://store.continuum.io/cshop/anaconda/>`_.
 
-.. warning:: If you are running Ensembler on OS X and see errors relating to OpenMPI (e.g. ``/opt/anaconda1anaconda2anaconda3/share/openmpi/help-opal-runtime.txt: No such file or directory.  Sorry!``), this is a `known Anaconda issue <https://github.com/ContinuumIO/anaconda-issues/issues/96>`_. A simple workaround is to create a symlink from ``/opt/anaconda1anaconda2anaconda3`` to your Anaconda installation, e.g. ``sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3``.
+.. warning:: If you are running Ensembler on OS X and see errors relating to OpenMPI, e.g. ``Sorry!  You were supposed to get help about: opal_init:startup:internal-failure``), this is a `known issue with Anaconda <https://github.com/ContinuumIO/anaconda-issues/issues/96>`_. A simple workaround is to create a symlink from ``/opt/anaconda1anaconda2anaconda3`` to your Anaconda installation, e.g. ``sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3``.
 
 
 Install from Source
