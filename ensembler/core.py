@@ -381,8 +381,11 @@ def encode_url_query(uniprot_query):
 
 def xpath_match_regex_case_sensitive(context, attrib_values, regex_str):
     """To be used as an lxml XPath extension, for regex searches of attrib values.
+
     Parameters
     ----------
+    context: set automatically by lxml
+    attrib_values: set automatically by lxml
     regex_str: str
     """
     import re

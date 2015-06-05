@@ -640,64 +640,6 @@ def gen_gather_templates_metadata(nselected_templates, additional_metadata=None)
     return metadata
 
 
-def dep_extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=None, manual_overrides=None, specified_pdbids=None, specified_chainids=None):
-    selected_pdbchains = []
-    all_uniprot_entries = uniprotxml.findall('entry')
-    for entry in all_uniprot_entries:
-        entry_name = entry.find('name').text
-        if uniprot_domain_regex:
-            selected_domains = entry.xpath(
-                'feature[@type="domain"][match_regex(@description, "%s")]' % uniprot_domain_regex,
-                extensions={(None, 'match_regex'): ensembler.core.xpath_match_regex_case_sensitive}
-            )
-        else:
-            selected_domains = entry.findall('feature[@type="domain"]')
-
-        domain_iter = 0
-        for domain in selected_domains:
-            domain_id = '%s_D%d' % (entry_name, domain_iter)
-            domain_span = [int(domain.find('location/begin').get('position')), int(domain.find('location/end').get('position'))]
-            if manual_overrides and domain_id in manual_overrides.template.domain_spans:
-                domain_span = [int(x) for x in manual_overrides.template.domain_spans[domain_id].split('-')]
-            domain_len = domain_span[1] - domain_span[0] + 1
-            if manual_overrides and manual_overrides.template.min_domain_len is not None and domain_len < manual_overrides.template.min_domain_len:
-                continue
-            if manual_overrides and manual_overrides.template.max_domain_len is not None and domain_len > manual_overrides.template.max_domain_len:
-                continue
-
-            domain_iter += 1
-            pdbs = domain.getparent().xpath(
-                'dbReference[@type="PDB"]/property[@type="method"][@value="X-ray" or @value="NMR"]/..')
-
-            for pdb in pdbs:
-                pdbid = pdb.get('id')
-                if manual_overrides and pdbid in manual_overrides.template.skip_pdbs:
-                    continue
-                if specified_pdbids and pdbid not in specified_pdbids:
-                    continue
-                pdb_chain_span_nodes = pdb.findall('property[@type="chains"]')
-
-                for PDB_chain_span_node in pdb_chain_span_nodes:
-                    chain_span_string = PDB_chain_span_node.get('value')
-                    chain_spans = ensembler.uniprot.parse_uniprot_pdbref_chains(chain_span_string)
-
-                    for chainid in chain_spans.keys():
-                        if specified_chainids and len(specified_chainids[pdbid]) > 0 and chainid not in specified_chainids[pdbid]:
-                            continue
-                        span = chain_spans[chainid]
-                        if (span[0] < domain_span[0] + 30) & (span[1] > domain_span[1] - 30):
-                            templateid = '%s_%s_%s' % (domain_id, pdbid, chainid)
-                            data = {
-                                'templateid': templateid,
-                                'pdbid': pdbid,
-                                'chainid': chainid,
-                                'domain_span': domain_span
-                            }
-                            selected_pdbchains.append(data)
-    logger.info('%d PDB chains selected.' % len(selected_pdbchains))
-    return selected_pdbchains
-
-
 def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=None, manual_overrides=None, specified_pdbids=None, specified_chainids=None):
     """
     Parameters
@@ -719,8 +661,8 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
                 'pdbid': str,
                 'chainid': str,
                 'residue_span': [
-                    start (int),
-                    end (int)
+                    start (int),   # 1-based inclusive
+                    end (int)      # 1-based inclusive
                 ]
             }
         ]

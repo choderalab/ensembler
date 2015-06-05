@@ -229,7 +229,7 @@ class ModelSimilarities(object):
         self.df = pd.merge(self.df, seqid_df, on='templateid')
 
     def _store_highest_seqid_model(self):
-        models_sorted = self.df.sort('seqid').templateid
+        models_sorted = self.df.sort('seqid', ascending=False).templateid
         for modelid in models_sorted:
             model_filepath = os.path.join(self.models_target_dir, modelid, self.model_filename)
             if os.path.exists(model_filepath):
