@@ -18,14 +18,16 @@ Install with Conda
 ------------------
 .. _install-with-conda:
 
-`conda <http://www.continuum.io/blog/conda>`_ is a package manager built for scientific Python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows. ``conda`` is distributed as part of `Continuum's Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. For a more minimal set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only ``conda`` and Python.
+`conda <http://www.continuum.io/blog/conda>`_ is a package manager built for scientific Python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows.
+
+``conda`` can be obtained by installing `Continuum Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. Alternatively, for a more minimal Python set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only ``conda`` and Python.
 
 To install Ensembler with ``conda``, use the following commands ::
 
   $ conda config --add channels http://conda.binstar.org/dannyparton
   $ conda install ensembler
 
-``conda`` will automatically install all dependencies except for Modeller and Rosetta (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
+``conda`` will automatically install all dependencies except for `Modeller <https://salilab.org/modeller/>`_ and `Rosetta <https://www.rosettacommons.org/software>`_ (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
 
 .. warning:: If you are running Ensembler on OS X and see errors relating to OpenMPI, e.g. ``Sorry!  You were supposed to get help about: opal_init:startup:internal-failure``), this is a `known issue with Anaconda <https://github.com/ContinuumIO/anaconda-issues/issues/96>`_. A simple workaround is to create a symlink from ``/opt/anaconda1anaconda2anaconda3`` to your Anaconda installation, e.g. ``sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3``.
 
