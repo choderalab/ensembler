@@ -18,7 +18,7 @@ Install with Conda
 ------------------
 .. _install-with-conda:
 
-`conda <http://www.continuum.io/blog/conda>`_ is a package manager built for scientific Python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows. ``conda`` is distributed as part of `Continuumm's Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. For a more minimal set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only ``conda`` and Python.
+`conda <http://www.continuum.io/blog/conda>`_ is a package manager built for scientific Python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows. ``conda`` is distributed as part of `Continuum's Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. For a more minimal set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only ``conda`` and Python.
 
 To install Ensembler with ``conda``, use the following commands ::
 
