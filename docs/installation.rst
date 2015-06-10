@@ -18,14 +18,14 @@ Install with Conda
 ------------------
 .. _install-with-conda:
 
-`conda <http://www.continuum.io/blog/conda>`_ is a python package manager built for scientific python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows. If you're a ``conda`` user, you can install Ensembler by adding the relevant channel. If you're not a conda user, you should look into it.
+`conda <http://www.continuum.io/blog/conda>`_ is a package manager built for scientific Python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows. ``conda`` is distributed as part of `Continuumm's Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. For a more minimal set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only ``conda`` and Python.
 
-To install Ensembler with conda, use the following commands ::
+To install Ensembler with ``conda``, use the following commands ::
 
   $ conda config --add channels http://conda.binstar.org/dannyparton
   $ conda install ensembler
 
-.. note:: ``conda`` will automatically install many of the tricky dependencies from binary packages automatically! The easiest way to get conda is with the `Anaconda python distribution <https://store.continuum.io/cshop/anaconda/>`_.
+``conda`` will automatically install all dependencies except for Modeller and Rosetta (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
 
 .. warning:: If you are running Ensembler on OS X and see errors relating to OpenMPI, e.g. ``Sorry!  You were supposed to get help about: opal_init:startup:internal-failure``), this is a `known issue with Anaconda <https://github.com/ContinuumIO/anaconda-issues/issues/96>`_. A simple workaround is to create a symlink from ``/opt/anaconda1anaconda2anaconda3`` to your Anaconda installation, e.g. ``sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3``.
 
@@ -65,14 +65,15 @@ To use Ensembler, the following libraries and software will need to be installed
     `MSMBuilder <http://msmbuilder.org/>`_
         Statistical models for biomolecular dynamics.
 
-    pdbfixer
+    `PDBFixer <https://github.com/pandegroup/pdbfixer>`_
+        PDB structure modeling
 
     `BioPython <http://biopython.org/wiki/Main_Page>`_
         Collection of Python tools for computational biology and
         bioinformatics.
 
     `NumPy <http://numpy.scipy.org/>`_
-        Numpy is the base package for numerical computing in python.
+        Numpy is the base package for numerical computing in Python.
 
     `lxml <http://lxml.de/>`_
         For working with XML files.
@@ -83,7 +84,8 @@ To use Ensembler, the following libraries and software will need to be installed
     `docopt <http://docopt.org/>`_
         For building command-line interfaces.
 
-    mock
+    `mock <http://www.voidspace.org.uk/python/mock/>`_
+        For testing in Python
 
 Optional packages:
 
@@ -105,22 +107,6 @@ Optional packages:
         Some functionality, including the ``quickmodel`` and ``inspect``
         functions, requires pandas.
 
-Avoid Hassles with Anaconda or Canopy
--------------------------------------
-
-An easy way to obtain many of the dependencies is to install one of the
-pre-packaged scientific python distributes like `Enthought's Canopy
-<https://www.enthought.com/products/canopy/>`_ or `Continuum's Anaconda
-<https://store.continuum.io/>`_. These distributions already contain all of the
-dependences, and are distributed via 1-click installers for Windows, Mac and
-Linux.
-
-.. note:: The developers personally recommend Continuum's Anaconda. It's free, includes the **AWESOME** conda package manager, and quite simple to use.
-
-Modeller and Rosetta (optional) are the only dependencies not available via
-these distributions, and will have to be installed according to the
-instructions for those packages.
-
 Manually Installing the Dependencies
 ------------------------------------
 
@@ -132,7 +118,7 @@ If you're on ubuntu and have root, you can install most dependencies through you
 
 Mac
 +++
-If you're on mac and want a package manager, you should be using `homebrew <http://mxcl.github.io/homebrew/>`_ and ``brews``'s python (see `this page <https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python>`_ for details). For example, numpy can be installed with ``brew`` as follows: ::
+If you're on mac and want a package manager, you should be using `homebrew <http://mxcl.github.io/homebrew/>`_ and ``brews``'s Python (see `this page <https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python>`_ for details). For example, numpy can be installed with ``brew`` as follows: ::
 
   $ brew tap Homebrew/python
   $ brew install python
@@ -145,27 +131,25 @@ Then, you can install many of the remaining packages with ``pip``. ::
 Windows
 +++++++
 Chris Gohlke maintains windows binary distributions for an ever-growing
-set of python extensions on `his website <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.
+set of Python extensions on `his website <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.
 Download and install the the installers for setuptools, nose, numpy, scipy, numexpr, pandas and tables.
 
 Testing Your Installation
 =========================
 Running the tests is a great way to verify that everything is working. The test
-suite uses `nose <https://nose.readthedocs.org/en/latest/>`_, which you can
-pick up via ``conda`` or ``pip`` if you don't already have it. ::
+suite uses `nose <https://nose.readthedocs.org/en/latest/>`_ and `mock
+<http://www.voidspace.org.uk/python/mock/>`_, which you can pick up via
+``conda`` or ``pip`` if you don't already have them. ::
 
-  $ conda install nose
+  $ conda install nose mock
 
-Currently, the best way to run the tests is to go to the Ensembler installation
-directory (e.g.
-``~/anaconda/lib/python2.7/site-packages/ensembler-0.2-py2.7.egg/ensembler``) and
-run the unit tests with: ::
+To run the unit tests: ::
 
-  $ nosetests -a unit
+  $ nosetests ensembler -a unit
 
-There is also a suite of integration tests, which test interoperation of
-Ensembler with software dependencies such as Modeller and Rosetta loopmodel, or
-external databases such as UniProt. Note that many of these tests run much more slowly
-than the unit tests. To run them: ::
+Further tests are available which check interoperation of Ensembler with
+software dependencies such as Modeller and Rosetta loopmodel, or with external public
+databases such as UniProt, or are excluded from the unit tests due to being
+slow. To run them: ::
 
-  $ nosetests -a integration
+  $ nosetests ensembler -a non_conda_dependencies -a network -a slow
