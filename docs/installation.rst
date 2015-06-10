@@ -20,14 +20,14 @@ Install with Conda
 
 `conda <http://www.continuum.io/blog/conda>`_ is a package manager built for scientific Python. Unlike ``easy_install`` or ``pip``, it handles binaries and binary dependencies, which are critical for most scientific workflows.
 
-``conda`` can be obtained by installing `Continuum Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. Alternatively, for a more minimal Python set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only ``conda`` and Python.
+Conda can be obtained by installing `Continuum Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. Alternatively, for a more minimal Python set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only Conda and Python.
 
-To install Ensembler with ``conda``, use the following commands ::
+To install Ensembler with Conda, use the following commands ::
 
   $ conda config --add channels http://conda.binstar.org/dannyparton
   $ conda install ensembler
 
-``conda`` will automatically install all dependencies except for `Modeller <https://salilab.org/modeller/>`_ and `Rosetta <https://www.rosettacommons.org/software>`_ (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
+Conda will automatically install all dependencies except for `Modeller <https://salilab.org/modeller/>`_ and `Rosetta <https://www.rosettacommons.org/software>`_ (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
 
 .. warning:: If you are running Ensembler on OS X and see errors relating to OpenMPI, e.g. ``Sorry!  You were supposed to get help about: opal_init:startup:internal-failure``), this is a `known issue with Anaconda <https://github.com/ContinuumIO/anaconda-issues/issues/96>`_. A simple workaround is to create a symlink from ``/opt/anaconda1anaconda2anaconda3`` to your Anaconda installation, e.g. ``sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3``.
 
@@ -141,7 +141,7 @@ Testing Your Installation
 Running the tests is a great way to verify that everything is working. The test
 suite uses `nose <https://nose.readthedocs.org/en/latest/>`_ and `mock
 <http://www.voidspace.org.uk/python/mock/>`_, which you can pick up via
-``conda`` or ``pip`` if you don't already have them. ::
+conda or pip if you don't already have them. ::
 
   $ conda install nose mock
 
