@@ -79,8 +79,6 @@ def eval_quantity_string(param_value_string):
         number, unit_name = quantity_as_number_space_unit_match.groups()
         number = ast.literal_eval(number)
         unit_obj = getattr(simtk.unit, unit_name)
-        print(number, unit_obj, unit_name)
-        print(type(number), type(unit_obj))
         return number * unit_obj
 
     else:
