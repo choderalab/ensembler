@@ -8,6 +8,7 @@ def test_eval_quantity_string():
     assert eval_quantity_string('2 picoseconds') == 2 * unit.picoseconds
     assert eval_quantity_string('2picoseconds') == 2 * unit.picoseconds
     assert eval_quantity_string('2 / picoseconds') == 2 / unit.picoseconds
+    assert eval_quantity_string('2 nanosecond') == 2 * unit.nanoseconds
 
 
 @attr('unit')

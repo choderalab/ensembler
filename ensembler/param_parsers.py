@@ -3,7 +3,8 @@ import re
 import operator as op
 import simtk.unit
 
-unit_membernames = [name for name in simtk.unit.__dict__]
+# needs to be sorted in reverse order so that 'nanoseconds' is matched before 'nano'
+unit_membernames = sorted([name for name in simtk.unit.__dict__], key=len, reverse=True)
 safe_names = {'None': None, 'True': True, 'False': False}
 
 quantity_without_operator_regex = re.compile(
@@ -78,6 +79,8 @@ def eval_quantity_string(param_value_string):
         number, unit_name = quantity_as_number_space_unit_match.groups()
         number = ast.literal_eval(number)
         unit_obj = getattr(simtk.unit, unit_name)
+        print(number, unit_obj, unit_name)
+        print(type(number), type(unit_obj))
         return number * unit_obj
 
     else:
