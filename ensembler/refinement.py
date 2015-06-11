@@ -958,10 +958,6 @@ def refine_explicit_md(
             model_dir = os.path.join(models_target_dir, template.id)
             if not os.path.exists(model_dir): continue
 
-            # Only simulate models that are unique following filtering by clustering.
-            unique_by_clustering = os.path.exists(os.path.join(model_dir, 'unique_by_clustering'))
-            if not unique_by_clustering: continue
-
             # Pass if this simulation has already been run.
             log_filepath = os.path.join(model_dir, 'explicit-log.yaml')
             if os.path.exists(log_filepath):
@@ -1098,4 +1094,3 @@ def readFileContents(filename):
     contents = infile.read()
     infile.close()
     return contents
-
