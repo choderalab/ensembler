@@ -46,6 +46,9 @@ helpstring_nonunique_options = [
     """\
   --template_seqid_cutoff <cutoff>  Select only templates with sequence identity (percentage)
                                     greater than the given cutoff.""",
+
+    """\
+  -v --verbose                 """,
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
@@ -88,6 +91,11 @@ def dispatch(args):
     else:
         archive = False
 
+    if args['--verbose']:
+        loglevel = 'debug'
+    else:
+        loglevel = 'info'
+
     if package_for.lower() == 'transfer':
         ensembler.packaging.package_for_transfer(
             process_only_these_targets=targets,
@@ -101,4 +109,5 @@ def dispatch(args):
             template_seqid_cutoff=template_seqid_cutoff,
             nclones=n_fah_clones,
             archive=archive,
+            verbose=args['--verbose'],
         )
