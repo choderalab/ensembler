@@ -14,7 +14,7 @@ sudo apt-get update
 
 conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
-conda config --add channels http://conda.binstar.org/mpi4py
+# conda config --add channels http://conda.binstar.org/mpi4py
 source activate $python
 conda install --yes conda-build jinja2
 
@@ -29,6 +29,3 @@ $modeller_key
 
 EOF
 cd ..
-
-#export PYTHONPATH="/bin/modeller9.14/modlib:/bin/modeller9.14/lib/x86_64-intel8/python2.5:${PYTHONPATH}"
-#export LD_LIBRARY_PATH="/bin/modeller9.14/lib/x86_64-intel8:${LD_LIBRARY_PATH}"

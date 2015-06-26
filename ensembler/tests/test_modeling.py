@@ -22,7 +22,6 @@ def test_import_modeller():
 @attr('modeller')
 @attr('non_conda_dependencies')
 def test_build_model():
-    # TODO may be possible to have Travis install Modeller binary
     template_filepath = get_installed_resource_filename(os.path.join('resources',  'mock_template.pdb'))
     aln_filepath = get_installed_resource_filename(os.path.join('resources', 'mock_template-alignment.pir'))
 

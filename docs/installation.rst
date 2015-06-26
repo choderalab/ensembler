@@ -29,7 +29,7 @@ To install Ensembler with Conda, use the following commands ::
 
 Conda will automatically install all dependencies except for `Modeller <https://salilab.org/modeller/>`_ and `Rosetta <https://www.rosettacommons.org/software>`_ (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
 
-.. warning:: If you are running Ensembler on OS X and see errors relating to OpenMPI, e.g. ``Sorry!  You were supposed to get help about: opal_init:startup:internal-failure``), this is a `known issue with Anaconda <https://github.com/ContinuumIO/anaconda-issues/issues/96>`_. A simple workaround is to create a symlink from ``/opt/anaconda1anaconda2anaconda3`` to your Anaconda installation, e.g. ``sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3``.
+.. warning:: If you are running Ensembler on OS X and have mpi4py installed, you may see an error along the lines of ``Sorry!  You were supposed to get help about: opal_init:startup:internal-failure``). This is a `known issue with Anaconda and mpi4py on OS X <https://github.com/ContinuumIO/anaconda-issues/issues/96>`_. A simple workaround is to create a symlink from ``/opt/anaconda1anaconda2anaconda3`` to your Anaconda installation, e.g. ``sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3``.
 
 
 Install from Source

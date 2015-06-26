@@ -11,11 +11,14 @@ install:
 script:
   # this builds the binary, unpacks it, and runs the tests
   - conda build devtools/conda-recipe
+  # this installs the package so that the Modeller-specific tests can be run
+  - conda install /home/travis/miniconda/conda-bld/linux-64/ensembler-dev-*
+  - nosetests ensembler -v --exe -a modeller
 
 env:
   global:
     secure: "kvxU/0eeSVFGmq0urTIWngYcSWwM3Jgai333v83gkPZRECGsb+rCSzUjagLt/p1gPFpRLXP1QPxPvxDBTJWVLtOo4dUx5lkrR9wP5EnC+LPDqfOdFp5SW4DWe41+v1CozbymVE3HsahRYfVFUIjWBTLjEJ7oqR2P7LzpLsUkSwc="
   matrix:
-    - python=2.7  CONDA_PY=27  PYTHONPATH=/home/travis/bin/modeller9.14/modlib:/home/travis/bin/modeller9.14/lib/x86_64-intel8/python2.5  LD_LIBRARY_PATH=/home/travis/bin/modeller9.14/lib/x86_64-intel8
+    - python=2.7  CONDA_PY=27  PYTHONPATH=/home/travis/bin/modeller9.14/modlib:/home/travis/bin/modeller9.14/lib/x86_64-intel8/python2.5
     # - python=3.3  CONDA_PY=33  PYTHONPATH=/home/travis/bin/modeller9.14/modlib:/home/travis/bin/modeller9.14/lib/x86_64-intel8/python3.3  LD_LIBRARY_PATH=/home/travis/bin/modeller9.14/lib/x86_64-intel8
     # - python=3.4  CONDA_PY=34  PYTHONPATH=/home/travis/bin/modeller9.14/modlib:/home/travis/bin/modeller9.14/lib/x86_64-intel8/python3.3  LD_LIBRARY_PATH=/home/travis/bin/modeller9.14/lib/x86_64-intel8

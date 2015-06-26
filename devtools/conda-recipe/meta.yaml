@@ -18,13 +18,12 @@ requirements:
 
   run:
     - python
-    - mpi4py
     - mdtraj
     - msmbuilder
     - biopython
     - openmm
     - pdbfixer
-    - numpy
+    # - numpy
     - lxml
     - pyyaml
     - docopt

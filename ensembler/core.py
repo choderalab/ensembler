@@ -81,18 +81,32 @@ model_filenames_by_ensembler_stage = {
 
 class MPIState:
     def __init__(self):
-        try:
-            import mpi4py.MPI
-            self.comm = mpi4py.MPI.COMM_WORLD
-            self.rank = self.comm.rank
-            self.size = self.comm.size
-        except Exception as e:
-            logger.debug('Error initializing MPIState:\n%s' % e)
-            self.comm = None
-            self.rank = 0
-            self.size = 1
+        import mpi4py.MPI
+        self.comm = mpi4py.MPI.COMM_WORLD
+        self.rank = self.comm.rank
+        self.size = self.comm.size
 
-mpistate = MPIState()
+class DummyMPIState:
+    def __init__(self):
+        self.comm = DummyMPIComm()
+        self.rank = 0
+        self.size = 1
+
+class DummyMPIComm:
+    def Barrier(self):
+        pass
+
+    def bcast(self, obj, root=0):
+        return obj
+
+    def gather(self, obj, root=0):
+        return [obj]
+
+try:
+    mpistate = MPIState()
+except Exception as e:
+    logger.debug('WARNING: failed to initialize MPIState:\n{0}'.format(e))
+    mpistate = DummyMPIState()
 
 # ========
 # YAML
