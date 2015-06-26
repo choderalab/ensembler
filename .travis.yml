@@ -13,6 +13,7 @@ script:
   - conda build devtools/conda-recipe
   # this installs the package so that the Modeller-specific tests can be run
   - conda install --yes /home/travis/miniconda/conda-bld/linux-64/ensembler-dev-*
+  - cd /
   - nosetests ensembler -v --exe -a modeller
 
 env:

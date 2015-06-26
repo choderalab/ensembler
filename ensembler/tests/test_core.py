@@ -5,6 +5,11 @@ from nose.plugins.attrib import attr
 
 
 @attr('unit')
+def test_import_ensembler_version():
+    import ensembler.version
+
+
+@attr('unit')
 def test_project_metadata():
     ensembler.core.ProjectMetadata(project_stage='init')
 
