@@ -106,16 +106,17 @@ try:
     import imp
     imp.find_module('mpi4py')
     import platform
-    if (
-            platform.system() == 'Darwin' and
-            not os.path.exists(os.path.join(os.path.sep, 'opt', 'anaconda1anaconda2anaconda3'))
-        ):
+    anaconda_placeholder_path = os.path.join(os.path.sep, 'opt', 'anaconda1anaconda2anaconda3')
+    if platform.system() == 'Darwin' and not os.path.exists(anaconda_placeholder_path):
         logger.warning(
-            'WARNING: ignoring mpi4py module.\n'
-            'Using mpi4py on OS X with Anaconda currently requires that'
-            '/opt/anaconda1anaconda2anaconda3 points to your Anaconda installation.\n'
+            'WARNING: {0} not found.\n'
+            'Ignoring mpi4py.\n'
+            'Using mpi4py on OS X with Anaconda currently requires that '
+            '{0} points to your Anaconda installation.\n'
             'As a workaround, you can create a symlink, e.g. '
-            '"sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3"'
+            '"sudo ln -s ~/anaconda {0}'.format(
+                anaconda_placeholder_path
+            )
         )
         mpistate = DummyMPIState()
     else:
