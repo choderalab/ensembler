@@ -103,9 +103,24 @@ class DummyMPIComm:
         return [obj]
 
 try:
-    mpistate = MPIState()
-except Exception as e:
-    logger.debug('WARNING: failed to initialize MPIState:\n{0}'.format(e))
+    import imp
+    imp.find_module('mpi4py')
+    import platform
+    if (
+            platform.system() == 'Darwin' and
+            not os.path.exists(os.path.join(os.path.sep, 'opt', 'anaconda1anaconda2anaconda3'))
+        ):
+        logger.warning(
+            'WARNING: ignoring mpi4py module.\n'
+            'Using mpi4py on OS X with Anaconda currently requires that'
+            '/opt/anaconda1anaconda2anaconda3 points to your Anaconda installation.\n'
+            'As a workaround, you can create a symlink, e.g. '
+            '"sudo ln -s ~/anaconda /opt/anaconda1anaconda2anaconda3"'
+        )
+        mpistate = DummyMPIState()
+    else:
+        mpistate = MPIState()
+except ImportError:
     mpistate = DummyMPIState()
 
 # ========
