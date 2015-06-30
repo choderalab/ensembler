@@ -4,7 +4,7 @@ from setuptools import setup
 
 ##########################
 VERSION = "1.0.2"
-ISRELEASED = True
+ISRELEASED = False
 __version__ = VERSION
 ##########################
 
