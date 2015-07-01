@@ -24,7 +24,7 @@ Conda can be obtained by installing `Continuum Anaconda <https://store.continuum
 
 To install Ensembler with Conda, use the following commands ::
 
-  $ conda config --add channels http://conda.binstar.org/dannyparton
+  $ conda config --add channels http://conda.binstar.org/omnia
   $ conda install ensembler
 
 Conda will automatically install all dependencies except for `Modeller <https://salilab.org/modeller/>`_ and `Rosetta <https://www.rosettacommons.org/software>`_ (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
