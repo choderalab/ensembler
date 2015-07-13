@@ -125,6 +125,52 @@ def test_log_unique_domain_names():
 
 
 @attr('network')
+def test_get_structure_files_for_single_pdbchain():
+    with integrationtest_context(set_up_project_stage='targets'):
+        ensembler.initproject.get_structure_files_for_single_pdbchain('1OPL')
+        assert os.path.exists(os.path.join(
+            ensembler.core.default_project_dirnames.structures_pdb, '1OPL.pdb.gz'
+        ))
+        assert os.path.exists(os.path.join(
+            ensembler.core.default_project_dirnames.structures_sifts, '1OPL.xml.gz'
+        ))
+
+
+@attr('network')
+def test_get_structure_files():
+    with integrationtest_context(set_up_project_stage='targets'):
+        pdbchains = [
+            {
+                'pdbid': '1OPL'
+            }
+        ]
+        ensembler.initproject.get_structure_files(pdbchains)
+        assert os.path.exists(os.path.join(
+            ensembler.core.default_project_dirnames.structures_pdb, '1OPL.pdb.gz'
+        ))
+        assert os.path.exists(os.path.join(
+            ensembler.core.default_project_dirnames.structures_sifts, '1OPL.xml.gz'
+        ))
+
+
+@attr('network')
+def test_get_structure_files_bad_structure_dir():
+    with integrationtest_context(set_up_project_stage='targets'):
+        pdbchains = [
+            {
+                'pdbid': '1OPL'
+            }
+        ]
+        ensembler.initproject.get_structure_files(pdbchains, structure_dirs=['BlAh1'])
+        assert os.path.exists(os.path.join(
+            ensembler.core.default_project_dirnames.structures_pdb, '1OPL.pdb.gz'
+        ))
+        assert os.path.exists(os.path.join(
+            ensembler.core.default_project_dirnames.structures_sifts, '1OPL.xml.gz'
+        ))
+
+
+@attr('network')
 def test_command_gather_targets_from_uniprot():
     with integrationtest_context(set_up_project_stage='init'):
         ref_fasta = """\

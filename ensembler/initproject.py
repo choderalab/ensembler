@@ -312,7 +312,7 @@ def gather_templates_from_targetexplorer(dbapi_uri, search_string='', structure_
     templates_json = get_targetexplorer_templates_json(dbapi_uri, search_string)
     selected_pdbchains = extract_template_pdbchains_from_targetexplorer_json(templates_json, manual_overrides=manual_overrides)
     for pdbchain in selected_pdbchains:
-        get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
+        get_structure_files_for_single_pdbchain(pdbchain['pdbid'], structure_dirs)
 
     selected_templates = extract_template_pdb_chain_residues(selected_pdbchains)
     write_template_seqs_to_fasta_file(selected_templates)
@@ -334,8 +334,7 @@ def gather_templates_from_uniprot(uniprot_query_string, uniprot_domain_regex=Non
             log_unique_domain_names_selected_by_regex(uniprot_domain_regex, uniprotxml)
 
         selected_pdbchains = extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex=uniprot_domain_regex, manual_overrides=manual_overrides, specified_pdbids=pdbids, specified_chainids=chainids)
-        for pdbchain in selected_pdbchains:
-            get_pdb_and_sifts_files(pdbchain['pdbid'], structure_dirs)
+        get_structure_files(selected_pdbchains, structure_dirs)
 
     selected_pdbchains = mpistate.comm.bcast(selected_pdbchains, root=0)
     logger.debug('Selected PDB chains: {0}'.format([pdbchain['templateid'] for pdbchain in selected_pdbchains]))
@@ -360,7 +359,7 @@ def gather_templates_from_pdb(pdbids, uniprot_domain_regex=None, chainids=None, 
     selected_pdbchains = None
     if mpistate.rank == 0:
         for pdbid in pdbids:
-            get_pdb_and_sifts_files(pdbid, structure_dirs)
+            get_structure_files_for_single_pdbchain(pdbid, structure_dirs)
         uniprot_acs = extract_uniprot_acs_from_sifts_files(pdbids)
         logger.debug('Extracted UniProt ACs: {0}'.format(uniprot_acs))
         uniprot_ac_query_string = ensembler.uniprot.build_uniprot_query_string_from_acs(uniprot_acs)
@@ -455,16 +454,33 @@ def download_sifts_file(pdbid, project_sifts_filepath):
         project_sifts_file.write(sifts_page)
 
 
-def get_pdb_and_sifts_files(pdbid, structure_dirs=None):
+def get_structure_files(selected_pdbchains, structure_dirs=None):
+    if structure_dirs:
+        for structure_dir in structure_dirs:
+            if not os.path.exists(structure_dir):
+                logger.warn('Structure directory {0} not found'.format(structure_dir))
+    for pdbchain in selected_pdbchains:
+        get_structure_files_for_single_pdbchain(pdbchain['pdbid'], structure_dirs)
+
+
+def get_structure_files_for_single_pdbchain(pdbid, structure_dirs=None):
     if type(structure_dirs) != list:
         structure_dirs = []
     project_structures_dir = 'structures'
     for structure_type in ['pdb', 'sifts']:
-        project_structure_filepath = os.path.join(project_structures_dir, structure_type, pdbid + structure_type_file_extension_mapper[structure_type])
+        project_structure_filepath = os.path.join(
+            project_structures_dir,
+            structure_type,
+            pdbid + structure_type_file_extension_mapper[structure_type]
+        )
         if not file_exists_and_not_empty(project_structure_filepath):
-            attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dirs, structure_type=structure_type)
+            attempt_symlink_structure_files(
+                pdbid, project_structures_dir, structure_dirs, structure_type=structure_type
+            )
             if not os.path.exists(project_structure_filepath):
-                download_structure_file(pdbid, project_structure_filepath, structure_type=structure_type)
+                download_structure_file(
+                    pdbid, project_structure_filepath, structure_type=structure_type
+                )
 
 
 def extract_template_pdb_chain_residues(selected_pdbchains):
