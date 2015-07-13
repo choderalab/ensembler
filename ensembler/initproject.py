@@ -9,7 +9,6 @@ import Bio.SeqUtils
 import Bio.SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-import ensembler.version
 
 import ensembler
 import ensembler.targetexplorer
@@ -646,7 +645,7 @@ def extract_template_pdbchains_from_uniprot_xml(uniprotxml, uniprot_domain_regex
     ----------
     uniprotxml: lxml.etree.Element
     uniprot_domain_regex: str
-    manual_overrides: ensembler.core.TemplateManualOverrides
+    manual_overrides: ensembler.core.ManualOverrides
     specified_pdbids: list of str
         ['2QR8', '4GU9']
     specified_chainids: dict of list of str

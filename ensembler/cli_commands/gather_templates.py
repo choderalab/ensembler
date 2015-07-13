@@ -30,7 +30,7 @@ helpstring_nonunique_options = [
                                      defined by the --query flag, plus an optional regular
                                      expression for selecting domains (--uniprot_domain_regex).
                                    - "pdb": PDB (www.pdb.org). Requires a query string defined by
-                                   the --query falg, plus an optional regular expression for
+                                   the --query flag, plus an optional regular expression for
                                    selecting domains (--uniprot_domain_regex).
                                    - "targetexplorer": a TargetExplorer database
                                      (https://github.com/choderalab/targetexplorer). Requires a

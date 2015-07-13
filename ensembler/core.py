@@ -79,6 +79,7 @@ model_filenames_by_ensembler_stage = {
 # MPI
 # ========
 
+
 class MPIState:
     def __init__(self):
         import mpi4py.MPI
@@ -86,11 +87,13 @@ class MPIState:
         self.rank = self.comm.rank
         self.size = self.comm.size
 
+
 class DummyMPIState:
     def __init__(self):
         self.comm = DummyMPIComm()
         self.rank = 0
         self.size = 1
+
 
 class DummyMPIComm:
     def Barrier(self):
@@ -101,6 +104,7 @@ class DummyMPIComm:
 
     def gather(self, obj, root=0):
         return [obj]
+
 
 try:
     import imp
@@ -133,7 +137,9 @@ try:
 except ImportError:
     from yaml import Loader as YamlLoader, Dumper as YamlDumper
 
+
 class literal_str(str): pass
+
 
 def change_style(style, representer):
     def new_representer(dumper, data):
@@ -141,6 +147,7 @@ def change_style(style, representer):
         scalar.style = style
         return scalar
     return new_representer
+
 
 from yaml.representer import SafeRepresenter
 
@@ -151,9 +158,11 @@ represent_literal_str = change_style('|', SafeRepresenter.represent_str)
 import yaml
 yaml.add_representer(literal_str, represent_literal_str)
 
+
 # ========
 # Definitions
 # ========
+
 
 def get_utcnow_formatted():
     import datetime
@@ -161,10 +170,12 @@ def get_utcnow_formatted():
     datestamp = now.strftime(datestamp_format_string)
     return datestamp
 
+
 def strf_timedelta(delta_t):
     hours, remainder = divmod(delta_t.seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return '%d:%d:%d' % (hours, minutes, seconds)
+
 
 def check_project_toplevel_dir(raise_exception=True):
     import os
@@ -179,6 +190,7 @@ def check_project_toplevel_dir(raise_exception=True):
                 logger.debug('Directory %s not found' % dirpath)
                 return False
     return True
+
 
 class LogFile:
     def __init__(self, log_filepath):
@@ -197,6 +209,29 @@ class LogFile:
 
 
 class ManualOverrides:
+    """
+    Reads in user-defined override data from a YAML file named "manual-overrides.yaml"
+
+    Example file contents
+    ---------------------
+
+    target-selection:
+        domain-spans:
+        ABL1_HUMAN_D0: 242-513
+    template-selection:
+        min-domain-len: 0
+        max-domain-len: 350
+        domain-spans:
+            ABL1_HUMAN_D0: 242-513
+        skip-pdbs:
+            - 4CYJ
+            - 4P41
+            - 4P2W
+            - 4QTD
+            - 4Q2A
+            - 4CTB
+            - 4QOX
+    """
     def __init__(self):
         import yaml
         if os.path.exists(manual_overrides_filename):
@@ -210,7 +245,7 @@ class ManualOverrides:
 
 
 class TargetManualOverrides:
-    '''
+    """
     Parameters
     ----------
     manual_overrides_yaml: dict
@@ -220,7 +255,7 @@ class TargetManualOverrides:
     domain_spans: dict
         dict with structure {`targetid`: `domain_span`, ...} where
         `domain_span` is a str e.g. '242-513'
-    '''
+    """
     def __init__(self, manual_overrides_yaml):
         target_dict = manual_overrides_yaml.get('target-selection')
         if target_dict != None:
@@ -230,7 +265,7 @@ class TargetManualOverrides:
 
 
 class TemplateManualOverrides:
-    '''
+    """
     Parameters
     ----------
     manual_overrides_yaml: dict
@@ -244,14 +279,14 @@ class TemplateManualOverrides:
         `domain_span` is a str e.g. '242-513'
     skip_pdbs: list
         list of PDB IDs to skip
-    '''
+    """
     def __init__(self, manual_overrides_yaml):
         template_dict = manual_overrides_yaml.get('template-selection')
         if template_dict != None:
             self.min_domain_len = template_dict.get('min-domain-len')
             self.max_domain_len = template_dict.get('max-domain-len')
             self.domain_spans = template_dict.get('domain-spans')
-            self.skip_pdbs = template_dict.get('skip-pdbs')
+            self.skip_pdbs = template_dict.get('skip-pdbs') if template_dict.get('skip-pdbs') is not None else []
         else:
             self.min_domain_len = None
             self.max_domain_len = None
