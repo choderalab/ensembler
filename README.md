@@ -9,7 +9,9 @@ Software pipeline for automating omics-scale protein modeling and simulation set
 
 Online documentation
 --------------------
-Go to the [official online documentation](http://ensembler.readthedocs.org/).
+* Go to the [official online documentation](http://ensembler.readthedocs.org/).
+* Read a preprint of the paper [on bioRxiv](http://dx.doi.org/10.1101/018036).
+* See the example dataset from [modeling all human tyrosine kinases](http://datadryad.org/review?doi=doi:10.5061/dryad.7fg32).
 
 Authors
 -------
