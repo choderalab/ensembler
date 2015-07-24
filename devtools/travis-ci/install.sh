@@ -18,9 +18,12 @@ conda config --add channels http://conda.binstar.org/omnia
 source activate $python
 conda install --yes conda-build jinja2
 
+if [[ "$TRAVIS_PULL_REQUEST" == "true" ]]
+then
+echo "This is a pull request. Secure environment variables are not available, so will not attempt to install Modeller."
+else
 wget https://salilab.org/modeller/9.14/modeller-9.14.tar.gz
 tar -xvf modeller-9.14.tar.gz
-
 cd modeller-9.14
 ./Install << EOF
 
@@ -29,3 +32,4 @@ $modeller_key
 
 EOF
 cd ..
+fi
