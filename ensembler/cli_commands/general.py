@@ -43,6 +43,7 @@ Usage:
       [--template_pdbids <pdbids>] [--template_chainids <chainids>]
       [--template_uniprot_query <query>] [--template_seqid_cutoff <cutoff>] [--no-loopmodel]
       [--package_for_fah] [--nfahclones <nfahclones>] [--structure_dirs <structure_dirs>]
+  ensembler renumber_residues [-h | --help] [--target <targetid>] [-v | --verbose]
 
 Commands:
   init                          Initialize a new Ensembler project

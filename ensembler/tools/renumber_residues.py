@@ -19,6 +19,8 @@ class RenumberResidues(object):
         set_loglevel(log_level)
         self.targetid = targetid
         self.models_target_dir = os.path.join(default_project_dirnames.models, self.targetid)
+        if not os.path.exists(self.models_target_dir):
+            raise Exception('Model "{}" not found'.format(self.targetid))
         self.project_dir = project_dir
         self.uniprot_mnemonic = '_'.join(self.targetid.split('_')[0:2])
         self._get_models()

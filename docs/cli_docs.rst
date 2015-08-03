@@ -41,3 +41,26 @@ PDB-format coordinate files in the directory ``templates/structures-resolved``.
 Each structure should be named XXX.pdb, where XXX matches the identifier in the
 fasta file. The residues in the coordinate files should also match the
 sequences in the fasta file.
+
+Additional Tools
+================
+
+Ensembler includes a ``tools`` submodule, which allows the user to conduct
+various useful tasks which are not considered core pipeline functions. The
+use-cases for many of these tools are quite specific, so they may not be
+applicable to every project, and should also be used with caution.
+
+Residue renumbering according to UniProt sequence coordinates
+-------------------------------------------------------------
+
+::
+
+  $ ensembler renumber_residues --target EGFR_HUMAN_D0
+
+The given target ID must begin with a UniProt mnemonic, e.g. "EGFR_HUMAN".
+This will output two files in the ``models/[target_id]`` directory:
+``topol-renumbered-implicit.pdb`` and ``topol-renumbered-explicit.pdb``.
+The coordinates are simply copied from the first example found for each of
+``refined-implicit.pdb.gz`` and ``refined-explicit.pdb.gz``. The residue
+numbers are renumbered according to the canonical isoform sequence coordinates
+in the UniProt entry.
