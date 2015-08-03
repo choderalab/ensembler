@@ -33,9 +33,16 @@ Overview of pipeline
 Installation
 ------------
 
-Using conda (installs all dependencies except Modeller and Rosetta):
+First go to the [Modeller website](http://salilab.org/modeller/) and get a license key (registration required; free for academic non-profit instituions).
 
-    conda config --add channels http://conda.binstar.org/omnia
+Save the key as an environment variable:
+
+    export KEY_MODELLER=XXX
+
+Then, using conda (installs all dependencies except the optional dependency Rosetta):
+
+    conda config --add channels http://conda.anaconda.org/omnia
+    conda config --add channels http://conda.anaconda.org/salilab
     conda install ensembler
 
 From source:
@@ -65,4 +72,4 @@ Dependencies
   * subprocess32 (if using Python 2)
   * PyMOL (optional, for model alignment/visualization) - http://www.pymol.org/
 
-Recommended approach is to install using conda (https://store.continuum.io/cshop/anaconda/). This will install all dependencies except for Modeller, which must be installed separately by the user.
+Recommended approach is to install using conda (https://store.continuum.io/cshop/anaconda/). This will install all dependencies except for the optional dependency Rosetta, which must be installed separately by the user.

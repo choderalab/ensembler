@@ -3,7 +3,6 @@ conda build devtools/conda-recipe
 
 if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
 then
-    conda build devtools/conda-recipe
     conda install --yes --use-local ensembler
     conda install --yes nose
     cd /

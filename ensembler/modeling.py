@@ -27,7 +27,7 @@ from ensembler.core import mpistate, logger
 try:
     import modeller
     import modeller.automodel
-except ImportError:
+except:
     pass
 if sys.version_info < (3,0):
     try:

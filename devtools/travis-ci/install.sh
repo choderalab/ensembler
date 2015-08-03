@@ -13,23 +13,14 @@ export PATH=$HOME/miniconda/bin:$PATH
 sudo apt-get update
 
 conda update --yes conda
-conda config --add channels http://conda.binstar.org/omnia
-# conda config --add channels http://conda.binstar.org/mpi4py
+conda config --add channels http://conda.anaconda.org/omnia
+conda config --add channels http://conda.anaconda.org/salilab
 source activate $python
 conda install --yes conda-build jinja2
 
-if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
-then
-wget https://salilab.org/modeller/9.14/modeller-9.14.tar.gz
-tar -xvf modeller-9.14.tar.gz
-cd modeller-9.14
-./Install << EOF
-
-
-$modeller_key
-
-EOF
-cd ..
-else
-echo "This is a pull request. Secure environment variables are not available, so will not attempt to install Modeller."
-fi
+#if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
+#then
+#conda install -c salilab modeller
+#else
+#echo "This is a pull request. Secure environment variables are not available, so will not attempt to install Modeller."
+#fi
