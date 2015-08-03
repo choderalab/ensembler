@@ -13,14 +13,12 @@ from ensembler.utils import enter_temp_dir
 
 
 @attr('modeller')
-@attr('non_conda_dependencies')
 def test_import_modeller():
     import modeller
     import modeller.automodel
 
 
 @attr('modeller')
-@attr('non_conda_dependencies')
 def test_build_model():
     template_filepath = get_installed_resource_filename(os.path.join('resources',  'mock_template.pdb'))
     aln_filepath = get_installed_resource_filename(os.path.join('resources', 'mock_template-alignment.pir'))
@@ -96,7 +94,6 @@ def test_align_command():
 
 
 @attr('slow')
-@attr('non_conda_dependencies')
 def test_build_models_command():
     with integrationtest_context(set_up_project_stage='aligned'):
         args = {
