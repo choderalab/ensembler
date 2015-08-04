@@ -102,6 +102,7 @@ def package_for_fah(process_only_these_targets=None,
 
 filenames_necessary_for_fah_packaging = [
     'unique_by_clustering',
+    'sequence-identity.txt',
     'explicit-system.xml',
     'explicit-state.xml',
     'explicit-integrator.xml',
