@@ -95,7 +95,7 @@ def package_for_fah(process_only_these_targets=None,
 
         for run_index in range(mpistate.rank, len(sorted_valid_templates), mpistate.size):
             logger.info('-------------------------------------------------------------------------')
-            logger.info('Building RUN for template {}'.format(sorted_valid_templates[run_index].id))
+            logger.info('Building RUN{} for template {}'.format(run_index, sorted_valid_templates[run_index].id))
             logger.info('-------------------------------------------------------------------------')
 
             template = sorted_valid_templates[run_index]
