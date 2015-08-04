@@ -36,7 +36,7 @@ Usage:
       [--api_params <params>] [-v | --verbose]
   ensembler package_models [-h | --help] [--package_for <choice>] [--targets <target>]
       [--targetsfile <targetsfile>] [--templates <template>] [--templatesfile <templatesfile>]
-      [--template_seqid_cutoff <cutoff>] [--nfahclones <n>] [--archivefahproject] [-v | --verbose]
+      [--template_seqid_cutoff <cutoff>] [--nfahclones <n>] [--compressruns] [-v | --verbose]
   ensembler testrun_pipeline [-h | --help]
   ensembler quickmodel [-h | --help] [--targetid <id>] [--templateids <ids>]
       [--target_uniprot_entry_name <entry_name>] [--uniprot_domain_regex <regex>]

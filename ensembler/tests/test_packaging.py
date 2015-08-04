@@ -29,15 +29,25 @@ def test_package_for_fah():
             packaged_project_base_path,
             'RUN1'
         ))
+        target_filenames = [
+            'system.xml',
+            'integrator.xml',
+        ]
+
+        for target_filename in target_filenames:
+            assert os.path.exists(os.path.join(
+                packaged_project_base_path,
+                target_filename
+            ))
+
         run_filenames = [
             'template.txt',
             'system.pdb',
             'protein.pdb',
             'sequence-identity.txt',
-            'system.xml',
-            'integrator.xml',
             'state0.xml',
         ]
+
         for run_id in range(2):
             for run_filename in run_filenames:
                 assert os.path.exists(os.path.join(

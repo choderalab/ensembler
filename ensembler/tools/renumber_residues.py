@@ -1,7 +1,7 @@
 import os
 import Bio.SeqUtils
 import mdtraj
-from ensembler.core import check_project_toplevel_dir, default_project_dirnames
+from ensembler.core import check_project_toplevel_dir, default_project_dirnames, logger
 from ensembler.utils import set_loglevel
 from ensembler.uniprot import get_uniprot_xml
 
@@ -77,4 +77,4 @@ class RenumberResidues(object):
             self.model[key].save_pdb(ofilepath)
 
     def _finish(self):
-        print('Done.')
+        logger.info('Done.')

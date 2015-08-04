@@ -6,6 +6,7 @@ from ensembler.utils import set_loglevel, read_file_contents_gz_or_not
 from ensembler.refinement import auto_select_openmm_platform
 import simtk.unit as unit
 import simtk.openmm as openmm
+import mdtraj
 
 fah_projects_dir = os.path.join(default_project_dirnames.packaged_models, 'fah-projects')
 
@@ -15,6 +16,9 @@ def package_for_fah(process_only_these_targets=None,
                     template_seqid_cutoff=None,
                     nclones=1, archive=False,
                     openmm_platform=None,
+                    timestep=2.0 * unit.femtoseconds,
+                    collision_rate=1.0 / unit.picosecond,
+                    temperature=300.0 * unit.kelvin,
                     loglevel=None):
     """
     Create the input files and directory structure necessary to start a Folding@Home project.
@@ -51,6 +55,8 @@ def package_for_fah(process_only_these_targets=None,
         mpistate.comm.Barrier()
 
         sorted_valid_templates = []
+        system = None
+        renumbered_resnums = {}
 
         if mpistate.rank == 0:
             logger.info('-------------------------------------------------------------------------')
@@ -71,7 +77,19 @@ def package_for_fah(process_only_these_targets=None,
 
             create_target_project_dir(target)
 
+            system = setup_system_and_integrator_files(
+                target,
+                sorted_valid_templates[0],
+                timestep,
+                collision_rate,
+                temperature
+            )
+
+            renumbered_resnums = get_renumbered_topol_resnums(target)
+
         sorted_valid_templates = mpistate.comm.bcast(sorted_valid_templates, root=0)
+        system = mpistate.comm.bcast(system, root=0)
+        renumbered_resnums = mpistate.comm.bcast(renumbered_resnums, root=0)
 
         logger.debug("Building RUNs in parallel...")
 
@@ -87,17 +105,22 @@ def package_for_fah(process_only_these_targets=None,
                 target_project_dir,
                 template,
                 source_dir,
+                system,
                 run_index,
                 nclones,
+                temperature,
+                collision_rate,
+                temperature,
                 openmm_platform,
+                renumbered_resnums,
             )
 
             if archive:
-                archive_fah_run(target, run_index)
+                tgz_fah_run(target, run_index)
 
     mpistate.comm.Barrier()
     if mpistate.rank == 0:
-        print('Done.')
+        logger.info('Done.')
 
 
 filenames_necessary_for_fah_packaging = [
@@ -181,12 +204,72 @@ def create_target_project_dir(target):
         os.makedirs(target_project_dir)
 
 
+def setup_system_and_integrator_files(target,
+                                      template,
+                                      timestep,
+                                      collision_rate,
+                                      temperature
+                                      ):
+    models_target_dir = os.path.join(default_project_dirnames.models, target.id)
+    template_dir = os.path.join(models_target_dir, template.id)
+    target_project_dir = os.path.join(fah_projects_dir, target.id)
+    source_system_filepath = os.path.join(template_dir, 'explicit-system.xml')
+    source_state_filepath = os.path.join(template_dir, 'explicit-state.xml')
+    dest_system_filepath = os.path.join(target_project_dir, 'system.xml')
+    dest_integrator_filepath = os.path.join(target_project_dir, 'integrator.xml')
+
+    system = openmm.XmlSerializer.deserialize(
+        read_file_contents_gz_or_not(source_system_filepath)
+    )
+    state = openmm.XmlSerializer.deserialize(
+        read_file_contents_gz_or_not(source_state_filepath)
+    )
+
+    # Substitute default box vectors.
+    box_vectors = state.getPeriodicBoxVectors()
+    system.setDefaultPeriodicBoxVectors(*box_vectors)
+
+    # Create new integrator to use.
+    integrator = openmm.LangevinIntegrator(temperature, collision_rate, timestep)
+
+    # TODO: Make sure MonteCarloBarostat temperature matches set temperature.
+
+    # Serialize System.
+    with open(dest_system_filepath, 'w') as dest_system_file:
+        dest_system_file.write(openmm.XmlSerializer.serialize(system))
+
+    # Serialize Integrator
+    with open(dest_integrator_filepath, 'w') as dest_integrator_file:
+        dest_integrator_file.write(openmm.XmlSerializer.serialize(integrator))
+
+    return system
+
+
+def get_renumbered_topol_resnums(target):
+    models_target_dir = os.path.join(default_project_dirnames.models, target.id)
+    renumbered_resnums = {}
+    for topol_type in ['implicit', 'explicit']:
+        topol_path = os.path.join(models_target_dir, 'topol-renumbered-{}.pdb'.format(topol_type))
+        if not os.path.exists(topol_path):
+            continue
+        traj = mdtraj.load_pdb(topol_path)
+        res_numbers = [resi.resSeq for resi in traj.top.residues]
+        renumbered_resnums[topol_type] = res_numbers
+        logger.info('Will use renumbered residues from {} for target {}'.format(topol_path, target.id))
+    return renumbered_resnums
+
+
 def generate_fah_run(target_project_dir,
                      template,
                      source_dir,
+                     system,
                      run_index,
                      nclones,
+                     temperature,
+                     collision_rate,
+                     timestep,
                      openmm_platform,
+                     renumbered_resnums,
                      ):
     """
     Build Folding@Home RUN and CLONE subdirectories from (possibly compressed) OpenMM serialized XML files.
@@ -202,15 +285,12 @@ def generate_fah_run(target_project_dir,
         run_dir = os.path.join(target_project_dir, 'RUN%d' % run_index)
         run_template_id_filepath = os.path.join(run_dir, 'template.txt')
         run_seqid_filepath = os.path.join(run_dir, 'sequence-identity.txt')
-        run_system_filepath = os.path.join(run_dir, 'system.xml')
-        run_integrator_filepath = os.path.join(run_dir, 'integrator.xml')
         run_protein_structure_filepath = os.path.join(run_dir, 'protein.pdb')
         run_system_structure_filepath = os.path.join(run_dir, 'system.pdb')
         run_final_state_filepath = os.path.join(run_dir, 'state%d.xml' % (nclones - 1))
         source_seqid_filepath = os.path.join(source_dir, 'sequence-identity.txt')
         source_protein_structure_filepath = os.path.join(source_dir, 'implicit-refined.pdb.gz')
         source_system_structure_filepath = os.path.join(source_dir, 'explicit-refined.pdb.gz')
-        source_openmm_system_filepath = os.path.join(source_dir, 'explicit-system.xml')
         source_openmm_state_filepath = os.path.join(source_dir, 'explicit-state.xml')
 
         # Return if this directory has already been set up.
@@ -218,8 +298,6 @@ def generate_fah_run(target_project_dir,
             if (
                     os.path.exists(run_template_id_filepath)
                     and os.path.exists(run_seqid_filepath)
-                    and os.path.exists(run_system_filepath)
-                    and os.path.exists(run_integrator_filepath)
                     and os.path.exists(run_protein_structure_filepath)
                     and os.path.exists(run_system_structure_filepath)
                     and os.path.exists(run_final_state_filepath)
@@ -235,50 +313,40 @@ def generate_fah_run(target_project_dir,
             outfile.write(template.id + '\n')
 
         # Write the protein and system structure pdbs
-
-        with open(run_protein_structure_filepath, 'w') as protein_structure_file:
-            protein_structure_file.write(
-                read_file_contents_gz_or_not(source_protein_structure_filepath)
+        if 'implicit' in renumbered_resnums:
+            write_renumbered_structure(
+                source_protein_structure_filepath,
+                run_protein_structure_filepath,
+                renumbered_resnums['implicit'],
             )
+        else:
+            with open(run_protein_structure_filepath, 'w') as protein_structure_file:
+                protein_structure_file.write(
+                    read_file_contents_gz_or_not(source_protein_structure_filepath)
+                )
 
-        with open(run_system_structure_filepath, 'w') as system_structure_file:
-            system_structure_file.write(
-                read_file_contents_gz_or_not(source_system_structure_filepath)
+        if 'explicit' in renumbered_resnums:
+            write_renumbered_structure(
+                source_system_structure_filepath,
+                run_system_structure_filepath,
+                renumbered_resnums['explicit'],
             )
+        else:
+            with open(run_system_structure_filepath, 'w') as system_structure_file:
+                system_structure_file.write(
+                    read_file_contents_gz_or_not(source_system_structure_filepath)
+                )
 
-        system = openmm.XmlSerializer.deserialize(
-            read_file_contents_gz_or_not(source_openmm_system_filepath)
-        )
         state = openmm.XmlSerializer.deserialize(
             read_file_contents_gz_or_not(source_openmm_state_filepath)
         )
-
-        # Substitute default box vectors.
-        box_vectors = state.getPeriodicBoxVectors()
-        system.setDefaultPeriodicBoxVectors(*box_vectors)
 
         # Write sequence identity.
         with open(run_seqid_filepath, 'w') as run_seqid_file:
             run_seqid_file.write(read_file_contents_gz_or_not(source_seqid_filepath))
 
-        # Integrator settings.
-        constraint_tolerance = 1.0e-5
-        timestep = 2.0 * unit.femtoseconds
-        collision_rate = 1.0 / unit.picosecond
-        temperature = 300.0 * unit.kelvin
-
         # Create new integrator to use.
         integrator = openmm.LangevinIntegrator(temperature, collision_rate, timestep)
-
-        # TODO: Make sure MonteCarloBarostat temperature matches set temperature.
-
-        # Serialize System.
-        with open(run_system_filepath, 'w') as run_system_file:
-            run_system_file.write(openmm.XmlSerializer.serialize(system))
-
-        # Serialize Integrator
-        with open(run_integrator_filepath, 'w') as run_integrator_file:
-            run_integrator_file.write(openmm.XmlSerializer.serialize(integrator))
 
         # Create Context so we can randomize velocities.
         platform = openmm.Platform.getPlatformByName(openmm_platform)
@@ -310,10 +378,15 @@ def generate_fah_run(target_project_dir,
         print(traceback.format_exc())
         print(str(e))
 
-    return
+
+def write_renumbered_structure(source_filepath, dest_filepath, renumbered_resnums):
+    traj = mdtraj.load_pdb(source_filepath)
+    for r, residue in enumerate(traj.top.residues):
+        residue.resSeq = renumbered_resnums[r]
+    traj.save_pdb(dest_filepath)
 
 
-def archive_fah_run(target, run_index):
+def tgz_fah_run(target, run_index):
     project_target_dir = os.path.join(fah_projects_dir, target.id)
     archive_filename = os.path.join(project_target_dir, 'RUN%d.tgz' % run_index)
     run_dir = os.path.join(project_target_dir, 'RUN%d' % run_index)
