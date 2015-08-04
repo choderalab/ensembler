@@ -94,11 +94,15 @@ def package_for_fah(process_only_these_targets=None,
         logger.debug("Building RUNs in parallel...")
 
         for run_index in range(mpistate.rank, len(sorted_valid_templates), mpistate.size):
-            logger.info('-------------------------------------------------------------------------')
-            logger.info('Building RUN{} for template {}'.format(run_index, sorted_valid_templates[run_index].id))
-            logger.info('-------------------------------------------------------------------------')
-
             template = sorted_valid_templates[run_index]
+
+            logger.info('-------------------------------------------------------------------------')
+            logger.info(
+                'Building RUN{} for template {}'.format(
+                    run_index, template.id
+                )
+            )
+            logger.info('-------------------------------------------------------------------------')
 
             source_dir = os.path.join(models_target_dir, template.id)
             generate_fah_run(
