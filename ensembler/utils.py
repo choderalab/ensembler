@@ -1,5 +1,6 @@
 import contextlib
 import os
+import gzip
 import logging
 import functools
 import shutil
@@ -115,3 +116,16 @@ def set_arg_with_default(arg, default_arg):
     if arg is None:
         arg = default_arg
     return arg
+
+
+def read_file_contents_gz_or_not(base_filepath):
+    if os.path.exists(base_filepath):
+        with open(base_filepath) as infile:
+            contents = infile.read()
+    elif os.path.exists(base_filepath+'.gz'):
+        with gzip.open(base_filepath+'.gz') as infile:
+            contents = infile.read()
+    else:
+        raise IOError('File {} not found'.format(base_filepath))
+
+    return contents

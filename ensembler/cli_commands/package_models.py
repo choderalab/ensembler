@@ -109,5 +109,5 @@ def dispatch(args):
             template_seqid_cutoff=template_seqid_cutoff,
             nclones=n_fah_clones,
             archive=archive,
-            verbose=args['--verbose'],
+            loglevel=loglevel,
         )

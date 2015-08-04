@@ -37,7 +37,9 @@ class SetUpSampleProject:
     def targets(self):
         self.init()
         distutils.dir_util.copy_tree(
-            get_installed_resource_filename(os.path.join('example_project', default_project_dirnames.targets)),
+            get_installed_resource_filename(
+                os.path.join('example_project', default_project_dirnames.targets)
+            ),
             os.path.join(self.project_dir, default_project_dirnames.targets)
         )
 
