@@ -132,11 +132,17 @@ def get_valid_templates_for_target(target,
 
     for template in selected_templates:
         # Check to make sure all files needed are present.
+        not_valid = False
         for filename in filenames_necessary_for_fah_packaging:
             fullpath = os.path.join(models_target_dir, template.id, filename)
             if not (os.path.exists(fullpath) or os.path.exists(fullpath+'.gz')):
-                continue
-        valid_templates.append(template)
+                not_valid = True
+                break
+
+        if not_valid:
+            continue
+        else:
+            valid_templates.append(template)
 
     logger.debug('{} valid unique initial starting conditions found'.format(len(valid_templates)))
 
