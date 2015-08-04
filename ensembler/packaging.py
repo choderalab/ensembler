@@ -40,7 +40,7 @@ def package_for_fah(process_only_these_targets=None,
     targets, templates_resolved_seq = get_targets_and_templates()
 
     if not openmm_platform:
-        openmm_platform = auto_select_openmm_platform()
+        openmm_platform = auto_select_openmm_platform(available_platform_names=['CPU', 'Reference'])
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets):
