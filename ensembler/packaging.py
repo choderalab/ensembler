@@ -3,7 +3,6 @@ import subprocess
 from ensembler.core import mpistate, logger, default_project_dirnames
 from ensembler.core import get_targets_and_templates, select_templates_by_seqid_cutoff
 from ensembler.utils import set_loglevel, read_file_contents_gz_or_not
-from ensembler.refinement import auto_select_openmm_platform
 import simtk.unit as unit
 import simtk.openmm as openmm
 import mdtraj
@@ -15,7 +14,7 @@ def package_for_fah(process_only_these_targets=None,
                     process_only_these_templates=None,
                     template_seqid_cutoff=None,
                     nclones=1, archive=False,
-                    openmm_platform=None,
+                    openmm_platform='Reference',
                     timestep=2.0 * unit.femtoseconds,
                     collision_rate=1.0 / unit.picosecond,
                     temperature=300.0 * unit.kelvin,
@@ -38,9 +37,6 @@ def package_for_fah(process_only_these_targets=None,
     mpistate.comm.Barrier()
 
     targets, templates_resolved_seq = get_targets_and_templates()
-
-    if not openmm_platform:
-        openmm_platform = auto_select_openmm_platform(available_platform_names=['CPU', 'Reference'])
 
     for target in targets:
         if process_only_these_targets and (target.id not in process_only_these_targets):
