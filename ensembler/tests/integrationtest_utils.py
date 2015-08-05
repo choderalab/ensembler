@@ -25,7 +25,7 @@ def integrationtest_context(set_up_project_stage='init'):
 
 
 class SetUpSampleProject:
-    def __init__(self, project_dir):
+    def __init__(self, project_dir='.'):
         self.project_dir = project_dir
         self.targets_list = ['EGFR_HUMAN_D0', 'KC1D_HUMAN_D0']
         self.templates_list = ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']
@@ -37,7 +37,9 @@ class SetUpSampleProject:
     def targets(self):
         self.init()
         distutils.dir_util.copy_tree(
-            get_installed_resource_filename(os.path.join('example_project', default_project_dirnames.targets)),
+            get_installed_resource_filename(
+                os.path.join('example_project', default_project_dirnames.targets)
+            ),
             os.path.join(self.project_dir, default_project_dirnames.targets)
         )
 

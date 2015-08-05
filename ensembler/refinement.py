@@ -329,8 +329,10 @@ def refine_implicit_md(
         print('Done.')
 
 
-def auto_select_openmm_platform():
-    for platform_name in ['CUDA', 'OpenCL', 'CPU', 'Reference']:
+def auto_select_openmm_platform(available_platform_names=None):
+    if available_platform_names is None:
+        available_platform_names = ['CUDA', 'OpenCL', 'CPU', 'Reference']
+    for platform_name in available_platform_names:
         try:
             platform = openmm.Platform.getPlatformByName(platform_name)
             if type(platform) == openmm.Platform:

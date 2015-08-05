@@ -12,6 +12,7 @@ command_list = [
     'refine_explicit',
     'package_models',
     'quickmodel',
+    'renumber_residues',
 ]
 
 from . import general
@@ -28,3 +29,4 @@ from . import solvate
 from . import refine_explicit
 from . import package_models
 from . import quickmodel
+from . import renumber_residues

@@ -1,7 +1,7 @@
 import os
 import Bio.SeqUtils
 import mdtraj
-from ensembler.core import check_project_toplevel_dir, default_project_dirnames
+from ensembler.core import check_project_toplevel_dir, default_project_dirnames, logger
 from ensembler.utils import set_loglevel
 from ensembler.uniprot import get_uniprot_xml
 
@@ -19,6 +19,8 @@ class RenumberResidues(object):
         set_loglevel(log_level)
         self.targetid = targetid
         self.models_target_dir = os.path.join(default_project_dirnames.models, self.targetid)
+        if not os.path.exists(self.models_target_dir):
+            raise Exception('Model "{}" not found'.format(self.targetid))
         self.project_dir = project_dir
         self.uniprot_mnemonic = '_'.join(self.targetid.split('_')[0:2])
         self._get_models()
@@ -75,4 +77,4 @@ class RenumberResidues(object):
             self.model[key].save_pdb(ofilepath)
 
     def _finish(self):
-        print('Done.')
+        logger.info('Done.')

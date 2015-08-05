@@ -11,6 +11,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 import ensembler
+import ensembler.version
 import ensembler.targetexplorer
 import ensembler.uniprot
 import ensembler.pdb

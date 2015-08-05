@@ -8,12 +8,15 @@ ISRELEASED = True
 __version__ = VERSION
 ##########################
 
+
 def read_readme(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 
 ##########################
 # Function for determining current git commit
 ##########################
+
 
 def git_version():
     # Return the git revision as a string
@@ -41,11 +44,14 @@ def git_version():
 
     return GIT_REVISION
 
+
 ##########################
 # Function for writing version.py (this will be copied to the install directory)
 ##########################
 
 ensembler_version_filepath = 'ensembler/version.py'
+
+
 def write_version_py(filename=ensembler_version_filepath):
     cnt = """# THIS FILE IS GENERATED FROM ENSEMBLER SETUP.PY
 short_version = '%(version)s'
@@ -77,9 +83,11 @@ if not release:
     finally:
         a.close()
 
+
 ##########################
 # Find package data
 ##########################
+
 
 def find_package_data():
     package_data = []
@@ -95,6 +103,7 @@ def find_package_data():
                     filepath = os.path.join(dir, file).replace(basepath + os.path.sep, '')
                     package_data.append(filepath)
     return package_data
+
 
 ##########################
 # Setup

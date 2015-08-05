@@ -22,8 +22,8 @@ helpstring_unique_options = [
                                         to use for each model [default: 1].""",
 
     """\
-  --archivefahproject                   If packaging for Folding@Home, choose whether to compress
-                                        the results into a .tgz file.""",
+  --compressruns                        If packaging for Folding@Home, choose whether to compress
+                                        each RUN into a .tgz file.""",
 ]
 
 helpstring_nonunique_options = [
@@ -86,7 +86,7 @@ def dispatch(args):
     else:
         n_fah_clones = 1
 
-    if args['--archivefahproject']:
+    if args['--compressruns']:
         archive = True
     else:
         archive = False
@@ -109,5 +109,5 @@ def dispatch(args):
             template_seqid_cutoff=template_seqid_cutoff,
             nclones=n_fah_clones,
             archive=archive,
-            verbose=args['--verbose'],
+            loglevel=loglevel,
         )
