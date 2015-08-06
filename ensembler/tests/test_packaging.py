@@ -72,5 +72,5 @@ def test_package_for_fah():
         test_state_kinetic_energy = test_state.getKineticEnergy()
         ref_state_kinetic_energy = ref_state.getKineticEnergy()
         assert abs(
-             test_state_kinetic_energy - ref_state_kinetic_energy
+            test_state_kinetic_energy - ref_state_kinetic_energy
         ) < ref_state_kinetic_energy
