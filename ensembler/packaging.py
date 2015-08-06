@@ -4,7 +4,7 @@ from ensembler.core import mpistate, logger, default_project_dirnames
 from ensembler.core import get_targets_and_templates, select_templates_by_seqid_cutoff
 from ensembler.utils import set_loglevel, read_file_contents_gz_or_not
 import simtk.unit as unit
-import simtk.openmm as openmm
+import simtk.openmm as mm
 import mdtraj
 
 fah_projects_dir = os.path.join(default_project_dirnames.packaged_models, 'fah-projects')
@@ -15,9 +15,9 @@ def package_for_fah(process_only_these_targets=None,
                     template_seqid_cutoff=None,
                     nclones=1, archive=False,
                     openmm_platform='Reference',
-                    timestep=2.0 * unit.femtoseconds,
-                    collision_rate=1.0 / unit.picosecond,
                     temperature=300.0 * unit.kelvin,
+                    collision_rate=1.0 / unit.picosecond,
+                    timestep=2.0 * unit.femtoseconds,
                     loglevel=None):
     """
     Create the input files and directory structure necessary to start a Folding@Home project.
@@ -76,9 +76,9 @@ def package_for_fah(process_only_these_targets=None,
             system = setup_system_and_integrator_files(
                 target,
                 sorted_valid_templates[0],
-                timestep,
+                temperature,
                 collision_rate,
-                temperature
+                timestep
             )
 
             renumbered_resnums = get_renumbered_topol_resnums(target)
@@ -110,7 +110,7 @@ def package_for_fah(process_only_these_targets=None,
                 nclones,
                 temperature,
                 collision_rate,
-                temperature,
+                timestep,
                 openmm_platform,
                 renumbered_resnums,
             )
@@ -206,10 +206,11 @@ def create_target_project_dir(target):
 
 def setup_system_and_integrator_files(target,
                                       template,
-                                      timestep,
+                                      temperature,
                                       collision_rate,
-                                      temperature
+                                      timestep
                                       ):
+    logger.debug('Copying system and integrator files for template {}'.format(template.id))
     models_target_dir = os.path.join(default_project_dirnames.models, target.id)
     template_dir = os.path.join(models_target_dir, template.id)
     target_project_dir = os.path.join(fah_projects_dir, target.id)
@@ -218,10 +219,10 @@ def setup_system_and_integrator_files(target,
     dest_system_filepath = os.path.join(target_project_dir, 'system.xml')
     dest_integrator_filepath = os.path.join(target_project_dir, 'integrator.xml')
 
-    system = openmm.XmlSerializer.deserialize(
+    system = mm.XmlSerializer.deserialize(
         read_file_contents_gz_or_not(source_system_filepath)
     )
-    state = openmm.XmlSerializer.deserialize(
+    state = mm.XmlSerializer.deserialize(
         read_file_contents_gz_or_not(source_state_filepath)
     )
 
@@ -230,17 +231,17 @@ def setup_system_and_integrator_files(target,
     system.setDefaultPeriodicBoxVectors(*box_vectors)
 
     # Create new integrator to use.
-    integrator = openmm.LangevinIntegrator(temperature, collision_rate, timestep)
+    integrator = mm.LangevinIntegrator(temperature, collision_rate, timestep)
 
     # TODO: Make sure MonteCarloBarostat temperature matches set temperature.
 
     # Serialize System.
     with open(dest_system_filepath, 'w') as dest_system_file:
-        dest_system_file.write(openmm.XmlSerializer.serialize(system))
+        dest_system_file.write(mm.XmlSerializer.serialize(system))
 
     # Serialize Integrator
     with open(dest_integrator_filepath, 'w') as dest_integrator_file:
-        dest_integrator_file.write(openmm.XmlSerializer.serialize(integrator))
+        dest_integrator_file.write(mm.XmlSerializer.serialize(integrator))
 
     return system
 
@@ -337,7 +338,7 @@ def generate_fah_run(target_project_dir,
                     read_file_contents_gz_or_not(source_system_structure_filepath)
                 )
 
-        state = openmm.XmlSerializer.deserialize(
+        state = mm.XmlSerializer.deserialize(
             read_file_contents_gz_or_not(source_openmm_state_filepath)
         )
 
@@ -346,13 +347,12 @@ def generate_fah_run(target_project_dir,
             run_seqid_file.write(read_file_contents_gz_or_not(source_seqid_filepath))
 
         # Create new integrator to use.
-        integrator = openmm.LangevinIntegrator(temperature, collision_rate, timestep)
+        integrator = mm.LangevinIntegrator(temperature, collision_rate, timestep)
 
         # Create Context so we can randomize velocities.
-        platform = openmm.Platform.getPlatformByName(openmm_platform)
-        context = openmm.Context(system, integrator, platform)
+        platform = mm.Platform.getPlatformByName(openmm_platform)
+        context = mm.Context(system, integrator, platform)
         context.setPositions(state.getPositions())
-        context.setVelocities(state.getVelocities())
         box_vectors = state.getPeriodicBoxVectors()
         context.setPeriodicBoxVectors(*box_vectors)
 
@@ -371,7 +371,7 @@ def generate_fah_run(target_project_dir,
                 enforcePeriodicBox=True
             )
             with open(state_filename, 'w') as state_file:
-                state_file.write(openmm.XmlSerializer.serialize(state))
+                state_file.write(mm.XmlSerializer.serialize(state))
 
     except Exception as e:
         import traceback

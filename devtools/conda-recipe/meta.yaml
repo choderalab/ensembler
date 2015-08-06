@@ -18,7 +18,7 @@ requirements:
 
   run:
     - python
-    - modeller
+    - modeller ==9.15
     - mdtraj
     - msmbuilder
     - biopython
