@@ -2,7 +2,7 @@
 
 if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
 then
-    conda install --yes --use-local ensembler
+    conda install --yes --use-local ensembler-dev
     conda install --yes nose
     pushd .; cd /
     nosetests ensembler -v --exe -a modeller
