@@ -1,5 +1,4 @@
 # This runs unit tests
-conda build devtools/conda-recipe
 
 if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
 then

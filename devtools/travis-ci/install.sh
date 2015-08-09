@@ -6,21 +6,8 @@ if [[ $MINICONDA_MD5 != $(md5sum $MINICONDA | cut -d ' ' -f 1) ]]; then
     exit 1
 fi
 bash $MINICONDA -b
-PIP_ARGS="-U"
 
 export PATH=$HOME/miniconda/bin:$PATH
-
-sudo apt-get update
-
-conda update --yes conda
+conda install --yes conda-build jinja2 anaconda-client pip
 conda config --add channels http://conda.anaconda.org/omnia
 conda config --add channels http://conda.anaconda.org/salilab
-source activate $python
-conda install --yes conda-build jinja2
-
-#if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
-#then
-#conda install -c salilab modeller
-#else
-#echo "This is a pull request. Secure environment variables are not available, so will not attempt to install Modeller."
-#fi

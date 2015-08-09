@@ -1,5 +1,5 @@
 package:
-  name: ensembler
+  name: ensembler-dev
   version: !!str dev
 
 #source:
@@ -33,11 +33,11 @@ requirements:
 
 test:
   requires:
-    - nose
+    # - nose
   imports:
     - ensembler
   commands:
-    - nosetests ensembler -v --exe -a unit
+    # - nosetests ensembler -v --exe -a unit
 
 about:
   home: https://github.com/choderalab/ensembler
