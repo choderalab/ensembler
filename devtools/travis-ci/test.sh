@@ -1,8 +1,6 @@
 # This runs unit tests
 
-if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
-then
-    conda install --yes --use-local ensembler-dev
+if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
     conda install --yes nose
     pushd .; cd /
     nosetests ensembler -v --exe -a modeller
