@@ -1,8 +1,6 @@
 import os
-
 from lxml import etree
 from nose.plugins.attrib import attr
-
 import ensembler
 import ensembler.cli
 import ensembler.cli_commands
@@ -10,9 +8,7 @@ import ensembler.initproject
 import ensembler.tests
 import ensembler.core
 import ensembler.uniprot
-from ensembler.utils import enter_temp_dir
-
-from ensembler.tests.utils import get_installed_resource_filename
+from ensembler.utils import enter_temp_dir, get_installed_resource_filename
 from ensembler.tests.integrationtest_utils import integrationtest_context
 
 
@@ -30,6 +26,7 @@ def test_initproject():
         assert os.path.exists(ensembler.core.default_project_dirnames.templates_structures_resolved)
         assert os.path.exists(ensembler.core.default_project_dirnames.templates_structures_modeled_loops)
         assert os.path.exists('meta0.yaml')
+        assert os.path.exists(ensembler.core.manual_overrides_filename)
 
 
 @attr('unit')
@@ -103,7 +100,7 @@ def test_extract_targets_from_targetexplorer_json():
 @attr('unit')
 def test_attempt_symlink_structure_files():
     pdbid = '4CFE'
-    structure_paths = [get_installed_resource_filename(os.path.join('resources'))]
+    structure_paths = [get_installed_resource_filename(os.path.join('tests', 'resources'))]
     with enter_temp_dir():
         os.mkdir('pdb')
         project_pdb_filepath = os.path.join('pdb', pdbid + '.pdb.gz')
@@ -116,7 +113,7 @@ def test_attempt_symlink_structure_files():
 def test_log_unique_domain_names():
     with open(
         get_installed_resource_filename(
-            os.path.join('resources', 'uniprot-CK1-kinases.xml')
+            os.path.join('tests', 'resources', 'uniprot-CK1-kinases.xml')
         )
     ) as uniprotxml_file:
         uniprotxml_string = ensembler.uniprot.remove_uniprot_xmlns(uniprotxml_file.read())

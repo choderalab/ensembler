@@ -1,11 +1,15 @@
 import os
-from nose.plugins.attrib import attr
+import gzip
+import simtk.openmm as mm
 from ensembler.packaging import package_for_fah
 from ensembler.core import default_project_dirnames
+from ensembler.utils import get_installed_resource_filename
 from ensembler.tests.integrationtest_utils import integrationtest_context
+from nose.plugins.attrib import attr
 
 
 @attr('unit')
+@attr('slow')
 def test_package_for_fah():
     with integrationtest_context(set_up_project_stage='refined_explicit'):
         package_for_fah(
@@ -55,3 +59,19 @@ def test_package_for_fah():
                     'RUN{}'.format(run_id),
                     run_filename
                 ))
+
+        # test whether kinetic energy in new state file is reasonable
+        test_state_filepath = os.path.join(packaged_project_base_path, 'RUN0', 'state0.xml')
+        with open(test_state_filepath) as test_state_file:
+            test_state = mm.XmlSerializer.deserialize(test_state_file.read())
+        ref_state_filepath = get_installed_resource_filename(os.path.join(
+            'tests', 'example_project', 'models',
+            'EGFR_HUMAN_D0', 'KC1D_HUMAN_D0_4HNF_A', 'explicit-state.xml.gz'
+        ))
+        with gzip.open(ref_state_filepath) as ref_state_file:
+            ref_state = mm.XmlSerializer.deserialize(ref_state_file.read())
+        test_state_kinetic_energy = test_state.getKineticEnergy()
+        ref_state_kinetic_energy = ref_state.getKineticEnergy()
+        assert abs(
+            test_state_kinetic_energy - ref_state_kinetic_energy
+        ) < ref_state_kinetic_energy

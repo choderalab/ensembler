@@ -37,6 +37,10 @@ class MkTraj(object):
         traj : mdtraj.Trajectory
         df : pandas.DataFrame
             models data (e.g. sequence identities):
+
+        Examples
+        --------
+        >>> MkTraj(targetid='EGFR_HUMAN_D0')
         """
         ensembler.utils.set_loglevel(loglevel)
         ensembler.core.check_project_toplevel_dir()
@@ -148,7 +152,16 @@ class MkTrajImplicitStart(MkTraj):
     def __init__(self, targetid, traj_filepath=None, topol_filepath=None,
            models_data_filepath=None, process_only_these_templates=None, loglevel=None,
            run_main=True):
-        """Quick hack.
+        """
+        Makes trajectory of the model files with added hydrogens, but prior to any refinement.
+        For the specified target, makes a single topology pdb file, a single trajectory xtc file,
+        and individual pdb files for each model.
+
+        See docs on `MkTraj` for further info on paramters.
+
+        Examples
+        --------
+        MkTrajImplicitStart(targetid='EGFR_HUMAN_D0')
         """
         ensembler.utils.set_loglevel(loglevel)
         ensembler.core.check_project_toplevel_dir()

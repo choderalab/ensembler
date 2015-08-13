@@ -135,7 +135,7 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
             template_full_seq.id + '.pdb'
         )
         fixer = pdbfixer.PDBFixer(filename=template_filepath)
-        chainid = fixer.structureChains[0].chain_id
+        chainid = next(fixer.structure.iter_chains()).chain_id
         seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(chainid)
         for r in template_full_seq.seq:
             resi3 = Bio.SeqUtils.seq3(r).upper()
@@ -179,6 +179,8 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
             'MPI rank %d pdbfixer error for template %s - see logfile' %
             (mpistate.rank, template_full_seq.id)
         )
+        logger.debug(e)
+        logger.debug(trbk)
 
 
 def remove_missing_residues_at_termini(fixer, len_full_seq):

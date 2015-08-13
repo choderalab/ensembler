@@ -18,12 +18,12 @@ requirements:
 
   run:
     - python
-    - modeller
+    - modeller ==9.15
     - mdtraj
     - msmbuilder
     - biopython
     - openmm
-    - pdbfixer
+    - pdbfixer ==1.2
     # - numpy
     - lxml
     - pyyaml

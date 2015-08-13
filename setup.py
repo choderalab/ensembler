@@ -89,19 +89,13 @@ if not release:
 ##########################
 
 
-def find_package_data():
+def find_package_data(dir_to_search=None):
     package_data = []
-    basepath = os.path.join('ensembler', 'tests')
-    dirs_to_search = [
-        os.path.join('ensembler', 'tests', 'resources'),
-        os.path.join('ensembler', 'tests', 'example_project')
-    ]
-    for dir_to_search in dirs_to_search:
-        for dir, subdirs, files in os.walk(dir_to_search):
-            for file in files:
-                if file[0] != '.':
-                    filepath = os.path.join(dir, file).replace(basepath + os.path.sep, '')
-                    package_data.append(filepath)
+    for dir, subdirs, files in os.walk(dir_to_search):
+        for file in files:
+            if file[0] != '.':
+                filepath = os.path.join(dir, file).replace(dir_to_search + os.path.sep, '')
+                package_data.append(filepath)
     return package_data
 
 
@@ -124,7 +118,10 @@ setup(
         'ensembler.tools',
         'ensembler.tests',
     ],
-    package_data = {'ensembler.tests': find_package_data()},
+    package_data = {
+        'ensembler': find_package_data(dir_to_search='ensembler'),
+        'ensembler.tests': find_package_data(dir_to_search=os.path.join('ensembler', 'tests')),
+    },
 
     entry_points = {'console_scripts':
         [
