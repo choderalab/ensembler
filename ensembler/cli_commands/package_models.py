@@ -54,6 +54,7 @@ helpstring_nonunique_options = [
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
 docopt_helpstring = '\n\n'.join(helpstring_unique_options)
 
+
 def dispatch(args):
     if args['--package_for']:
         package_for = args['--package_for']

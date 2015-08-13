@@ -4,7 +4,7 @@ if sys.version_info > (3, 0):
     from io import StringIO
 else:
     from StringIO import StringIO
-from ensembler.tests.utils import get_installed_resource_filename
+from ensembler.utils import get_installed_resource_filename
 import ensembler.pdb
 from mock import Mock
 from nose.plugins.attrib import attr
@@ -13,7 +13,7 @@ from nose.plugins.attrib import attr
 @attr('unit')
 def test_extract_residues_by_resnum_from_4CFE():
     # 4CFE contains a 'TPO' residue
-    pdb_input_filepath = get_installed_resource_filename(os.path.join('resources', '4CFE.pdb.gz'))
+    pdb_input_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', '4CFE.pdb.gz'))
     template = Mock()
     template.chainid= 'A'
     template.resolved_pdbresnums = [str(x) for x in range(16, 269)]
@@ -25,7 +25,7 @@ def test_extract_residues_by_resnum_from_4CFE():
 @attr('unit')
 def test_extract_residues_by_resnum_from_3HLL():
     # 3HLL contains resnums '56A' and '93B'
-    pdb_input_filepath = get_installed_resource_filename(os.path.join('resources', '3HLL.pdb.gz'))
+    pdb_input_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', '3HLL.pdb.gz'))
     template = Mock()
     template.chainid = 'A'
     template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
@@ -38,7 +38,7 @@ def test_extract_residues_by_resnum_from_3HLL():
 
 @attr('unit')
 def test_extract_residues_by_resnum_output():
-    pdb_input_filepath = get_installed_resource_filename(os.path.join('resources', '3HLL.pdb.gz'))
+    pdb_input_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', '3HLL.pdb.gz'))
     template = Mock()
     template.chainid = 'A'
     template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]

@@ -6,10 +6,9 @@ from nose.plugins.attrib import attr
 import ensembler
 import ensembler.tests
 import ensembler.modeling
-from ensembler.tests.utils import get_installed_resource_filename
 from ensembler.tests.integrationtest_utils import integrationtest_context
 import ensembler.cli_commands
-from ensembler.utils import enter_temp_dir
+from ensembler.utils import enter_temp_dir, get_installed_resource_filename
 
 
 @attr('modeller')
@@ -20,8 +19,8 @@ def test_import_modeller():
 
 @attr('modeller')
 def test_build_model():
-    template_filepath = get_installed_resource_filename(os.path.join('resources',  'mock_template.pdb'))
-    aln_filepath = get_installed_resource_filename(os.path.join('resources', 'mock_template-alignment.pir'))
+    template_filepath = get_installed_resource_filename(os.path.join('tests', 'resources',  'mock_template.pdb'))
+    aln_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', 'mock_template-alignment.pir'))
 
     with enter_temp_dir():
         target = Mock()
@@ -60,7 +59,7 @@ def test_build_model():
 
 @attr('unit')
 def test_align_command():
-    ref_resources_dirpath = get_installed_resource_filename('example_project')
+    ref_resources_dirpath = get_installed_resource_filename(os.path.join('tests', 'example_project'))
     with integrationtest_context(set_up_project_stage='templates_modeled_loops'):
         targets = ['KC1D_HUMAN_D0', 'EGFR_HUMAN_D0']
         templates = ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']

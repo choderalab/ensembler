@@ -212,6 +212,11 @@ class ManualOverrides:
     """
     Reads in user-defined override data from a YAML file named "manual-overrides.yaml"
 
+    Parameters
+    ----------
+    manual_overrides_filepath: str
+        In normal use, this should not need to be set. Defaults to 'manual-overrides.yaml'
+
     Example file contents
     ---------------------
 
@@ -231,17 +236,27 @@ class ManualOverrides:
             - 4Q2A
             - 4CTB
             - 4QOX
+    refinement:
+        ph: 8.0
+        custom_residue_variants:
+            DDR1_HUMAN_D0_PROTONATED:
+                # keyed by 0-based residue index
+                35: ASH
+
+    Or see `ensembler/tests/example_project/manual_overrides.yaml` for an example file.
     """
-    def __init__(self):
-        import yaml
-        if os.path.exists(manual_overrides_filename):
-            with open(manual_overrides_filename, 'r') as manual_overrides_file:
+    def __init__(self, manual_overrides_filepath=None):
+        if not manual_overrides_filepath:
+            manual_overrides_filepath = manual_overrides_filename
+        if os.path.exists(manual_overrides_filepath):
+            with open(manual_overrides_filepath, 'r') as manual_overrides_file:
                 manual_overrides_yaml = yaml.load(manual_overrides_file, Loader=YamlLoader)
         else:
             manual_overrides_yaml = {}
 
         self.target = TargetManualOverrides(manual_overrides_yaml)
         self.template = TemplateManualOverrides(manual_overrides_yaml)
+        self.refinement = RefinementManualOverrides(manual_overrides_yaml)
 
 
 class TargetManualOverrides:
@@ -258,7 +273,7 @@ class TargetManualOverrides:
     """
     def __init__(self, manual_overrides_yaml):
         target_dict = manual_overrides_yaml.get('target-selection')
-        if target_dict != None:
+        if target_dict is not None:
             self.domain_spans = target_dict.get('domain-spans')
         else:
             self.domain_spans = {}
@@ -282,7 +297,7 @@ class TemplateManualOverrides:
     """
     def __init__(self, manual_overrides_yaml):
         template_dict = manual_overrides_yaml.get('template-selection')
-        if template_dict != None:
+        if template_dict is not None:
             self.min_domain_len = template_dict.get('min-domain-len')
             self.max_domain_len = template_dict.get('max-domain-len')
             self.domain_spans = template_dict.get('domain-spans')
@@ -292,6 +307,29 @@ class TemplateManualOverrides:
             self.max_domain_len = None
             self.domain_spans = {}
             self.skip_pdbs = []
+
+
+class RefinementManualOverrides:
+    """
+    Parameters
+    ----------
+    manual_overrides_yaml: dict
+
+    Attributes
+    ----------
+    ph: float or NoneType
+    custom_residue_variants_by_targetid: dict or NoneType
+        dict with structure {`targetid`: {residue_index: residue_name}, ...} where
+        e.g. {'DDR1_HUMAN_D0_PROTONATED': {35: 'ASH'}}
+    """
+    def __init__(self, manual_overrides_yaml):
+        refinement_dict = manual_overrides_yaml.get('refinement')
+        if refinement_dict is not None:
+            self.ph = refinement_dict.get('ph')
+            self.custom_residue_variants_by_targetid = refinement_dict.get('custom_residue_variants')
+        else:
+            self.ph = None
+            self.custom_residue_variants_by_targetid = {}
 
 
 def gen_metadata_filename(ensembler_stage, metadata_file_index):

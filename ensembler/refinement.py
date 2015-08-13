@@ -9,11 +9,12 @@ from yaml.scanner import ScannerError
 import warnings
 import socket
 from collections import deque
+from copy import deepcopy
 import numpy as np
 import Bio
 import ensembler
 import ensembler.version
-from ensembler.core import mpistate, logger
+from ensembler.core import mpistate, logger, ManualOverrides
 import simtk.unit as unit
 import simtk.openmm as openmm
 import simtk.openmm.app as app
@@ -23,8 +24,9 @@ import simtk.openmm.version
 def refine_implicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
         process_only_these_templates=None, template_seqid_cutoff=None,
-        verbose=False, write_trajectory=False,
+        write_trajectory=False,
         include_disulfide_bonds=False,
+        custom_residue_variants=None,
         ff='amber99sbildn',
         implicit_water_model='amber99_obc',
         sim_length=100.0 * unit.picoseconds,
@@ -35,15 +37,30 @@ def refine_implicit_md(
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
         nsteps_per_iteration=500,
-        ph=7.0,
+        ph=None,
         retry_failed_runs=False,
-        cpu_platform_threads=1):
+        cpu_platform_threads=1,
+        loglevel=None):
     # TODO - refactor
-    '''Run MD refinement in implicit solvent.
+    """Run MD refinement in implicit solvent.
 
     MPI-enabled.
-    '''
+    """
+    ensembler.utils.set_loglevel(loglevel)
     gpuid = mpistate.rank % gpupn
+    manual_overrides = ManualOverrides()
+    if ph is None:
+        if manual_overrides.refinement.ph is not None:
+            ph = manual_overrides.refinement.ph
+        else:
+            ph = 7.0
+    if custom_residue_variants is None:
+        custom_residue_variants = deepcopy(
+            manual_overrides.refinement.custom_residue_variants_by_targetid
+        )
+
+    if (sim_length / timestep) < nsteps_per_iteration:
+        nsteps_per_iteration = int(sim_length / timestep)
 
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
@@ -72,7 +89,7 @@ def refine_implicit_md(
 
     def simulate_implicit_md():
 
-        if verbose: print("Reading model...")
+        logger.debug("Reading model...")
         with gzip.open(model_filename) as model_file:
             pdb = app.PDBFile(model_file)
 
@@ -94,23 +111,23 @@ def refine_implicit_md(
         topology = modeller.getTopology()
         positions = modeller.getPositions()
 
-        if verbose: print("Constructing System object...")
+        logger.debug("Constructing System object...")
         if cutoff is None:
             system = forcefield.createSystem(topology, nonbondedMethod=app.NoCutoff, constraints=app.HBonds)
         else:
             system = forcefield.createSystem(topology, nonbondedMethod=app.CutoffNonPeriodic, nonbondedCutoff=cutoff, constraints=app.HBonds)
 
-        if verbose: print("Creating Context...")
+        logger.debug("Creating Context...")
         integrator = openmm.LangevinIntegrator(temperature, collision_rate, timestep)
         context = openmm.Context(system, integrator, platform, platform_properties)
         context.setPositions(positions)
 
-        if verbose: print("Minimizing structure...")
+        logger.debug("Minimizing structure...")
         openmm.LocalEnergyMinimizer.minimize(context, minimization_tolerance, minimization_steps)
 
         if write_trajectory:
             # Open trajectory for writing.
-            if verbose: print("Opening trajectory for writing...")
+            logger.debug("Opening trajectory for writing...")
             trajectory_filename = os.path.join(model_dir, 'implicit-trajectory.pdb.gz')
             trajectory_outfile = gzip.open(trajectory_filename, 'w')
             app.PDBFile.writeHeader(topology, file=trajectory_outfile)
@@ -120,7 +137,7 @@ def refine_implicit_md(
         energy_outfile = open(energy_filename, 'w')
         energy_outfile.write('# iteration | simulation time (ps) | potential_energy (kT) | kinetic_energy (kT) | ns per day\n')
 
-        if verbose: print("Running dynamics...")
+        logger.debug("Running dynamics...")
         import time
         initial_time = time.time()
         for iteration in range(niterations):
@@ -134,7 +151,7 @@ def refine_implicit_md(
             final_time = time.time()
             elapsed_time = (final_time - initial_time) * unit.seconds
             ns_per_day = (simulation_time / elapsed_time) / (unit.nanoseconds / unit.day)
-            if verbose: print(
+            logger.debug(
                 "  %8.1f ps : potential %8.3f kT | kinetic %8.3f kT | %.3f ns/day | %.3f s remain"
                 % (
                     simulation_time / unit.picoseconds, potential_energy / kT, kinetic_energy / kT,
@@ -203,14 +220,16 @@ def refine_implicit_md(
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
         reference_topology = modeller.topology
         reference_variants = modeller.addHydrogens(forcefield, pH=ph)
-        if verbose:
-            print("Reference variants extracted:")
-            if reference_variants != None:
-                for (residue_index, residue) in enumerate(reference_variants):
-                    if residue != None:
-                        print("%8d %s" % (residue_index+1, residue))
-                print("")
-            else: print(reference_variants)
+        if target.id in custom_residue_variants:
+            apply_custom_residue_variants(reference_variants, custom_residue_variants[target.id])
+        logger.debug("Reference variants extracted:")
+        if reference_variants is not None:
+            for (residue_index, residue) in enumerate(reference_variants):
+                if residue is not None:
+                    logger.debug("%8d %s" % (residue_index+1, residue))
+            logger.debug("")
+        else:
+            logger.debug(reference_variants)
 
         if template_seqid_cutoff:
             process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
@@ -241,23 +260,26 @@ def refine_implicit_md(
             # Check to make sure the initial model file is present.
             model_filename = os.path.join(model_dir, 'model.pdb.gz')
             if not os.path.exists(model_filename):
-                if verbose: print('model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template.id, mpistate.rank, gpuid))
+                logger.debug('model.pdb.gz not present: target %s template %s rank %d gpuid %d' % (target.id, template.id, mpistate.rank, gpuid))
                 continue
 
             pdb_filename = os.path.join(model_dir, 'implicit-refined.pdb.gz')
 
-            print("-------------------------------------------------------------------------")
-            print("Simulating %s => %s in implicit solvent for %.1f ps (MPI rank: %d, GPU ID: %d)" % (target.id, template.id, niterations * nsteps_per_iteration * timestep / unit.picoseconds, mpistate.rank, gpuid))
-            print("-------------------------------------------------------------------------")
+            logger.info("-------------------------------------------------------------------------")
+            logger.info("Simulating %s => %s in implicit solvent for %.1f ps (MPI rank: %d, GPU ID: %d)" % (target.id, template.id, niterations * nsteps_per_iteration * timestep / unit.picoseconds, mpistate.rank, gpuid))
+            logger.info("-------------------------------------------------------------------------")
 
             # Open log file
             log_data = {
                 'mpi_rank': mpistate.rank,
                 'gpuid': gpuid if 'CUDA_VISIBLE_DEVICES' not in os.environ else os.environ['CUDA_VISIBLE_DEVICES'],
                 'openmm_platform': openmm_platform,
-                'sim_length': '%s' % sim_length,
                 'finished': False,
-                }
+                'sim_length': str(sim_length),
+                'timestep': str(timestep),
+                'temperature': str(temperature),
+                'ph': ph,
+            }
             log_file = ensembler.core.LogFile(log_filepath)
             log_file.log(new_log_data=log_data)
 
@@ -269,7 +291,7 @@ def refine_implicit_md(
                     'finished': True,
                     'timing': timing,
                     'successful': True,
-                    }
+                }
                 log_file.log(new_log_data=log_data)
             except Exception as e:
                 trbk = traceback.format_exc()
@@ -285,11 +307,10 @@ def refine_implicit_md(
                     'timing': timing,
                     'finished': True,
                     'successful': False,
-                    }
+                }
                 log_file.log(new_log_data=log_data)
 
-        if verbose:
-            print('Finished template loop: rank %d' % mpistate.rank)
+        logger.debug('Finished template loop: rank %d' % mpistate.rank)
 
         mpistate.comm.Barrier()
 
@@ -303,12 +324,23 @@ def refine_implicit_md(
             metadata = {
                 'target_id': target.id,
                 'datestamp': datestamp,
-                'template_seqid_cutoff': template_seqid_cutoff,
+                'timing': ensembler.core.strf_timedelta(target_timedelta),
+                'openmm_platform': openmm_platform,
                 'process_only_these_targets': process_only_these_targets,
                 'process_only_these_templates': process_only_these_templates,
-                'timing': ensembler.core.strf_timedelta(target_timedelta),
+                'template_seqid_cutoff': template_seqid_cutoff,
+                'write_trajectory': write_trajectory,
+                'include_disulfide_bonds': include_disulfide_bonds,
+                'custom_residue_variants': custom_residue_variants,
                 'ff': ff,
                 'implicit_water_model': implicit_water_model,
+                'sim_length': str(sim_length),
+                'timestep': str(timestep),
+                'temperature': str(temperature),
+                'collision_rate': str(collision_rate),
+                'cutoff': str(cutoff),
+                'nsteps_per_iteration': nsteps_per_iteration,
+                'ph': ph,
                 'nsuccessful_refinements': nsuccessful_refinements,
                 'python_version': sys.version.split('|')[0].strip(),
                 'python_full_version': ensembler.core.literal_str(sys.version),
@@ -326,7 +358,7 @@ def refine_implicit_md(
 
     mpistate.comm.Barrier()
     if mpistate.rank == 0:
-        print('Done.')
+        logger.info('Done.')
 
 
 def auto_select_openmm_platform(available_platform_names=None):
@@ -394,6 +426,29 @@ def remove_disulfide_bonds_from_topology(topology):
             ):
             remove_bond_indices.append(b)
     [topology._bonds.pop(b) for b in remove_bond_indices]
+
+
+def apply_custom_residue_variants(variants, custom_variants_dict):
+    """
+    Applies custom residue names to a list of residue names.
+    Acts on `variants` list in-place.
+
+    Parameters
+    ----------
+    variants: list of str
+        typically generated from openmm.app.modeller.addHydrogens
+    custom_variants_dict: dict
+        keyed by 0-based residue index. Values should be residue name string.
+        e.g. {35: 'HID'}
+    """
+    for residue_index in custom_variants_dict:
+        if residue_index >= len(variants):
+            raise Exception(
+                'Custom residue variant index ({}: \'{}\') out of range of variants (len: {})'.format(
+                    residue_index, custom_variants_dict[residue_index], len(variants)
+                )
+            )
+        variants[residue_index] = custom_variants_dict[residue_index]
 
 
 def solvate_models(process_only_these_targets=None, process_only_these_templates=None,
