@@ -40,7 +40,8 @@ script:
   # - source devtools/travis-ci/test.sh
   - conda install --yes nose
   - pushd .; cd /
-  - nosetests ensembler -v --exe -a modeller
+  - nosetests ensembler -v --exe -a unit
+  - if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then; nosetests ensembler -v --exe -a modeller; fi
   - popd
 
 after_success:
