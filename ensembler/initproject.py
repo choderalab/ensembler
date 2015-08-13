@@ -61,15 +61,10 @@ class InitProject(object):
             template_manual_overrides_filepath = get_installed_resource_filename(
                 os.path.join('resources', 'template-manual-overrides.yaml')
             )
-            try:
-                with open(template_manual_overrides_filepath) as template_manual_overrides_file:
-                    with open(manual_overrides_filename, 'w') as manual_overrides_file:
-                        manual_overrides_file.write(template_manual_overrides_file.read())
-            except:
-                logger.warn('Problem writing manual overrides file from {} to {}'.format(
-                    template_manual_overrides_filepath, os.path.abspath(manual_overrides_filename))
-                )
-                raise
+            manual_overrides_filepath = os.path.join(
+                self.project_toplevel_dir, manual_overrides_filename
+            )
+            shutil.copy(template_manual_overrides_filepath, manual_overrides_filepath)
 
     def _write_init_metadata(self):
         project_metadata = ensembler.core.ProjectMetadata(project_stage='init', project_toplevel_dir=self.project_toplevel_dir)
