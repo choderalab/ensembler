@@ -34,15 +34,7 @@ install:
   - export CXX=g++
 
 script:
-  - conda config --add channels https://conda.binstar.org/omnia
-  - conda build devtools/conda-recipe
-  - conda install --yes --use-local ensembler-dev
-  # - source devtools/travis-ci/test.sh
-  - conda install --yes nose
-  - pushd .; cd /
-  - nosetests ensembler -v --exe -a unit
-  - if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then; nosetests ensembler -v --exe -a modeller; fi
-  - popd
+  - source devtools/travis-ci/test.sh
 
 after_success:
   - echo "after_success"
