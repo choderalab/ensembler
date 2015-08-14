@@ -3,8 +3,8 @@ import subprocess
 from setuptools import setup
 
 ##########################
-VERSION = "1.0.3"
-ISRELEASED = False
+VERSION = "1.0.4"
+ISRELEASED = True
 __version__ = VERSION
 ##########################
 
