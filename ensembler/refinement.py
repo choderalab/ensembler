@@ -736,6 +736,10 @@ def refine_explicit_md(
 
     targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
 
+    if (sim_length / timestep) < nsteps_per_iteration:
+        nsteps_per_iteration = int(sim_length / timestep)
+
+
     if process_only_these_templates:
         selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
     else:

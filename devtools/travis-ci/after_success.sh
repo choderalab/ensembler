@@ -1,3 +1,4 @@
+#!/bin/bash
 echo $TRAVIS_PULL_REQUEST $TRAVIS_BRANCH
 
 if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
@@ -11,4 +12,3 @@ fi
 
 
 binstar -t $BINSTAR_TOKEN upload --force -u omnia -p ensembler-dev $HOME/miniconda/conda-bld/linux-64/ensembler-dev-*
-

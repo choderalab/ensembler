@@ -5,7 +5,6 @@ from mock import Mock
 from nose.plugins.attrib import attr
 import ensembler
 import ensembler.initproject
-from ensembler.core import get_templates_full_seq
 from ensembler.utils import get_installed_resource_filename, set_loglevel
 from ensembler.tests.integrationtest_utils import integrationtest_context
 from ensembler.modeling import pdbfix_templates, pdbfix_template, loopmodel_template
@@ -13,23 +12,6 @@ from ensembler.modeling import pdbfix_templates, pdbfix_template, loopmodel_temp
 
 @attr('unit')
 def test_pdbfix_KC1D_HUMAN_D0_4KB8_D():
-    set_loglevel('debug')
-    with integrationtest_context(set_up_project_stage='templates_resolved'):
-        template = Mock()
-        template.id = 'KC1D_HUMAN_D0_4KB8_D'
-        template.seq = 'LRVGNRYRLGRKIGSGSFGDIYLGTDIAAGEEVAIKLECVKTKHPQLHIESKIYKMMQGGVGIPTIRWCGAEGDYNVMVMELLGPSLEDLFNFCSRKFSLKTVLLLADQMISRIEYIHSKNFIHRDVKPDNFLMGLGKKGNLVYIIDFGLAKKYRDARTHQHIPYRENKNLTGTARYASINTHLGIEQSRRDDLESLGYVLMYFNLGSLPWQGLKAATKRQKYERISEKKMSTPIEVLCKGYPSEFATYLNFCRSLRFDDKPDYSYLRQLFRNLFHRQGFSYDYVFDWNMLKFGASRAADDAERERRDREERLRH'
-        missing_residues = pdbfix_template(template)
-
-        assert (0, 278) not in missing_residues
-        assert missing_residues == {
-            (0, 8): ['SER', 'GLY', 'SER', 'PHE', 'GLY'],
-            (0, 28): ['VAL', 'LYS', 'THR', 'LYS', 'HIS'],
-            (0, 141): ['ARG', 'THR', 'HIS'],
-        }
-
-
-@attr('unit')
-def test_pdbfix_KC1D_HUMAN_D0_4KB8_D_old():
     set_loglevel('debug')
     template_pdb_gz_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', 'KC1D_HUMAN_D0_4KB8_D.pdb.gz'))
     template_pdb_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, 'KC1D_HUMAN_D0_4KB8_D.pdb')
