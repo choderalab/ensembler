@@ -11,7 +11,7 @@ from ensembler.modeling import pdbfix_templates, pdbfix_template, loopmodel_temp
 
 
 @attr('unit')
-def test_pdbfix_KC1D_HUMAN_D0_4KB8_D_old():
+def test_pdbfix_KC1D_HUMAN_D0_4KB8_D():
     set_loglevel('debug')
     template_pdb_gz_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', 'KC1D_HUMAN_D0_4KB8_D.pdb.gz'))
     template_pdb_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, 'KC1D_HUMAN_D0_4KB8_D.pdb')
