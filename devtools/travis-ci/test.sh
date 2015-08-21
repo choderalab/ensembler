@@ -1,3 +1,4 @@
+#!/bin/bash
 # This installs the program and runs unit tests
 set -e
 conda config --add channels https://conda.anaconda.org/omnia
