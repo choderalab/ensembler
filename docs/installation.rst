@@ -22,14 +22,19 @@ Install with Conda
 
 Conda can be obtained by installing `Continuum Anaconda <https://store.continuum.io/>`_ - an awesome free Python distribution for scientific computing. The standard installation contains many of Ensembler's dependencies. Alternatively, for a more minimal Python set-up you can install `miniconda <http://conda.pydata.org/miniconda.html>`_, which contains only Conda and Python.
 
-To install Ensembler with Conda, use the following commands ::
+First get a license for Modeller from the `Modeller website <https://salilab.org/modeller/>`_ (registration required; free for academic non-profit use).
 
-  $ conda config --add channels http://conda.binstar.org/omnia
+Save this in an environment variable as follows ::
+
+  $ export KEY_MODELLER=XXX
+
+Then, to install Ensembler with Conda, use the following commands ::
+
+  $ conda config --add channels http://conda.anaconda.org/omnia
+  $ conda config --add channels http://conda.anaconda.org/salilab
   $ conda install ensembler
 
-Conda will automatically install all dependencies except for `Modeller <https://salilab.org/modeller/>`_ and `Rosetta <https://www.rosettacommons.org/software>`_ (optional). These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages.
-
-.. warning:: If, after installing Modeller according to the instructions on the website, you see an error message saying that either ``modeller`` or ``_modeller`` or ``libmodeller.so`` have not been found, then your probably need to make the Modeller libraries available to your Python installation. On OS X, set your PYTHONPATH environment variable with the appropriate paths, e.g. ``export PYTHONPATH=/Library/modeller-9.12/modlib:/Library/modeller-9.12/lib/mac10v4:${PYTHONPATH}`` (substitute the correct Modeller installation directory as appropriate). On Linux you will also need to add the second directory to your LD_LIBRARY_PATH environment variable, e.g. ``export PYTHONPATH=~/opt/modeller9.14/modlib:~/opt/modeller9.14/lib/x86_64:${PYTHONPATH}; export LD_LIBRARY_PATH=~/opt/modeller9.14/lib/x86_64:${LD_LIBRARY_PATH}``.
+Conda will automatically install all dependencies except for the optional dependency `Rosetta <https://www.rosettacommons.org/software>`_. This requires a license (free for academic non-profit use), and will have to be installed according to the instructions for that package.
 
 Install from Source
 -------------------
@@ -149,7 +154,7 @@ To run the unit tests: ::
   $ nosetests ensembler -a unit
 
 Further tests are available which check interoperation of Ensembler with
-software dependencies such as Modeller and Rosetta loopmodel, or with external public
+software dependencies such Rosetta loopmodel, or with external public
 databases such as UniProt, or are excluded from the unit tests due to being
 slow. To run them: ::
 

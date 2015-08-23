@@ -122,6 +122,6 @@ def dispatch(args):
         retry_failed_runs=args['--retry_failed_runs'],
         ff=args['--ff'],
         implicit_water_model=args['--water_model'],
-        verbose=args['--verbose'],
+        loglevel=loglevel,
         **api_params
     )

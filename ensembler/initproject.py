@@ -3,19 +3,19 @@ import json
 import sys
 import os
 import re
-
+import shutil
 from lxml import etree
 import Bio.SeqUtils
 import Bio.SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-
 import ensembler
+import ensembler.version
 import ensembler.targetexplorer
 import ensembler.uniprot
 import ensembler.pdb
-from ensembler.utils import file_exists_and_not_empty
-from ensembler.core import mpistate, logger
+from ensembler.utils import file_exists_and_not_empty, get_installed_resource_filename
+from ensembler.core import mpistate, logger, manual_overrides_filename
 
 
 class TemplateData:
@@ -42,6 +42,7 @@ class InitProject(object):
     @ensembler.utils.notify_when_done
     def _init_project(self):
         self._create_project_dirs()
+        self._write_manual_overrides_file()
         self._write_init_metadata()
 
     def _create_project_dirs(self):
@@ -54,6 +55,16 @@ class InitProject(object):
         ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.structures_sifts))
         ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.templates_structures_resolved))
         ensembler.utils.create_dir(os.path.join(self.project_toplevel_dir, ensembler.core.default_project_dirnames.templates_structures_modeled_loops))
+
+    def _write_manual_overrides_file(self):
+        if not os.path.exists(manual_overrides_filename):
+            template_manual_overrides_filepath = get_installed_resource_filename(
+                os.path.join('resources', 'template-manual-overrides.yaml')
+            )
+            manual_overrides_filepath = os.path.join(
+                self.project_toplevel_dir, manual_overrides_filename
+            )
+            shutil.copy(template_manual_overrides_filepath, manual_overrides_filepath)
 
     def _write_init_metadata(self):
         project_metadata = ensembler.core.ProjectMetadata(project_stage='init', project_toplevel_dir=self.project_toplevel_dir)

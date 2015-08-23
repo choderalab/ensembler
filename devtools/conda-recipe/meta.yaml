@@ -1,9 +1,9 @@
 package:
-  name: ensembler
+  name: ensembler-dev
   version: !!str dev
 
-#source:
-#   git_url: https://github.com/choderalab/ensembler
+source:
+   path: ../..
 
 build:
   preserve_egg_dir: True
@@ -18,25 +18,18 @@ requirements:
 
   run:
     - python
+    - modeller ==9.15
     - mdtraj
     - msmbuilder
     - biopython
     - openmm
-    - pdbfixer
+    - pdbfixer ==1.2
     # - numpy
     - lxml
     - pyyaml
     - docopt
     - mock
     - subprocess32 # [py2k]
-
-test:
-  requires:
-    - nose
-  imports:
-    - ensembler
-  commands:
-    - nosetests ensembler -v --exe -a unit -a modeller
 
 about:
   home: https://github.com/choderalab/ensembler

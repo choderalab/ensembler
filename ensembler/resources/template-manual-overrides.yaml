@@ -1,0 +1,22 @@
+# target-selection:
+#     domain-spans:
+#       ABL1_HUMAN_D0: 242-513
+# template-selection:
+#     min-domain-len: 0
+#     max-domain-len: 350
+#     domain-spans:
+#         ABL1_HUMAN_D0: 242-513
+#     skip-pdbs:
+#         - 4CYJ
+#         - 4P41
+#         - 4P2W
+#         - 4QTD
+#         - 4Q2A
+#         - 4CTB
+#         - 4QOX
+# refinement:
+#     ph: 8.0
+#     custom_residue_variants:
+#         DDR1_HUMAN_D0_PROTONATED:
+#             # keyed by 0-based residue index
+#             35: ASH

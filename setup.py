@@ -3,17 +3,20 @@ import subprocess
 from setuptools import setup
 
 ##########################
-VERSION = "1.0.2"
+VERSION = "1.0.4"
 ISRELEASED = False
 __version__ = VERSION
 ##########################
 
+
 def read_readme(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 
 ##########################
 # Function for determining current git commit
 ##########################
+
 
 def git_version():
     # Return the git revision as a string
@@ -41,11 +44,14 @@ def git_version():
 
     return GIT_REVISION
 
+
 ##########################
 # Function for writing version.py (this will be copied to the install directory)
 ##########################
 
 ensembler_version_filepath = 'ensembler/version.py'
+
+
 def write_version_py(filename=ensembler_version_filepath):
     cnt = """# THIS FILE IS GENERATED FROM ENSEMBLER SETUP.PY
 short_version = '%(version)s'
@@ -77,24 +83,21 @@ if not release:
     finally:
         a.close()
 
+
 ##########################
 # Find package data
 ##########################
 
-def find_package_data():
+
+def find_package_data(dir_to_search=None):
     package_data = []
-    basepath = os.path.join('ensembler', 'tests')
-    dirs_to_search = [
-        os.path.join('ensembler', 'tests', 'resources'),
-        os.path.join('ensembler', 'tests', 'example_project')
-    ]
-    for dir_to_search in dirs_to_search:
-        for dir, subdirs, files in os.walk(dir_to_search):
-            for file in files:
-                if file[0] != '.':
-                    filepath = os.path.join(dir, file).replace(basepath + os.path.sep, '')
-                    package_data.append(filepath)
+    for dir, subdirs, files in os.walk(dir_to_search):
+        for file in files:
+            if file[0] != '.':
+                filepath = os.path.join(dir, file).replace(dir_to_search + os.path.sep, '')
+                package_data.append(filepath)
     return package_data
+
 
 ##########################
 # Setup
@@ -115,7 +118,10 @@ setup(
         'ensembler.tools',
         'ensembler.tests',
     ],
-    package_data = {'ensembler.tests': find_package_data()},
+    package_data = {
+        'ensembler': find_package_data(dir_to_search='ensembler'),
+        'ensembler.tests': find_package_data(dir_to_search=os.path.join('ensembler', 'tests')),
+    },
 
     entry_points = {'console_scripts':
         [

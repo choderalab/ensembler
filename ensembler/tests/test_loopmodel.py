@@ -5,14 +5,15 @@ from mock import Mock
 from nose.plugins.attrib import attr
 import ensembler
 import ensembler.initproject
-from ensembler.tests.utils import get_installed_resource_filename
+from ensembler.utils import get_installed_resource_filename, set_loglevel
 from ensembler.tests.integrationtest_utils import integrationtest_context
 from ensembler.modeling import pdbfix_templates, pdbfix_template, loopmodel_template
 
 
 @attr('unit')
 def test_pdbfix_KC1D_HUMAN_D0_4KB8_D():
-    template_pdb_gz_filepath = get_installed_resource_filename(os.path.join('resources', 'KC1D_HUMAN_D0_4KB8_D.pdb.gz'))
+    set_loglevel('debug')
+    template_pdb_gz_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', 'KC1D_HUMAN_D0_4KB8_D.pdb.gz'))
     template_pdb_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, 'KC1D_HUMAN_D0_4KB8_D.pdb')
     with ensembler.utils.enter_temp_dir():
         ensembler.utils.create_dir(ensembler.core.default_project_dirnames.templates_structures_resolved)
@@ -39,7 +40,8 @@ def test_pdbfix_KC1D_HUMAN_D0_4KB8_D():
 
 @attr('unit')
 def test_pdbfix_ABL1_HUMAN_D0_2E2B_B():
-    template_pdb_gz_filepath = get_installed_resource_filename(os.path.join('resources', 'ABL1_HUMAN_D0_2E2B_B.pdb.gz'))
+    set_loglevel('debug')
+    template_pdb_gz_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', 'ABL1_HUMAN_D0_2E2B_B.pdb.gz'))
     template_pdb_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, 'ABL1_HUMAN_D0_2E2B_B.pdb')
     with ensembler.utils.enter_temp_dir():
         ensembler.utils.create_dir(ensembler.core.default_project_dirnames.templates_structures_resolved)
@@ -65,9 +67,10 @@ def test_pdbfix_ABL1_HUMAN_D0_2E2B_B():
 
 @attr('unit')
 def test_pdbfix_templates():
-    template1_pdb_gz_filepath = get_installed_resource_filename(os.path.join('resources', 'KC1D_HUMAN_D0_4KB8_D.pdb.gz'))
+    set_loglevel('debug')
+    template1_pdb_gz_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', 'KC1D_HUMAN_D0_4KB8_D.pdb.gz'))
     template1_pdb_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, 'KC1D_HUMAN_D0_4KB8_D.pdb')
-    template2_pdb_gz_filepath = get_installed_resource_filename(os.path.join('resources', 'KC1D_HUMAN_D0_3UYS_D.pdb.gz'))
+    template2_pdb_gz_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', 'KC1D_HUMAN_D0_3UYS_D.pdb.gz'))
     template2_pdb_filepath = os.path.join(ensembler.core.default_project_dirnames.templates_structures_resolved, 'KC1D_HUMAN_D0_3UYS_D.pdb')
     with ensembler.utils.enter_temp_dir():
         ensembler.utils.create_dir(ensembler.core.default_project_dirnames.templates_structures_resolved)
