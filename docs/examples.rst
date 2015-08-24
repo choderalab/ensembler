@@ -19,7 +19,7 @@ Example using the quickmodel function
 
 ::
 
-  $ ensembler quickmodel --target_uniprot_entry_name EGFR_HUMAN --uniprot_domain_regex '^Protein kinase' --template_pdbids 4KB8,4AF3 --no-loopmodel
+  $ ensembler quickmodel --target_uniprot_entry_name EGFR_HUMAN --uniprot_domain_regex '^Protein kinase' --template_pdbids 1M14,4AF3 --no-loopmodel
 
 Models human EGFR onto two templates selected via PDB IDs. The ``quickmodel`` function executes the entire modeling pipeline in one go, and is designed to work with only a few targets and templates. For generating larger numbers of models (such as entire protein families), the main pipeline functions should be used.
 

@@ -254,6 +254,9 @@ class ManualOverrides:
         else:
             manual_overrides_yaml = {}
 
+        if type(manual_overrides_yaml) is not dict:
+            manual_overrides_yaml = {}
+
         self.target = TargetManualOverrides(manual_overrides_yaml)
         self.template = TemplateManualOverrides(manual_overrides_yaml)
         self.refinement = RefinementManualOverrides(manual_overrides_yaml)
