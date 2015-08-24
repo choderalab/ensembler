@@ -22,7 +22,7 @@ The ``ensembler`` tool is operated via a number of subcommands, which should be 
   ensembler cluster
   ensembler refine_implicit
   ensembler solvate
-  ensembler refine_implicit
+  ensembler refine_explicit
   ensembler package_models
 
 Furthermore, the ``ensembler quickmodel`` subcommand allows the entire modeling

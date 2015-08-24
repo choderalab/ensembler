@@ -62,6 +62,8 @@ def refine_implicit_md(
     if (sim_length / timestep) < nsteps_per_iteration:
         nsteps_per_iteration = int(sim_length / timestep)
 
+    niterations = int((sim_length / timestep) / nsteps_per_iteration)
+
     models_dir = os.path.abspath(ensembler.core.default_project_dirnames.models)
 
     targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
@@ -84,8 +86,6 @@ def refine_implicit_md(
 
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
-
-    niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
     def simulate_implicit_md():
 
@@ -719,10 +719,10 @@ def refine_explicit_md(
         rigidWater = True, # rigid water
         removeCMMotion = False, # remove center-of-mass motion
         sim_length=100.0 * unit.picoseconds,
-        timestep=2.0 * unit.femtoseconds, # timestep
-        temperature=300.0 * unit.kelvin, # simulation temperature
-        pressure=1.0 * unit.atmospheres, # simulation pressure
-        collision_rate=20.0 / unit.picoseconds, # Langevin collision rate
+        timestep=2.0 * unit.femtoseconds,   # timestep
+        temperature=300.0 * unit.kelvin,   # simulation temperature
+        pressure=1.0 * unit.atmospheres,   # simulation pressure
+        collision_rate=20.0 / unit.picoseconds,   # Langevin collision rate
         barostat_period=50,
         minimization_tolerance=10.0 * unit.kilojoules_per_mole / unit.nanometer,
         minimization_steps=20,
@@ -744,6 +744,7 @@ def refine_explicit_md(
     if (sim_length / timestep) < nsteps_per_iteration:
         nsteps_per_iteration = int(sim_length / timestep)
 
+    niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
     if process_only_these_templates:
         selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
@@ -763,8 +764,6 @@ def refine_explicit_md(
 
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
-
-    niterations = int((sim_length / timestep) / nsteps_per_iteration)
 
     def solvate_pdb(pdb, target_nwaters, water_model=water_model):
         """

@@ -6,6 +6,7 @@ import ensembler.initproject
 import ensembler.modeling
 import ensembler.refinement
 import ensembler.packaging
+from ensembler.core import get_templates_resolved_seq
 from simtk import unit
 
 
@@ -13,7 +14,8 @@ class QuickModel(object):
     def __init__(self, targetid=None, templateids=None, target_uniprot_entry_name=None,
                  uniprot_domain_regex=None, pdbids=None, chainids=None, template_uniprot_query=None,
                  template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None,
-                 structure_dirs=None, sim_length=100*unit.picoseconds):
+                 structure_dirs=None, sim_length=100*unit.picoseconds
+                 ):
         """
         Run this after having set up targets and templates with the appropriate ensembler commands.
 
@@ -53,14 +55,19 @@ class QuickModel(object):
 
         if not self.targetid:
             if not self.target_uniprot_entry_name or not self.uniprot_domain_regex:
-                raise Exception('If no targetid is passed, must specify target_uniprot_entry_name and uniprot_domain_regex.')
+                raise Exception(
+                    'If no targetid is passed, must specify target_uniprot_entry_name and '
+                    'uniprot_domain_regex.'
+                )
             uniprot_query_string = 'mnemonic:%s' % self.target_uniprot_entry_name
-            gather_targets_obj = ensembler.initproject.GatherTargetsFromUniProt(uniprot_query_string, uniprot_domain_regex=self.uniprot_domain_regex)
+            gather_targets_obj = ensembler.initproject.GatherTargetsFromUniProt(
+                uniprot_query_string, uniprot_domain_regex=self.uniprot_domain_regex
+            )
             self.targetid = gather_targets_obj.targets[0].id
 
         existing_templates = False
         if os.path.exists(os.path.join(ensembler.core.default_project_dirnames.templates, 'templates-resolved-seq.fa')):
-            all_templates_resolved_seq, all_templates_full_seq = ensembler.core.get_templates()
+            all_templates_resolved_seq = get_templates_resolved_seq()
             if len(all_templates_resolved_seq) > 0:
                 existing_templates = True
 
@@ -69,7 +76,7 @@ class QuickModel(object):
                 raise Exception('No existing templates found.')
         elif self.pdbids:
             ensembler.initproject.gather_templates_from_pdb(self.pdbids, self.uniprot_domain_regex, chainids=self.chainids, structure_dirs=self.structure_dirs)
-            templates_resolved_seq, templates_full_seq = ensembler.core.get_templates()
+            templates_resolved_seq = get_templates_resolved_seq()
             self.templateids = [t.id for t in templates_resolved_seq]
         elif self.template_uniprot_query:
             ensembler.initproject.gather_templates_from_uniprot(self.template_uniprot_query, self.uniprot_domain_regex, structure_dirs=self.structure_dirs)
