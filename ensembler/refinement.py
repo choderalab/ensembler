@@ -713,6 +713,11 @@ def refine_explicit_md(
         include_disulfide_bonds=False,
         ff='amber99sbildn',
         water_model='tip3p',
+        nonbondedMethod = app.PME, # nonbonded method
+        cutoff = 1.0*unit.nanometers, # nonbonded cutoff
+        constraints = app.HBonds, # bond constrains
+        rigidWater = True, # rigid water
+        removeCMMotion = False, # remove center-of-mass motion
         sim_length=100.0 * unit.picoseconds,
         timestep=2.0 * unit.femtoseconds, # timestep
         temperature=300.0 * unit.kelvin, # simulation temperature
@@ -755,8 +760,6 @@ def refine_explicit_md(
 
     ff_files = [ff+'.xml', water_model+'.xml']
     forcefield = app.ForceField(*ff_files)
-
-    nonbondedMethod = app.PME
 
     kB = unit.MOLAR_GAS_CONSTANT_R
     kT = kB * temperature
@@ -894,7 +897,7 @@ def refine_explicit_md(
                 platform.setPropertyDefaultValue('OpenCLDeviceIndex', '%d' % gpuid)
 
         if verbose: print("Constructing System object...")
-        system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod, constraints=app.HBonds)
+        system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod, cutoff=cutoff, constraints=constraints, rigidWater=rigidWater, removeCMMotion=removeCMMotion)
         if verbose: print("  system has %d atoms" % (system.getNumParticles()))
 
         # Add barostat.
