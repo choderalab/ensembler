@@ -204,6 +204,76 @@ def create_target_project_dir(target):
         os.makedirs(target_project_dir)
 
 
+def calc_pme_parameters(system):
+    """Calculate PME parameters using scheme similar to OpenMM OpenCL platform.
+
+    Parameters
+    ----------
+    system : simtk.openmm.System
+        The system for which parameters are to be computed.
+
+    Returns
+    -------
+    alpha : float
+        The PME alpha parameter
+    nx, ny, nz : int
+        The grid numbers in each dimension
+
+    """
+
+    # Find nonbonded force.
+    forces = { system.getForce(index).__class__.__name__ : system.getForce(index) for index in range(system.getNumForces()) }
+    force = forces['NonbondedForce']
+    tol = force.getEwaldErrorTolerance()
+    boxVectors = system.getDefaultPeriodicBoxVectors()
+
+    from numpy import sqrt, log, ceil
+    from math import pow
+    alpha = (1.0/force.getCutoffDistance())*sqrt(-log(2.0*tol))
+    xsize = int(ceil(2*alpha*boxVectors[0][0]/(3*pow(tol, 0.2))))
+    ysize = int(ceil(2*alpha*boxVectors[1][1]/(3*pow(tol, 0.2))))
+    zsize = int(ceil(2*alpha*boxVectors[2][2]/(3*pow(tol, 0.2))))
+
+    print (xsize,ysize,zsize)
+    def findLegalDimension(minimum):
+        while (True):
+            # Attempt to factor the current value.
+            unfactored = minimum
+            for factor in range(2, 8):
+                while (unfactored > 1) and (unfactored%factor == 0):
+                    unfactored /= factor
+
+            if (unfactored == 1):
+                return int(minimum)
+
+            minimum += 1
+
+    nx = findLegalDimension(xsize)
+    ny = findLegalDimension(ysize)
+    nz = findLegalDimension(zsize)
+
+    return (alpha, nx, ny, nz)
+
+def ensure_pme_parameters_are_explicit(system):
+    """Ensure that the PME parameters in an OpenMM system are explicit.
+    If they are not explicit, set them explicitly.
+
+    Parameters
+    ----------
+    system : simtk.openmm.System
+        System for which NonbondedForce PME parameters are to be set explicitly.
+
+    """
+    # Compile dictionary of OpenMM forces.
+    forces = { system.getForce(force_index).__class__.__name__ : system.getForce(force_index) for force_index in range(system.getNumForces()) }
+    force = forces['NonbondedForce']
+    (alpha, nx, ny, nz) = force.getPMEParameters()
+    if alpha == 0.0 / unit.nanometers:
+        # Set PME parameters explicitly.
+        (alpha, nx, ny, nz) = calc_pme_parameters(system)
+        force.setPMEParameters(alpha, nx, ny, nz)
+    return
+
 def setup_system_and_integrator_files(target,
                                       template,
                                       temperature,
@@ -226,14 +296,20 @@ def setup_system_and_integrator_files(target,
         read_file_contents_gz_or_not(source_state_filepath)
     )
 
-    # Substitute default box vectors.
+    # Substitute default box vectors in system with those from state.
     box_vectors = state.getPeriodicBoxVectors()
     system.setDefaultPeriodicBoxVectors(*box_vectors)
+
+    # Set PME parameters explicitly to minimize discrepancy between Reference and OpenCL/CUDA if not already set explicitly.
+    ensure_pme_parameters_are_explicit(system)
 
     # Create new integrator to use.
     integrator = mm.LangevinIntegrator(temperature, collision_rate, timestep)
 
-    # TODO: Make sure MonteCarloBarostat temperature matches set temperature.
+    # Make sure MonteCarloBarostat temperature matches set temperature.
+    forces = { system.getForce(index).__class__.__name__ : system.getForce(index) for index in range(system.getNumForces()) }
+    if 'MonteCarloBarostat' in forces:
+        forces['MonteCarloBarostat'].setTemperature(temperature)
 
     # Serialize System.
     with open(dest_system_filepath, 'w') as dest_system_file:

@@ -714,7 +714,7 @@ def refine_explicit_md(
         ff='amber99sbildn',
         water_model='tip3p',
         nonbondedMethod = app.PME, # nonbonded method
-        cutoff = 1.0*unit.nanometers, # nonbonded cutoff
+        cutoff = 0.9*unit.nanometers, # nonbonded cutoff
         constraints = app.HBonds, # bond constrains
         rigidWater = True, # rigid water
         removeCMMotion = False, # remove center-of-mass motion
