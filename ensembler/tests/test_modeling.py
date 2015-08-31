@@ -58,6 +58,20 @@ def test_build_model():
 
 
 @attr('unit')
+def test_align_target_template():
+    target = Mock()
+    template = Mock()
+    target.id = 'mock_target'
+    target.seq = 'YILGDTLGVGGKVKVGKH'
+    template.id = 'mock_template'
+    template.seq = 'YQNLSPVGSGGSVCAAFD'
+    aln = ensembler.modeling.align_target_template(target, template, substitution_matrix='gonnet')
+    assert aln == [('YILGDTLGVGGKVKVGKH', 'YQNLSPVGSGGSVCAAFD', 18.099999999999998, 0, 18)]
+    aln2 = ensembler.modeling.align_target_template(target, template, substitution_matrix='blosum62')
+    assert aln2 == [('YILGDTLGVGGKVKVGKH', 'YQNLSPVGSGGSVCAAFD', 10.0, 0, 18)]
+
+
+@attr('unit')
 def test_align_command():
     ref_resources_dirpath = get_installed_resource_filename(os.path.join('tests', 'example_project'))
     with integrationtest_context(set_up_project_stage='templates_modeled_loops'):

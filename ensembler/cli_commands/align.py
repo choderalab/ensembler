@@ -24,6 +24,10 @@ helpstring_unique_options = [
     """\
   --targets <target>                Define one or more target IDs to work on (comma-separated), e.g.
                                     "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
+
+    """\
+  --substitution_matrix <matrix     Specify an amino acid substitution matrix available from
+                                    Bio.SubsMat.MatrixInfo (default: 'Gonnet')""",
 ]
 
 helpstring_nonunique_options = [

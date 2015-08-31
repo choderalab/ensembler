@@ -178,16 +178,16 @@ def strf_timedelta(delta_t):
 
 
 def check_project_toplevel_dir(raise_exception=True):
-    import os
-    for dirtype in project_dirtypes:
-        if dirtype == 'packaged_models':
+    cwd = os.getcwd()
+    for project_dirtype in project_dirtypes:
+        if project_dirtype == 'packaged_models':
             continue
-        dirpath = getattr(default_project_dirnames, dirtype)
-        if not os.path.exists(dirpath):
+        project_dirpath = getattr(default_project_dirnames, project_dirtype)
+        if not os.path.exists(project_dirpath):
             if raise_exception:
-                raise Exception('Directory {0} is not the top-level directory of an Ensembler project'.format(dirpath))
+                raise Exception('Directory "{}" is not the top-level directory of an Ensembler project'.format(cwd))
             else:
-                logger.debug('Directory %s not found' % dirpath)
+                logger.debug('Directory "{}" not found'.format(project_dirpath))
                 return False
     return True
 
