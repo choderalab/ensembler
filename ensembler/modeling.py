@@ -337,16 +337,24 @@ def check_loopmodel_complete_and_successful(template):
 
 
 @ensembler.utils.notify_when_done
-def align_targets_and_templates(process_only_these_targets=None, process_only_these_templates=None, loglevel=None):
+def align_targets_and_templates(process_only_these_targets=None,
+                                process_only_these_templates=None,
+                                substitution_matrix='gonnet',
+                                gap_open=-10,
+                                gap_extend=-0.5,
+                                loglevel=None
+                                ):
     """
     Conducts pairwise alignments of target sequences against template sequences.
     Stores Modeller-compatible 'alignment.pir' files in each model directory,
     and also outputs a table of model IDs, sorted by sequence identity.
 
-    :param process_only_these_targets:
-    :param process_only_these_templates:
-    :param loglevel:
-    :return:
+    Parameters
+    ----------
+    process_only_these_targets:
+    process_only_these_templates:
+    substitution_matrix: str
+        Specify an amino acid substitution matrix available from Bio.SubsMat.MatrixInfo
     """
     ensembler.utils.set_loglevel(loglevel)
     targets, templates_resolved_seq = ensembler.core.get_targets_and_templates()
@@ -375,7 +383,13 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
 
             model_dir = os.path.abspath(os.path.join(ensembler.core.default_project_dirnames.models, target.id, template_id))
             ensembler.utils.create_dir(model_dir)
-            aln = align_target_template(target, template)
+            aln = align_target_template(
+                target,
+                template,
+                substitution_matrix=substitution_matrix,
+                gap_open=gap_open,
+                gap_extend=gap_extend
+            )
             aln_filepath = os.path.join(model_dir, 'alignment.pir')
             write_modeller_pir_aln_file(aln, target, template, pir_aln_filepath=aln_filepath)
             seq_identity_data_sublist.append({
@@ -397,15 +411,27 @@ def align_targets_and_templates(process_only_these_targets=None, process_only_th
         write_sorted_seq_identities(target, seq_identity_data)
 
 
-def align_target_template(target, template, gap_open=-10, gap_extend=-0.5):
+def align_target_template(target,
+                          template,
+                          substitution_matrix='gonnet',
+                          gap_open=-10,
+                          gap_extend=-0.5
+                          ):
     """
-    :param target: BioPython SeqRecord
-    :param template: BioPython SeqRecord
-    :param gap_open: float or int
-    :param gap_extend: float or int
-    :return: alignment
+    Parameters
+    ----------
+    target: BioPython SeqRecord
+    template: BioPython SeqRecord
+    substitution_matrix: str
+        Specify an amino acid substitution matrix available from Bio.SubsMat.MatrixInfo
+    gap_open: float or int
+    gap_extend: float or int
+
+    Returns
+    -------
+    alignment: list
     """
-    matrix = Bio.SubsMat.MatrixInfo.gonnet
+    matrix = getattr(Bio.SubsMat.MatrixInfo, substitution_matrix)
     aln = Bio.pairwise2.align.globalds(str(target.seq), str(template.seq), matrix, gap_open, gap_extend)
     return aln
 
