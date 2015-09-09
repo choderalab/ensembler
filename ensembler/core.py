@@ -619,8 +619,6 @@ def check_ensembler_modeling_stage_metadata_exists(ensembler_stage, targetid):
 
 
 def check_ensembler_modeling_stage_complete(ensembler_stage, targetid):
-    if not check_ensembler_modeling_stage_metadata_exists(ensembler_stage, targetid):
-        return False
     if not check_ensembler_modeling_stage_first_model_file_exists(ensembler_stage, targetid):
         return False
     return True
@@ -632,6 +630,31 @@ def get_most_advanced_ensembler_modeling_stage(targetid):
             return stagename
 
     raise Exception('Models have not yet been built for this Ensembler project.')
+
+
+def get_valid_model_ids(ensembler_stage, targetid):
+    """
+    Get model IDs for models which exist, for a given ensembler modeling stage.
+
+    Parameters
+    ----------
+    ensembler_stage: str
+        {refine_explicit_md|refine_implicit_md|build_models}
+    targetid: str
+
+    Returns
+    -------
+    valid_model_ids: list of str
+    """
+    model_pdb_filename = model_filenames_by_ensembler_stage[ensembler_stage]
+    valid_model_ids = []
+    models_target_dir = os.path.join(default_project_dirnames.models, targetid)
+    for models_dir_filename in os.listdir(models_target_dir):
+        if os.path.isdir(os.path.join(models_target_dir, models_dir_filename)):
+            model_filepath = os.path.join(models_target_dir, models_dir_filename, model_pdb_filename)
+            if os.path.exists(model_filepath):
+                valid_model_ids.append(models_dir_filename)
+    return valid_model_ids
 
 
 def select_templates_by_seqid_cutoff(targetid, seqid_cutoff=None):
