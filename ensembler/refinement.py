@@ -929,7 +929,6 @@ def refine_explicit_md(
         import time
         initial_time = time.time()
 
-        # TODO DEBUGGING
         if serialize_at_start_of_each_sim:
             with open(system_filename[: system_filename.index('.xml')]+'-start.xml', 'w') as system_file:
                 system_file.write(openmm.XmlSerializer.serialize(system))
@@ -970,10 +969,15 @@ def refine_explicit_md(
         energy_outfile.close()
 
         state = context.getState(getPositions=True, enforcePeriodicBox=True)
-        with gzip.open(pdb_filename, 'w') as pdb_outfile:
-            app.PDBFile.writeHeader(topology, file=pdb_outfile)
-            app.PDBFile.writeFile(topology, state.getPositions(), file=pdb_outfile)
-            app.PDBFile.writeFooter(topology, file=pdb_outfile)
+        try:
+            with gzip.open(pdb_filename, 'w') as pdb_outfile:
+                app.PDBFile.writeHeader(topology, file=pdb_outfile)
+                app.PDBFile.writeFile(topology, state.getPositions(), file=pdb_outfile)
+                app.PDBFile.writeFooter(topology, file=pdb_outfile)
+        except:
+            if os.path.exists(pdb_filename):
+                os.remove(pdb_filename)
+            raise
 
         # Serialize system
         if verbose: print("Serializing system...")
