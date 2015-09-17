@@ -7,8 +7,9 @@ from subprocess import Popen, PIPE
 from ensembler.core import get_most_advanced_ensembler_modeling_stage, default_project_dirnames
 from ensembler.core import model_filenames_by_ensembler_stage, get_valid_model_ids, mpistate
 from ensembler.core import YamlDumper
+from ensembler.utils import notify_when_done
 
-# also includes types
+# includes types
 molprobity_oneline_analysis_colnames = [
     ('#pdbFileName', None),
     ('x-H_type', None),
@@ -59,6 +60,36 @@ molprobity_oneline_analysis_colnames_to_output = [
 ]
 
 
+@notify_when_done
+def molprobity_validation_multiple_targets(targetids, modeling_stage=None):
+    """
+Calculate model quality using MolProbity ``oneline-analysis`` command.
+
+For each target, this function outputs a text file named
+``models/[targetid]/validation_scores_sorted-[method]-[ensembler_stage]`` which contains a list of
+targetids sorted by validation score. This can be used by the subsequent ``package_models`` command
+to filter out models below a specified quality threshold.
+
+Typically, this should be run after models have been refined to the desired extent (e.g. after
+implicit or explicit MD refinement)
+
+More detailed validation results are written to the individual model directories.
+
+MPI-enabled.
+
+    Parameters
+    ----------
+    targetids: list of str or str
+    modeling_stage: str
+        {None|build_models|refine_implicit_md|refine_explicit_md}
+        Default: None (automatically selects most advanced stage)
+    """
+    if type(targetids) is str:
+        targetids = [targetids]
+    for targetid in targetids:
+        molprobity_validation(targetid=targetid, ensembler_stage=modeling_stage)
+
+
 def molprobity_validation(targetid, ensembler_stage=None):
     valid_model_ids = []
     if mpistate.rank == 0:
@@ -73,7 +104,7 @@ def molprobity_validation(targetid, ensembler_stage=None):
 
     models_target_dir = os.path.join(default_project_dirnames.models, targetid)
     molprobity_results_filepath = os.path.join(
-        models_target_dir, 'molprobity_scores_sorted-{}'.format(ensembler_stage)
+        models_target_dir, 'validation_scores_sorted-molprobity-{}'.format(ensembler_stage)
     )
 
     molprobity_scores_sublist = []

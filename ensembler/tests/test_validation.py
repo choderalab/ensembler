@@ -39,7 +39,7 @@ def test_molprobity_validation():
                 assert results_dict.get('pct_badbonds') == ref_pct_badbonds[template_id]
 
         target_results_filepath = os.path.join(
-            default_project_dirnames.models, target_id, 'molprobity_scores_sorted-refine_explicit_md'
+            default_project_dirnames.models, target_id, 'validation_scores_sorted-molprobity-refine_explicit_md'
         )
         with open(target_results_filepath) as target_results_file:
             target_results = target_results_file.read().splitlines()
