@@ -112,7 +112,7 @@ def test_build_models_command():
         args = {
             '--targets': 'EGFR_HUMAN_D0',
             '--targetsfile': None,
-            '--template_seqid_cutoff': None,
+            '--model_seqid_cutoff': None,
             '--templates': ','.join(['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']),
             '--templatesfile': None,
             '--write_modeller_restraints_file': None,

@@ -1,7 +1,7 @@
 import os
 import subprocess
-from ensembler.core import mpistate, logger, default_project_dirnames
-from ensembler.core import get_targets_and_templates, select_templates_by_seqid_cutoff
+from ensembler.core import mpistate, logger, default_project_dirnames, get_targets_and_templates
+from ensembler.core import select_templates_by_seqid_cutoff, select_templates_by_validation_score
 from ensembler.utils import set_loglevel, read_file_contents_gz_or_not
 import simtk.unit as unit
 import simtk.openmm as mm
@@ -12,7 +12,9 @@ fah_projects_dir = os.path.join(default_project_dirnames.packaged_models, 'fah-p
 
 def package_for_fah(process_only_these_targets=None,
                     process_only_these_templates=None,
-                    template_seqid_cutoff=None,
+                    model_seqid_cutoff=None,
+                    model_validation_score_cutoff=None,
+                    model_validation_score_percentile=None,
                     nclones=1, archive=False,
                     openmm_platform='Reference',
                     temperature=300.0 * unit.kelvin,
@@ -62,8 +64,10 @@ def package_for_fah(process_only_these_targets=None,
             valid_templates = get_valid_templates_for_target(
                 target,
                 templates_resolved_seq,
-                process_only_these_templates,
-                template_seqid_cutoff
+                process_only_these_templates=process_only_these_templates,
+                model_seqid_cutoff=model_seqid_cutoff,
+                model_validation_score_cutoff=model_validation_score_cutoff,
+                model_validation_score_percentile=model_validation_score_percentile
             )
 
             sorted_valid_templates = sort_valid_templates_by_seqid(
@@ -95,12 +99,12 @@ def package_for_fah(process_only_these_targets=None,
             logger.info('-------------------------------------------------------------------------')
             logger.info(
                 'Building RUN{} for template {}'.format(
-                    run_index, template.id
+                    run_index, template
                 )
             )
             logger.info('-------------------------------------------------------------------------')
 
-            source_dir = os.path.join(models_target_dir, template.id)
+            source_dir = os.path.join(models_target_dir, template)
             generate_fah_run(
                 target_project_dir,
                 template,
@@ -134,30 +138,38 @@ filenames_necessary_for_fah_packaging = [
 
 def get_valid_templates_for_target(target,
                                    templates_resolved_seq,
-                                   process_only_these_templates,
-                                   template_seqid_cutoff
+                                   process_only_these_templates=None,
+                                   model_seqid_cutoff=None,
+                                   model_validation_score_cutoff=None,
+                                   model_validation_score_percentile=None,
                                    ):
     logger.debug("Building list of valid templates...")
     models_target_dir = os.path.join(default_project_dirnames.models, target.id)
-    if template_seqid_cutoff:
-        selected_templates = select_templates_by_seqid_cutoff(
-            target.id, seqid_cutoff=template_seqid_cutoff
+    if model_seqid_cutoff:
+        selected_template_ids = select_templates_by_seqid_cutoff(
+            target.id, seqid_cutoff=model_seqid_cutoff
+        )
+    elif model_validation_score_cutoff or model_validation_score_percentile:
+        selected_template_ids = select_templates_by_validation_score(
+            targetid=target.id,
+            validation_score_cutoff=model_validation_score_cutoff,
+            validation_score_percentile=model_validation_score_percentile,
         )
     elif process_only_these_templates:
-        selected_templates = [
-            seq_obj for seq_obj in templates_resolved_seq
+        selected_template_ids = [
+            seq_obj.id for seq_obj in templates_resolved_seq
             if seq_obj.id in process_only_these_templates
         ]
     else:
-        selected_templates = templates_resolved_seq
+        selected_template_ids = [seq_obj.id for seq_obj in templates_resolved_seq]
 
     valid_templates = []
 
-    for template in selected_templates:
+    for template in selected_template_ids:
         # Check to make sure all files needed are present.
         not_valid = False
         for filename in filenames_necessary_for_fah_packaging:
-            fullpath = os.path.join(models_target_dir, template.id, filename)
+            fullpath = os.path.join(models_target_dir, template, filename)
             if not (os.path.exists(fullpath) or os.path.exists(fullpath+'.gz')):
                 not_valid = True
                 break
@@ -192,7 +204,7 @@ def sort_valid_templates_by_seqid(target, valid_templates):
 
 
 def get_seqid_for_model(models_target_dir, template):
-    seqid_filename = os.path.join(models_target_dir, template.id, 'sequence-identity.txt')
+    seqid_filename = os.path.join(models_target_dir, template, 'sequence-identity.txt')
     with open(seqid_filename, 'r') as infile:
         seqid = float(infile.readline().strip())
     return seqid
@@ -234,7 +246,7 @@ def calc_pme_parameters(system):
     ysize = int(ceil(2*alpha*boxVectors[1][1]/(3*pow(tol, 0.2))))
     zsize = int(ceil(2*alpha*boxVectors[2][2]/(3*pow(tol, 0.2))))
 
-    print (xsize,ysize,zsize)
+    logger.debug(xsize,ysize,zsize)
     def findLegalDimension(minimum):
         while (True):
             # Attempt to factor the current value.
@@ -280,9 +292,9 @@ def setup_system_and_integrator_files(target,
                                       collision_rate,
                                       timestep
                                       ):
-    logger.debug('Copying system and integrator files for template {}'.format(template.id))
+    logger.debug('Copying system and integrator files for template {}'.format(template))
     models_target_dir = os.path.join(default_project_dirnames.models, target.id)
-    template_dir = os.path.join(models_target_dir, template.id)
+    template_dir = os.path.join(models_target_dir, template)
     target_project_dir = os.path.join(fah_projects_dir, target.id)
     source_system_filepath = os.path.join(template_dir, 'explicit-system.xml')
     source_state_filepath = os.path.join(template_dir, 'explicit-state.xml')
@@ -387,7 +399,7 @@ def generate_fah_run(target_project_dir,
 
         # Write template ID
         with open(run_template_id_filepath, 'w') as outfile:
-            outfile.write(template.id + '\n')
+            outfile.write(template + '\n')
 
         # Write the protein and system structure pdbs
         if 'implicit' in renumbered_resnums:

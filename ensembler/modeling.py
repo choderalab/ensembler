@@ -457,7 +457,7 @@ def write_sorted_seq_identities(target, seq_identity_data):
 
 @ensembler.utils.notify_when_done
 def build_models(process_only_these_targets=None, process_only_these_templates=None,
-                 template_seqid_cutoff=None, write_modeller_restraints_file=False, loglevel=None):
+                 model_seqid_cutoff=None, write_modeller_restraints_file=False, loglevel=None):
     """Uses the build_model method to build homology models for a given set of
     targets and templates.
 
@@ -480,8 +480,8 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
         if process_only_these_targets and target.id not in process_only_these_targets: continue
         target_setup_data = build_models_target_setup(target)
 
-        if template_seqid_cutoff:
-            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+        if model_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=model_seqid_cutoff)
             selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
 
         ntemplates_selected = len(selected_template_indices)
@@ -493,7 +493,7 @@ def build_models(process_only_these_targets=None, process_only_these_templates=N
                         write_modeller_restraints_file=write_modeller_restraints_file,
                         loglevel=loglevel)
         write_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                                    process_only_these_templates, template_seqid_cutoff,
+                                    process_only_these_templates, model_seqid_cutoff,
                                     write_modeller_restraints_file)
 
 
@@ -637,7 +637,7 @@ def build_models_target_setup(target):
 
 
 def gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                              process_only_these_templates, template_seqid_cutoff,
+                              process_only_these_templates, model_seqid_cutoff,
                               write_modeller_restraints_file):
     """
     Generate build_models metadata for a given target.
@@ -652,7 +652,7 @@ def gen_build_models_metadata(target, target_setup_data, process_only_these_targ
     metadata = {
         'target_id': target.id,
         'write_modeller_restraints_file': write_modeller_restraints_file,
-        'template_seqid_cutoff': template_seqid_cutoff,
+        'model_seqid_cutoff': model_seqid_cutoff,
         'datestamp': datestamp,
         'timing': ensembler.core.strf_timedelta(target_timedelta),
         'nsuccessful_models': nsuccessful_models,
@@ -770,11 +770,11 @@ def end_exception_build_model_logfile(e, log_file):
 
 @ensembler.utils.mpirank0only_and_end_with_barrier
 def write_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                                process_only_these_templates, template_seqid_cutoff,
+                                process_only_these_templates, model_seqid_cutoff,
                                 write_modeller_restraints_file):
     project_metadata = ensembler.core.ProjectMetadata(project_stage='build_models', target_id=target.id)
     metadata = gen_build_models_metadata(target, target_setup_data, process_only_these_targets,
-                                         process_only_these_templates, template_seqid_cutoff,
+                                         process_only_these_templates, model_seqid_cutoff,
                                          write_modeller_restraints_file)
     project_metadata.add_data(metadata)
     project_metadata.write()

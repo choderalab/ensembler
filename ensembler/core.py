@@ -35,6 +35,8 @@ project_stages = [
     'package_for_fah',
 ]
 
+modeling_stages = ['build_models', 'refine_implicit_md', 'refine_explicit_md']
+
 project_dirtypes = [
     'targets',
     'templates',
@@ -592,7 +594,7 @@ def find_loopmodel_executable():
 
 
 def check_ensembler_modeling_stage_first_model_file_exists(ensembler_stage, targetid):
-    models_target_dir = os.path.join(ensembler.core.default_project_dirnames.models, targetid)
+    models_target_dir = os.path.join(default_project_dirnames.models, targetid)
     root, dirnames, filenames = next(os.walk(models_target_dir))
     for dirname in dirnames:
         model_filepath = os.path.join(
@@ -625,7 +627,7 @@ def check_ensembler_modeling_stage_complete(ensembler_stage, targetid):
 
 
 def get_most_advanced_ensembler_modeling_stage(targetid):
-    for stagename in ['refine_explicit_md', 'refine_implicit_md', 'build_models']:
+    for stagename in modeling_stages[::-1]:
         if check_ensembler_modeling_stage_complete(stagename, targetid):
             return stagename
 
@@ -659,17 +661,65 @@ def get_valid_model_ids(ensembler_stage, targetid):
 
 def select_templates_by_seqid_cutoff(targetid, seqid_cutoff=None):
     """
-    :param seqid_cutoff:
-    :return:
+    Parameters
+    ----------
+    targetid: str
+    seqid_cutoff: float
+
+    Returns
+    -------
+    selected_templateids: list of str
     """
-    seqid_filepath = os.path.join(ensembler.core.default_project_dirnames.models, targetid, 'sequence-identities.txt')
+    seqid_filepath = os.path.join(default_project_dirnames.models, targetid, 'sequence-identities.txt')
     with open(seqid_filepath) as seqid_file:
         seqid_lines_split = [line.split() for line in seqid_file.read().splitlines()]
 
     templateids = np.array([i[0] for i in seqid_lines_split])
     seqids = np.array([float(i[1]) for i in seqid_lines_split])
 
-    # must coerce to string due to yaml.dump type requirements
+    # must coerce to str due to yaml.dump type requirements
     selected_templateids = [str(x) for x in templateids[seqids > seqid_cutoff]]
+
+    return selected_templateids
+
+
+def select_templates_by_validation_score(targetid,
+                                         validation_score_cutoff=None,
+                                         validation_score_percentile=None
+                                         ):
+    """
+    Parameters
+    ----------
+    targetid: str
+    validation_score_cutoff: float
+    validation_score_percentile: float
+
+    Returns
+    -------
+    selected_templateids: list of str
+    """
+    # NOTE will also need to iterate through validation methods if additional validation methods are implemented
+    validation_score_filenames = [
+        'validation_scores_sorted-molprobity-{}'.format(stagename) for stagename in modeling_stages
+    ]
+
+    for validation_score_filename in validation_score_filenames[::-1]:
+        validation_score_filepath = os.path.join(default_project_dirnames.models, targetid, validation_score_filename)
+        if os.path.exists(validation_score_filepath):
+            break
+
+    with open(validation_score_filepath) as validation_score_file:
+        validation_score_lines_split = [line.split() for line in validation_score_file.read().splitlines()]
+
+    templateids = np.array([i[0] for i in validation_score_lines_split])
+    validation_scores = np.array([float(i[1]) for i in validation_score_lines_split])
+
+    if validation_score_cutoff:
+        selected_templateids = [str(x) for x in templateids[validation_scores < validation_score_cutoff]]
+    elif validation_score_percentile:
+        percentile_index = (len(templateids) - 1) - int((len(templateids) - 1) * (float(validation_score_percentile) / 100.0))
+        selected_templateids = [str(x) for x in templateids[:percentile_index]]
+    else:
+        selected_templateids = templateids
 
     return selected_templateids

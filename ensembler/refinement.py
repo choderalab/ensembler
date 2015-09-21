@@ -23,7 +23,7 @@ import simtk.openmm.version
 
 def refine_implicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
-        process_only_these_templates=None, template_seqid_cutoff=None,
+        process_only_these_templates=None, model_seqid_cutoff=None,
         write_trajectory=False,
         include_disulfide_bonds=False,
         custom_residue_variants=None,
@@ -231,8 +231,8 @@ def refine_implicit_md(
         else:
             logger.debug(reference_variants)
 
-        if template_seqid_cutoff:
-            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+        if model_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=model_seqid_cutoff)
             selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
 
         ntemplates_selected = len(selected_template_indices)
@@ -328,7 +328,7 @@ def refine_implicit_md(
                 'openmm_platform': openmm_platform,
                 'process_only_these_targets': process_only_these_targets,
                 'process_only_these_templates': process_only_these_templates,
-                'template_seqid_cutoff': template_seqid_cutoff,
+                'model_seqid_cutoff': model_seqid_cutoff,
                 'write_trajectory': write_trajectory,
                 'include_disulfide_bonds': include_disulfide_bonds,
                 'custom_residue_variants': custom_residue_variants,
@@ -452,7 +452,7 @@ def apply_custom_residue_variants(variants, custom_variants_dict):
 
 
 def solvate_models(process_only_these_targets=None, process_only_these_templates=None,
-                   template_seqid_cutoff=None,
+                   model_seqid_cutoff=None,
                    ff='amber99sbildn',
                    water_model='tip3p',
                    verbose=False,
@@ -490,8 +490,8 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
         if mpistate.rank == 0:
             target_starttime = datetime.datetime.utcnow()
 
-        if template_seqid_cutoff:
-            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+        if model_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=model_seqid_cutoff)
             selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
 
         ntemplates_selected = len(selected_template_indices)
@@ -559,7 +559,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             metadata = {
                 'target_id': target.id,
                 'datestamp': datestamp,
-                'template_seqid_cutoff': template_seqid_cutoff,
+                'model_seqid_cutoff': model_seqid_cutoff,
                 'process_only_these_targets': process_only_these_targets,
                 'process_only_these_templates': process_only_these_templates,
                 'python_version': sys.version.split('|')[0].strip(),
@@ -583,7 +583,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
 
 
 def determine_nwaters(process_only_these_targets=None,
-                      process_only_these_templates=None, template_seqid_cutoff=None,
+                      process_only_these_templates=None, model_seqid_cutoff=None,
                       verbose=False,
                       select_at_percentile=None):
     '''Determine distribution of nwaters, and select the value at a certain percentile.
@@ -609,8 +609,8 @@ def determine_nwaters(process_only_these_targets=None,
             models_target_dir = os.path.join(models_dir, target.id)
             if not os.path.exists(models_target_dir): continue
 
-            if template_seqid_cutoff:
-                process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+            if model_seqid_cutoff:
+                process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=model_seqid_cutoff)
                 selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
 
             ntemplates_selected = len(selected_template_indices)
@@ -670,7 +670,6 @@ def determine_nwaters(process_only_these_targets=None,
                 with open(filename, 'w') as outfile:
                     outfile.write('%d\n' % nwaters_array.max())
 
-                # Use 68th percentile.
                 filename = os.path.join(models_target_dir, 'nwaters-use.txt')
                 with open(filename, 'w') as outfile:
                     outfile.write('%d\n' % nwaters_array[index_selected])
@@ -685,7 +684,7 @@ def determine_nwaters(process_only_these_targets=None,
             metadata = {
                 'target_id': target.id,
                 'datestamp': datestamp,
-                'template_seqid_cutoff': template_seqid_cutoff,
+                'model_seqid_cutoff': model_seqid_cutoff,
                 'select_at_percentile': select_at_percentile,
                 'process_only_these_targets': process_only_these_targets,
                 'process_only_these_templates': process_only_these_templates,
@@ -708,7 +707,7 @@ def determine_nwaters(process_only_these_targets=None,
 
 def refine_explicit_md(
         openmm_platform=None, gpupn=1, process_only_these_targets=None,
-        process_only_these_templates=None, template_seqid_cutoff=None,
+        process_only_these_templates=None, model_seqid_cutoff=None,
         verbose=False, write_trajectory=False,
         include_disulfide_bonds=False,
         ff='amber99sbildn',
@@ -1013,8 +1012,8 @@ def refine_explicit_md(
             line = infile.readline()
         nwaters = int(line)
 
-        if template_seqid_cutoff:
-            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=template_seqid_cutoff)
+        if model_seqid_cutoff:
+            process_only_these_templates = ensembler.core.select_templates_by_seqid_cutoff(target.id, seqid_cutoff=model_seqid_cutoff)
             selected_template_indices = [i for i, seq in enumerate(templates_resolved_seq) if seq.id in process_only_these_templates]
 
         ntemplates_selected = len(selected_template_indices)
@@ -1121,7 +1120,7 @@ def refine_explicit_md(
             metadata = {
                 'target_id': target.id,
                 'datestamp': datestamp,
-                'template_seqid_cutoff': template_seqid_cutoff,
+                'model_seqid_cutoff': model_seqid_cutoff,
                 'process_only_these_targets': process_only_these_targets,
                 'process_only_these_templates': process_only_these_templates,
                 'timing': ensembler.core.strf_timedelta(target_timedelta),
