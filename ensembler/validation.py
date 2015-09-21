@@ -114,6 +114,8 @@ def molprobity_validation(targetid, ensembler_stage=None):
             targetid, model_id, model_structure_filename
         )
         molprobity_model_results = molprobity_results.get(model_id)
+        if molprobity_model_results is None:
+            continue
         molprobity_scores_sublist.append((model_id, molprobity_model_results.get('MolProbityScore')))
         write_molprobity_results_for_target(molprobity_model_results, models_target_dir, model_id, ensembler_stage)
 
