@@ -96,6 +96,12 @@ Solvates models using the number of waters determined in the previous step, then
 
 ::
 
+  $ ensembler validate
+
+(Optional; requires `MolProbity <http://molprobity.biochem.duke.edu/>`_ command-line tools) Validates model quality using MolProbity, which uses criteria such as Ramachandran angles, backbone distortions, and atom clashes. The ``package_models`` command can filter models based on validation score, using the ``--model_validation_score_cutoff`` and ``--model_validation_score_percentile`` flags.
+
+::
+
   $ ensembler package_models --package_for FAH --nfahclones 3
 
 Packages models in the necessary directory and file structure to be run as Folding@Home projects. Files are written in the directory tree ``packaged_models/fah-projects/[target id]``.
