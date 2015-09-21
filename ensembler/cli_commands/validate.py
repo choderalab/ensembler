@@ -74,8 +74,14 @@ def dispatch(args):
     else:
         modeling_stage = None
 
+    if args['--verbose']:
+        loglevel = 'debug'
+    else:
+        loglevel = 'info'
+
     if method == 'molprobity':
         ensembler.validation.molprobity_validation_multiple_targets(
             targetids=targets,
             modeling_stage=modeling_stage,
+            loglevel=loglevel,
         )

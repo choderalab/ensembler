@@ -52,4 +52,8 @@ def dispatch(args):
     else:
         loglevel = 'info'
 
-    ensembler.modeling.cluster_models(process_only_these_targets=targets, loglevel=loglevel, **dispatch_args)
+    ensembler.modeling.cluster_models(
+        process_only_these_targets=targets,
+        loglevel=loglevel,
+        **dispatch_args
+    )

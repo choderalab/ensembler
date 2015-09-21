@@ -6,8 +6,8 @@ import mdtraj
 from subprocess import Popen, PIPE
 from ensembler.core import get_most_advanced_ensembler_modeling_stage, default_project_dirnames
 from ensembler.core import model_filenames_by_ensembler_stage, get_valid_model_ids, mpistate
-from ensembler.core import YamlDumper
-from ensembler.utils import notify_when_done
+from ensembler.core import YamlDumper, logger
+from ensembler.utils import notify_when_done, set_loglevel
 
 # includes types
 molprobity_oneline_analysis_colnames = [
@@ -61,7 +61,7 @@ molprobity_oneline_analysis_colnames_to_output = [
 
 
 @notify_when_done
-def molprobity_validation_multiple_targets(targetids, modeling_stage=None):
+def molprobity_validation_multiple_targets(targetids, modeling_stage=None, loglevel=None):
     """
 Calculate model quality using MolProbity ``oneline-analysis`` command.
 
@@ -84,13 +84,16 @@ MPI-enabled.
         {None|build_models|refine_implicit_md|refine_explicit_md}
         Default: None (automatically selects most advanced stage)
     """
+    set_loglevel(loglevel)
     if type(targetids) is str:
         targetids = [targetids]
     for targetid in targetids:
+        logger.info('Working on target {}'.format(targetid))
         molprobity_validation(targetid=targetid, ensembler_stage=modeling_stage)
 
 
-def molprobity_validation(targetid, ensembler_stage=None):
+def molprobity_validation(targetid, ensembler_stage=None, loglevel=None):
+    set_loglevel(loglevel)
     valid_model_ids = []
     if mpistate.rank == 0:
         if ensembler_stage is None:
@@ -110,6 +113,7 @@ def molprobity_validation(targetid, ensembler_stage=None):
     molprobity_scores_sublist = []
     for model_index in range(mpistate.rank, nvalid_model_ids, mpistate.size):
         model_id = valid_model_ids[model_index]
+        logger.debug('MPI process {} working on model {}'.format(mpistate.rank, model_id))
         molprobity_results = run_molprobity_oneline_analysis(
             targetid, model_id, model_structure_filename
         )
