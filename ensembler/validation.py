@@ -89,7 +89,7 @@ MPI-enabled.
         targetids = [targetids]
     for targetid in targetids:
         logger.info('Working on target {}'.format(targetid))
-        molprobity_validation(targetid=targetid, ensembler_stage=modeling_stage)
+        molprobity_validation(targetid=targetid, ensembler_stage=modeling_stage, loglevel=loglevel)
 
 
 def molprobity_validation(targetid, ensembler_stage=None, loglevel=None):
@@ -119,7 +119,9 @@ def molprobity_validation(targetid, ensembler_stage=None, loglevel=None):
         )
         molprobity_model_results = molprobity_results.get(model_id)
         if molprobity_model_results is None:
+            logger.debug('MolProbity returned no results for model {}'.format(model_dir))
             continue
+        logger.debug('MolProbity score of {} calculated for model {}'.format(molprobity_model_results.get('MolProbityScore'), model_id))
         molprobity_scores_sublist.append((model_id, molprobity_model_results.get('MolProbityScore')))
         write_molprobity_results_for_target(molprobity_model_results, models_target_dir, model_id, ensembler_stage)
 
@@ -130,8 +132,9 @@ def molprobity_validation(targetid, ensembler_stage=None, loglevel=None):
     write_molprobity_scores_list(molprobity_scores_sorted, molprobity_results_filepath)
 
 
-def run_molprobity_oneline_analysis(targetid, model_id, model_structure_filename):
-    tmp_model_dir = tempfile.mkdtemp()
+def run_molprobity_oneline_analysis(targetid, model_id, model_structure_filename, tmp_model_dir=None):
+    if tmp_model_dir is None:
+        tmp_model_dir = tempfile.mkdtemp()
 
     try:
         source_path = os.path.join(
