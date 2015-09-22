@@ -127,10 +127,10 @@ def molprobity_validation(targetid, ensembler_stage=None, loglevel=None):
         molprobity_scores_sublist.append((model_id, molprobity_score))
 
     molprobity_scores_gathered_list = mpistate.comm.gather(molprobity_scores_sublist, root=0)
-    molprobity_scores_list_of_tuples = [item for sublist in molprobity_scores_gathered_list for item in sublist]
-    molprobity_scores_list_of_tuples = mpistate.comm.bcast(molprobity_scores_list_of_tuples, root=0)
-    molprobity_scores_sorted = sorted(molprobity_scores_list_of_tuples, key=lambda x: x[1])
-    write_molprobity_scores_list(molprobity_scores_sorted, molprobity_results_filepath)
+    if mpistate.rank == 0:
+        molprobity_scores_list_of_tuples = [item for sublist in molprobity_scores_gathered_list for item in sublist]
+        molprobity_scores_sorted = sorted(molprobity_scores_list_of_tuples, key=lambda x: x[1])
+        write_molprobity_scores_list(molprobity_scores_sorted, molprobity_results_filepath)
 
 
 def run_molprobity_oneline_analysis_and_write_results(targetid,
