@@ -6,7 +6,7 @@ import mdtraj
 from subprocess import Popen, PIPE
 from ensembler.core import get_most_advanced_ensembler_modeling_stage, default_project_dirnames
 from ensembler.core import model_filenames_by_ensembler_stage, get_valid_model_ids, mpistate
-from ensembler.core import YamlDumper, logger
+from ensembler.core import YamlDumper, YamlLoader, logger
 from ensembler.utils import notify_when_done, set_loglevel
 
 # includes types
@@ -113,17 +113,18 @@ def molprobity_validation(targetid, ensembler_stage=None, loglevel=None):
     molprobity_scores_sublist = []
     for model_index in range(mpistate.rank, nvalid_model_ids, mpistate.size):
         model_id = valid_model_ids[model_index]
+
         logger.debug('MPI process {} working on model {}'.format(mpistate.rank, model_id))
-        molprobity_results = run_molprobity_oneline_analysis(
-            targetid, model_id, model_structure_filename
+
+        molprobity_score = run_molprobity_oneline_analysis_and_write_results(
+            targetid,
+            model_id,
+            ensembler_stage,
+            model_structure_filename=model_structure_filename,
+            models_target_dir=models_target_dir,
         )
-        molprobity_model_results = molprobity_results.get(model_id)
-        if molprobity_model_results is None:
-            logger.debug('MolProbity returned no results for model {}'.format(model_dir))
-            continue
-        logger.debug('MolProbity score of {} calculated for model {}'.format(molprobity_model_results.get('MolProbityScore'), model_id))
-        molprobity_scores_sublist.append((model_id, molprobity_model_results.get('MolProbityScore')))
-        write_molprobity_results_for_target(molprobity_model_results, models_target_dir, model_id, ensembler_stage)
+
+        molprobity_scores_sublist.append((model_id, molprobity_score))
 
     molprobity_scores_gathered_list = mpistate.comm.gather(molprobity_scores_sublist, root=0)
     molprobity_scores_list_of_tuples = [item for sublist in molprobity_scores_gathered_list for item in sublist]
@@ -132,7 +133,56 @@ def molprobity_validation(targetid, ensembler_stage=None, loglevel=None):
     write_molprobity_scores_list(molprobity_scores_sorted, molprobity_results_filepath)
 
 
+def run_molprobity_oneline_analysis_and_write_results(targetid,
+                                                      model_id,
+                                                      ensembler_stage,
+                                                      model_structure_filename=None,
+                                                      models_target_dir=None,
+                                                      check_for_existing_results=True,
+                                                      ):
+    if model_structure_filename is None:
+        model_structure_filename = model_filenames_by_ensembler_stage[ensembler_stage]
+    if models_target_dir is None:
+        models_target_dir = os.path.join(default_project_dirnames.models, targetid)
+
+    results_output_filepath = os.path.join(
+        models_target_dir, model_id, 'molprobity-{}.yaml'.format(ensembler_stage)
+    )
+
+    if check_for_existing_results:
+        if os.path.exists(results_output_filepath):
+            with open(results_output_filepath) as results_output_file:
+                prev_results = yaml.load(stream=results_output_file, Loader=YamlLoader)
+            prev_molprobity_score = prev_results.get('MolProbityScore')
+            if prev_molprobity_score is not None:
+                logger.debug(
+                    'Existing MolProbity score of {} found for model {}'.format(
+                        prev_molprobity_score, model_id
+                    )
+                )
+                return prev_molprobity_score
+
+    molprobity_results = run_molprobity_oneline_analysis(
+        targetid, model_id, model_structure_filename
+    )
+    if molprobity_results is None:
+        logger.debug('MolProbity returned no results for model {}'.format(model_id))
+        return None
+
+    logger.debug('MolProbity score of {} calculated for model {}'.format(molprobity_results.get('MolProbityScore'), model_id))
+
+    molprobity_score = molprobity_results.get('MolProbityScore')
+    if molprobity_score is not None:
+        write_molprobity_results_for_target(
+            molprobity_results, models_target_dir, model_id, ensembler_stage
+        )
+    return molprobity_score
+
+
 def run_molprobity_oneline_analysis(targetid, model_id, model_structure_filename, tmp_model_dir=None):
+    """
+    Runs oneline_analysis for a single model in a temp dir, and cleans up after.
+    """
     if tmp_model_dir is None:
         tmp_model_dir = tempfile.mkdtemp()
 
@@ -157,11 +207,12 @@ def run_molprobity_oneline_analysis(targetid, model_id, model_structure_filename
         stdout, stderr = molprobity_oneline_analysis_cmd(tmp_model_dir)
         output_text = '\n'.join([stdout, stderr])
         molprobity_results = parse_molprobity_oneline_analysis_output(output_text)
+        molprobity_model_results = molprobity_results.get(model_id)
 
     finally:
         shutil.rmtree(tmp_model_dir)
 
-    return molprobity_results
+    return molprobity_model_results
 
 
 def molprobity_oneline_analysis_cmd(dir_path):
@@ -213,7 +264,7 @@ def write_molprobity_results_for_target(molprobity_model_results, models_target_
     }
 
     results_output_filepath = os.path.join(
-        models_target_dir, model_id, 'molprobity-{}.txt'.format(ensembler_stage)
+        models_target_dir, model_id, 'molprobity-{}.yaml'.format(ensembler_stage)
     )
     with open(results_output_filepath, 'w') as results_output_file:
         yaml.dump(output_dict, stream=results_output_file, default_flow_style=False, Dumper=YamlDumper)

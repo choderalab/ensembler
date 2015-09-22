@@ -31,7 +31,7 @@ def test_molprobity_validation():
         molprobity_validation(target_id)
         for template_id in template_ids:
             results_filepath = os.path.join(
-                default_project_dirnames.models, target_id, template_id, 'molprobity-refine_explicit_md.txt'
+                default_project_dirnames.models, target_id, template_id, 'molprobity-refine_explicit_md.yaml'
             )
             assert os.path.exists(results_filepath)
             with open(results_filepath) as results_file:
