@@ -25,9 +25,14 @@ The ``ensembler`` tool is operated via a number of subcommands, which should be 
   ensembler refine_explicit
   ensembler package_models
 
-Furthermore, the ``ensembler quickmodel`` subcommand allows the entire modeling
-pipeline to be run in one go for a single target and a small number of
-templates. Note that this command will not work with MPI.
+The optional ``ensembler validate`` subcommand uses the
+`MolProbity <http://molprobity.biochem.duke.edu/>`_ command-line tools to
+conduct model quality validation based on criteria such as Ramachandran angles,
+backbone distortion, and atom clashes.
+
+The ``ensembler quickmodel`` subcommand allows the entire modeling pipeline to
+be run in one go for a single target and a small number of templates. Note that
+this command will not work with MPI.
 
 To print helpstrings for each subcommand, pass the ``-h`` flag.
 
@@ -96,7 +101,7 @@ Additional Tools
 Ensembler includes a ``tools`` submodule, which allows the user to conduct
 various useful tasks which are not considered core pipeline functions. The
 use-cases for many of these tools are quite specific, so they may not be
-applicable to every project, and should also be used with caution.
+applicable to every project, and should be used with caution.
 
 Residue renumbering according to UniProt sequence coordinates
 -------------------------------------------------------------

@@ -10,6 +10,7 @@ command_list = [
     'refine_implicit',
     'solvate',
     'refine_explicit',
+    'validate',
     'package_models',
     'quickmodel',
     'renumber_residues',
@@ -27,6 +28,7 @@ from . import cluster
 from . import refine_implicit
 from . import solvate
 from . import refine_explicit
+from . import validate
 from . import package_models
 from . import quickmodel
 from . import renumber_residues

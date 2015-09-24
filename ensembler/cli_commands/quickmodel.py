@@ -60,7 +60,7 @@ helpstring_nonunique_options = [
                                            /Users/partond/tmp/kinome-MSMSeeder/structures/sifts\"""",
 
     """\
-  --template_seqid_cutoff <cutoff>         e.g. "80\"""",
+  --model_seqid_cutoff <cutoff>         e.g. "80\"""",
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
@@ -88,10 +88,10 @@ def dispatch(args):
     else:
         chainids_dict = None
 
-    if args['--template_seqid_cutoff']:
-        template_seqid_cutoff = float(args['--template_seqid_cutoff'])
+    if args['--model_seqid_cutoff']:
+        model_seqid_cutoff = float(args['--model_seqid_cutoff'])
     else:
-        template_seqid_cutoff = None
+        model_seqid_cutoff = None
 
     if args['--nfahclones']:
         nfahclones = int(args['--nfahclones'])
@@ -103,4 +103,4 @@ def dispatch(args):
     else:
         structure_paths = None
 
-    QuickModel(targetid=args['--targetid'], templateids=templateids, target_uniprot_entry_name=args['--target_uniprot_entry_name'], uniprot_domain_regex=args['--uniprot_domain_regex'], pdbids=pdbids, chainids=chainids_dict, template_uniprot_query=args['--template_uniprot_query'], template_seqid_cutoff=template_seqid_cutoff, loopmodel=not args['--no-loopmodel'], package_for_fah=args['--package_for_fah'], nfahclones=nfahclones, structure_dirs=structure_paths)
+    QuickModel(targetid=args['--targetid'], templateids=templateids, target_uniprot_entry_name=args['--target_uniprot_entry_name'], uniprot_domain_regex=args['--uniprot_domain_regex'], pdbids=pdbids, chainids=chainids_dict, template_uniprot_query=args['--template_uniprot_query'], model_seqid_cutoff=model_seqid_cutoff, loopmodel=not args['--no-loopmodel'], package_for_fah=args['--package_for_fah'], nfahclones=nfahclones, structure_dirs=structure_paths)

@@ -34,7 +34,7 @@ Then, to install Ensembler with Conda, use the following commands ::
   $ conda config --add channels http://conda.anaconda.org/salilab
   $ conda install ensembler
 
-Conda will automatically install all dependencies except for the optional dependency `Rosetta <https://www.rosettacommons.org/software>`_. This requires a license (free for academic non-profit use), and will have to be installed according to the instructions for that package.
+Conda will automatically install all dependencies except for the optional dependencies `Rosetta <https://www.rosettacommons.org/software>`_ and `MolProbity <http://molprobity.biochem.duke.edu/>`_. These require licenses (free for academic non-profit use), and will have to be installed according to the instructions for those packages. Some limited installation instructions are included below, but these are not guaranteed to be up to date.
 
 Install from Source
 -------------------
@@ -113,6 +113,10 @@ Optional packages:
         Some functionality, including the ``quickmodel`` and ``inspect``
         functions, requires pandas.
 
+    `MolProbity <http://molprobity.biochem.duke.edu/>`_
+        For model validation. The ``package_models`` function can use this
+        data to filter models by validation score.
+
 Manually Installing the Dependencies
 ------------------------------------
 
@@ -159,3 +163,27 @@ databases such as UniProt, or are excluded from the unit tests due to being
 slow. To run them: ::
 
   $ nosetests ensembler -a non_conda_dependencies -a network -a slow
+
+Installation of Dependencies Unavailable Through Conda
+======================================================
+
+(Note: only limited instructions are included here, and these are not guaranteed to be up to date. If you encounter problems, please consult the relevant support or installation instructions for that software dependency.)
+
+MolProbity
+----------
+
+Download the `MolProbity 4.2 release source <https://github.com/rlabduke/MolProbity/archive/molprobity_4.2.zip>`_ from the GitHub repo.
+
+Extract the zip file, enter the created directory, and run the following command: ::
+
+  $ ./configure.sh
+
+This was all that was required when tested on a MacBook running OS X 10.8.
+
+On a Linux cluster, it was first necessary to edit the file configure.sh to uncomment the following line, and comment the ``make`` command: ::
+
+  $ ./binlibtbx.scons -j 1
+
+This forces the build to use only a single core - this ran rather slowly, but using more cores resulted in build failure. This is likely due to memory issues. After runnng ``./configure.sh`` it was then also necessary to run ``./setup.sh``.
+
+Binaries can found in the ``[MolProbity source dir]/cmdline`` directory.

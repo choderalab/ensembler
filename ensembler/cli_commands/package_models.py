@@ -12,43 +12,51 @@ Options."""
 
 helpstring_unique_options = [
     """\
-  --package_for <choice>                Specify which packaging method to use (required).
-                                        - transfer: compress results into a single .tgz file
-                                        - FAH: set up the input files and directory structure
-                                          necessary to start a Folding@Home project.""",
+  --package_for <choice>                                Specify which packaging method to use (required).
+                                                        - transfer: compress results into a single .tgz file
+                                                        - FAH: set up the input files and directory structure
+                                                          necessary to start a Folding@Home project.""",
 
     """\
-  --nfahclones <n>                      If packaging for Folding@Home, select the number of clones
-                                        to use for each model [default: 1].""",
+  --nfahclones <n>                                      If packaging for Folding@Home, select the number of clones
+                                                        to use for each model [default: 1].""",
 
     """\
-  --compressruns                        If packaging for Folding@Home, choose whether to compress
-                                        each RUN into a .tgz file.""",
+  --compressruns                                        If packaging for Folding@Home, choose whether to compress
+                                                        each RUN into a .tgz file. [default: False]""",
+
+    """\
+  --model_validation_score_cutoff <cutoff>              Select only models with MolProbity validation score
+                                                        less than the given cutoff.""",
+
+    """\
+  --model_validation_score_percentile <percentile>      Select only models with MolProbity validation score
+                                                        less than the value at the given percentile.""",
 ]
 
 helpstring_nonunique_options = [
     """\
-  --targetsfile <targetsfile>  File containing a list of target IDs to work on (newline-separated).
-                               Comment targets out with "#".""",
+  --targetsfile <targetsfile>                           File containing a list of target IDs to work on (newline-separated).
+                                                        Comment targets out with "#".""",
 
     """\
-  --targets <target>           Define one or more target IDs to work on (comma-separated), e.g.
-                               "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
+  --targets <target>                                    Define one or more target IDs to work on (comma-separated), e.g.
+                                                        "--targets ABL1_HUMAN_D0,SRC_HUMAN_D0" (default: all targets)""",
 
     """\
-  --templates <template>            Define one or more template IDs to work on (comma-separated), e.g.
-                                    "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
+  --templates <template>                                Define one or more template IDs to work on (comma-separated), e.g.
+                                                        "--templates ABL1_HUMAN_D0_1OPL_A" (default: all templates)""",
 
     """\
-  --templatesfile <templatesfile>   File containing a list of template IDs to work on (newline-separated).
-                                    Comment targets out with "#".""",
+  --templatesfile <templatesfile>                       File containing a list of template IDs to work on (newline-separated).
+                                                        Comment targets out with "#".""",
 
     """\
-  --template_seqid_cutoff <cutoff>  Select only templates with sequence identity (percentage)
-                                    greater than the given cutoff.""",
+  --model_seqid_cutoff <cutoff>                         Select only models with sequence identity (percentage)
+                                                        greater than the given cutoff.""",
 
     """\
-  -v --verbose                 """,
+  -v --verbose                                          """,
 ]
 
 helpstring = '\n\n'.join([helpstring_header, '\n\n'.join(helpstring_unique_options), '\n\n'.join(helpstring_nonunique_options)])
@@ -77,10 +85,20 @@ def dispatch(args):
     else:
         templates = False
 
-    if args['--template_seqid_cutoff']:
-        template_seqid_cutoff = float(args['--template_seqid_cutoff'])
+    if args['--model_seqid_cutoff']:
+        model_seqid_cutoff = float(args['--model_seqid_cutoff'])
     else:
-        template_seqid_cutoff = False
+        model_seqid_cutoff = False
+
+    if args['--model_validation_score_cutoff']:
+        model_validation_score_cutoff = float(args['--model_validation_score_cutoff'])
+    else:
+        model_validation_score_cutoff = None
+
+    if args['--model_validation_score_percentile']:
+        model_validation_score_percentile = int(args['--model_validation_score_percentile'])
+    else:
+        model_validation_score_percentile = None
 
     if args['--nfahclones']:
         n_fah_clones = int(args['--nfahclones'])
@@ -107,7 +125,9 @@ def dispatch(args):
         ensembler.packaging.package_for_fah(
             process_only_these_targets=targets,
             process_only_these_templates=templates,
-            template_seqid_cutoff=template_seqid_cutoff,
+            model_seqid_cutoff=model_seqid_cutoff,
+            model_validation_score_cutoff=model_validation_score_cutoff,
+            model_validation_score_percentile=model_validation_score_percentile,
             nclones=n_fah_clones,
             archive=archive,
             loglevel=loglevel,

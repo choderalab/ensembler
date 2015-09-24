@@ -13,7 +13,7 @@ from simtk import unit
 class QuickModel(object):
     def __init__(self, targetid=None, templateids=None, target_uniprot_entry_name=None,
                  uniprot_domain_regex=None, pdbids=None, chainids=None, template_uniprot_query=None,
-                 template_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None,
+                 model_seqid_cutoff=None, loopmodel=True, package_for_fah=False, nfahclones=None,
                  structure_dirs=None, sim_length=100*unit.picoseconds
                  ):
         """
@@ -26,7 +26,7 @@ class QuickModel(object):
         :param pdbids: list of str
         :param chainids: dict {pdbid (str): [chainid (str)]}
         :param template_uniprot_query: str
-        :param template_seqid_cutoff: float
+        :param model_seqid_cutoff: float
         :param loopmodel: boolean
         :param package_for_fah: boolean
         :param nfahclones: int
@@ -40,7 +40,7 @@ class QuickModel(object):
         self.pdbids = pdbids
         self.chainids = chainids
         self.template_uniprot_query = template_uniprot_query
-        self.template_seqid_cutoff = template_seqid_cutoff
+        self.model_seqid_cutoff = model_seqid_cutoff
         self.loopmodel = loopmodel
         self.package_for_fah = package_for_fah
         self.nfahclones = nfahclones
@@ -81,12 +81,12 @@ class QuickModel(object):
         elif self.template_uniprot_query:
             ensembler.initproject.gather_templates_from_uniprot(self.template_uniprot_query, self.uniprot_domain_regex, structure_dirs=self.structure_dirs)
             self._align_all_templates(self.targetid)
-            self.templateids = self._select_templates_based_on_seqid_cutoff(self.targetid, seqid_cutoff=self.template_seqid_cutoff)
+            self.templateids = self._select_templates_based_on_seqid_cutoff(self.targetid, seqid_cutoff=self.model_seqid_cutoff)
         else:
             if not existing_templates:
                 raise Exception('No existing templates found.')
             self._align_all_templates(self.targetid)
-            self.templateids = self._select_templates_based_on_seqid_cutoff(self.targetid, seqid_cutoff=self.template_seqid_cutoff)
+            self.templateids = self._select_templates_based_on_seqid_cutoff(self.targetid, seqid_cutoff=self.model_seqid_cutoff)
 
         if not self.templateids or len(self.templateids) == 0:
             warnings.warn('No templates found. Exiting.')

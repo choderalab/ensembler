@@ -1,9 +1,12 @@
 import os
 import shutil
-from ensembler.core import ProjectMetadata, manual_overrides_filename, ManualOverrides
-from ensembler.param_parsers import parse_api_params_string, eval_quantity_string
 from simtk import unit
+from ensembler.core import ProjectMetadata, manual_overrides_filename, ManualOverrides
+from ensembler.core import get_valid_model_ids, default_project_dirnames
+from ensembler.core import model_filenames_by_ensembler_stage
+from ensembler.param_parsers import parse_api_params_string, eval_quantity_string
 from ensembler.utils import enter_temp_dir, get_installed_resource_filename
+from ensembler.tests.integrationtest_utils import integrationtest_context
 from nose.plugins.attrib import attr
 
 
@@ -48,3 +51,12 @@ def test_manual_overrides_file():
         assert manual_overrides.refinement.custom_residue_variants_by_targetid == {
             'EGFR_HUMAN_D0': {49: 'ASH'}
         }
+
+
+@attr('unit')
+def test_get_valid_model_filepaths():
+    targetid = 'EGFR_HUMAN_D0'
+    templateids = ['KC1D_HUMAN_D0_4KB8_D', 'KC1D_HUMAN_D0_4HNF_A']
+    with integrationtest_context('refined_implicit'):
+        valid_model_filenames = get_valid_model_ids('refine_implicit_md', targetid)
+        assert all([fpath in templateids for fpath in valid_model_filenames])
