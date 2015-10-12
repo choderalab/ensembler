@@ -6,7 +6,7 @@ import mdtraj
 from subprocess import Popen, PIPE
 from ensembler.core import get_most_advanced_ensembler_modeling_stage, default_project_dirnames
 from ensembler.core import model_filenames_by_ensembler_stage, get_valid_model_ids, mpistate
-from ensembler.core import YamlDumper, YamlLoader, logger
+from ensembler.core import YamlDumper, YamlLoader, logger, get_targets
 from ensembler.utils import notify_when_done, set_loglevel
 
 # includes types
@@ -61,7 +61,7 @@ molprobity_oneline_analysis_colnames_to_output = [
 
 
 @notify_when_done
-def molprobity_validation_multiple_targets(targetids, modeling_stage=None, loglevel=None):
+def molprobity_validation_multiple_targets(targetids=None, modeling_stage=None, loglevel=None):
     """
 Calculate model quality using MolProbity ``oneline-analysis`` command.
 
@@ -85,7 +85,9 @@ MPI-enabled.
         Default: None (automatically selects most advanced stage)
     """
     set_loglevel(loglevel)
-    if type(targetids) is str:
+    if targetids is None:
+        targetids = [target.id for target in get_targets()]
+    elif type(targetids) is str:
         targetids = [targetids]
     for targetid in targetids:
         logger.info('Working on target {}'.format(targetid))
