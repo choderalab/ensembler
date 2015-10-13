@@ -12,6 +12,7 @@ command_list = [
     'refine_explicit',
     'validate',
     'package_models',
+    'mktraj',
     'quickmodel',
     'renumber_residues',
 ]
@@ -30,5 +31,6 @@ from . import solvate
 from . import refine_explicit
 from . import validate
 from . import package_models
+from . import mktraj
 from . import quickmodel
 from . import renumber_residues

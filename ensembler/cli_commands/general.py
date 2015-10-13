@@ -42,6 +42,8 @@ Usage:
       [--model_seqid_cutoff <cutoff>] [--model_validation_score_cutoff <cutoff>]
       [--model_validation_score_percentile <percentile>] [--nfahclones <n>] [--compressruns]
       [-v | --verbose]
+  ensembler mktraj [-h | --help] [--targets <targets>] [--targetsfile <targetsfile>]
+      [--modeling_stage <stage>] [-v | --verbose]
   ensembler testrun_pipeline [-h | --help]
   ensembler quickmodel [-h | --help] [--targetid <id>] [--templateids <ids>]
       [--target_uniprot_entry_name <entry_name>] [--uniprot_domain_regex <regex>]
