@@ -6,7 +6,7 @@ Calculate model quality.
 
 For each target, this outputs a text file named
 ``models/[targetid]/validation_scores_sorted-[method]-[ensembler_stage]`` which contains a list of
-targetids sorted by validation score. This can be used by the subsequent ``package_models`` command
+model IDs sorted by validation score. This can be used by the subsequent ``package_models`` command
 to filter out models below a specified quality threshold.
 
 Typically, this should be run after models have been refined to the desired extent (e.g. after
