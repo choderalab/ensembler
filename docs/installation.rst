@@ -191,7 +191,7 @@ Binaries can found in the ``[MolProbity source dir]/cmdline`` directory.
 Rosetta
 ----------
 
-Download Rosetta `here <https://www.rosettacommons.org/software/license-and-download>`.
+Download Rosetta `here <https://www.rosettacommons.org/software/license-and-download>`_.
 
 Rosetta version 2014.35 has been most thoroughly tested within ``ensembler``.
 
