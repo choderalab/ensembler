@@ -440,7 +440,7 @@ def attempt_symlink_structure_files(pdbid, project_structures_dir, structure_dir
             if file_exists_and_not_empty(structure_filepath) > 0:
                 if os.path.exists(project_structure_filepath):
                     os.remove(project_structure_filepath)
-                os.symlink(structure_filepath, project_structure_filepath)
+                os.symlink(os.path.abspath(structure_filepath), os.path.abspath(project_structure_filepath))
                 break
 
 
