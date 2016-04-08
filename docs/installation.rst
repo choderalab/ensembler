@@ -187,3 +187,16 @@ On a Linux cluster, it was first necessary to edit the file configure.sh to unco
 This forces the build to use only a single core - this ran rather slowly, but using more cores resulted in build failure. This is likely due to memory issues. After runnng ``./configure.sh`` it was then also necessary to run ``./setup.sh``.
 
 Binaries can found in the ``[MolProbity source dir]/cmdline`` directory.
+
+Rosetta
+----------
+
+Download Rosetta `here <https://www.rosettacommons.org/software/license-and-download>`_.
+
+Rosetta version 2014.35 has been most thoroughly tested within ``ensembler``.
+
+Rosetta requires a program called ``Scons`` to compile. It is conda installable: ::
+
+  $ conda install --yes scons
+
+It is important to add both ``rosetta_2014.35.57232_bundle/main/source/bin`` to your ``$PATH`` and ``rosetta_2014.35.57232_bundle/main/database`` to a new ``$MINIROSETTA_DATABASE`` path, or else loop modeling will not work.
