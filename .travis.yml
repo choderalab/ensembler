@@ -27,11 +27,10 @@ install:
 script:
   # Add omnia channel
   - conda config --add channels ${ORGNAME}
-  # build the recipe
+  # Build the recipe
   - conda build devtools/conda-recipe
   # Test the local installation
   - source activate _test
-  #- cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit -a "\!slow" && cd ..
   - cd devtools
   - nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit
   - if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then nosetests ensembler --nocapture --verbosity=2 --exe -a modeller --with-timer; fi
