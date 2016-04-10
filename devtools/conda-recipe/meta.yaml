@@ -1,12 +1,12 @@
 package:
   name: ensembler-dev
-  version: !!str dev
+  version: 0.0.0
 
 source:
    path: ../..
 
 build:
-  preserve_egg_dir: True
+  # preserve_egg_dir: True
   number: 0
   entry_points:
     - ensembler = ensembler.cli:main
@@ -22,8 +22,8 @@ requirements:
     - mdtraj
     - msmbuilder
     - biopython
-    - openmm
-    - pdbfixer ==1.2
+    - openmm-dev
+    - pdbfixer-dev
     # - numpy
     - lxml
     - pyyaml
