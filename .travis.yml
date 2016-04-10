@@ -9,6 +9,9 @@ env:
   global:
     - ORGNAME="omnia"
     - PACKAGENAME="ensembler"
+    - # Make sure OpenMM uses at most 1 thread for CPU platform (unless we explicitly say otherwise)
+    - OPENMM_CPU_THREADS=1
+    - OPENMM_NUM_THREADS=1
     # KEY_MODELLER for testing with modeller package
     - secure: "M6Qw8y6+Q05+ciQ/JGxhO/3jmc/qtywy2xE4nGBIpDDMZ1FJH17tN1YVMMXM8Ld2DIFb/4CMGHKi03URfxdve9Q8QT9AMo+nffvHqrQizyX26ao3eAo61p0r0s7qLtAwymx2PoRvZxOOvZHpq11VN0gMeCynU4OPCf4nWZ9BbgE="
     # BINSTAR_TOKEN
