@@ -31,6 +31,14 @@ requirements:
     - mock
     - subprocess32 # [py2k]
 
+test:
+  requires:
+    - pip
+    - nose
+    - nose-timer
+  imports:
+    - ensembler
+
 about:
   home: https://github.com/choderalab/ensembler
   license: GNU Lesser General Public License v2 or later (LGPLv2+)
