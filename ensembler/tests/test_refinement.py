@@ -19,6 +19,7 @@ def test_refine_implicit_md_short():
             process_only_these_templates=[templateid],
             sim_length=2.0*unit.femtosecond,
             nsteps_per_iteration=1,
+            minimization_steps=1,
             loglevel='debug'
         )
         implicit_metadata_filepath = os.path.join(

@@ -1,16 +1,5 @@
 language: c
 sudo: false
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-      - g++
-      - gfortran
-      - valgrind
-      - csh
-      - g++-multilib
-      - gcc-multilib
 
 branches:
   only:
@@ -18,10 +7,15 @@ branches:
 
 env:
   global:
+    - ORGNAME="omnia"
+    - PACKAGENAME="ensembler"
+    - # Make sure OpenMM uses at most 1 thread for CPU platform (unless we explicitly say otherwise)
+    - OPENMM_CPU_THREADS=1
+    - OPENMM_NUM_THREADS=1
     # KEY_MODELLER for testing with modeller package
-    secure: "M6Qw8y6+Q05+ciQ/JGxhO/3jmc/qtywy2xE4nGBIpDDMZ1FJH17tN1YVMMXM8Ld2DIFb/4CMGHKi03URfxdve9Q8QT9AMo+nffvHqrQizyX26ao3eAo61p0r0s7qLtAwymx2PoRvZxOOvZHpq11VN0gMeCynU4OPCf4nWZ9BbgE="
+    - secure: "M6Qw8y6+Q05+ciQ/JGxhO/3jmc/qtywy2xE4nGBIpDDMZ1FJH17tN1YVMMXM8Ld2DIFb/4CMGHKi03URfxdve9Q8QT9AMo+nffvHqrQizyX26ao3eAo61p0r0s7qLtAwymx2PoRvZxOOvZHpq11VN0gMeCynU4OPCf4nWZ9BbgE="
     # BINSTAR_TOKEN
-    secure: "KpipUgZIm+dJX9o+qMj237URs2M7FAm/hcl03mM/dcrNktf4k4w2fajTAdrx2Qk68eigQhg+oZZOCvX3eE+eFuUzBPFZfH2G+JaQBG4KDNwO83WYCL+tYDRf1Prlm7p4yYtGUpac2Um3RCBP6+sEE5R+UxQX0KdPoIH4nYfQ5j0="
+    - secure: "KpipUgZIm+dJX9o+qMj237URs2M7FAm/hcl03mM/dcrNktf4k4w2fajTAdrx2Qk68eigQhg+oZZOCvX3eE+eFuUzBPFZfH2G+JaQBG4KDNwO83WYCL+tYDRf1Prlm7p4yYtGUpac2Um3RCBP6+sEE5R+UxQX0KdPoIH4nYfQ5j0="
   matrix:
     - python=2.7  CONDA_PY=27
     # - python=3.3  CONDA_PY=33
@@ -34,7 +28,19 @@ install:
   - export CXX=g++
 
 script:
-  - source devtools/travis-ci/test.sh
+  # Add omnia channel
+  - conda config --add channels ${ORGNAME}
+  # Build the recipe
+  - conda build devtools/conda-recipe
+  # Test the local installation
+  - source activate _test
+  - cd devtools
+  # Skip slow tests for debugging
+  #- nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+    nosetests ensembler --nocapture --verbosity=2 --exe -a modeller --with-timer;
+    fi
+  - cd ..
 
 after_success:
   - echo "after_success"

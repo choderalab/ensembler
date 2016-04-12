@@ -217,8 +217,10 @@ def refine_implicit_md(
             remove_disulfide_bonds_from_topology(reference_pdb.topology)
 
         # Build topology for reference model
+        logger.debug("Creating app.Modeller instance...")
         modeller = app.Modeller(reference_pdb.topology, reference_pdb.positions)
         reference_topology = modeller.topology
+        logger.debug("Adding hydrogens...")
         reference_variants = modeller.addHydrogens(forcefield, pH=ph)
         if target.id in custom_residue_variants:
             apply_custom_residue_variants(reference_variants, custom_residue_variants[target.id])
@@ -508,7 +510,7 @@ def solvate_models(process_only_these_targets=None, process_only_these_templates
             print("-------------------------------------------------------------------------")
             print("Solvating %s => %s in explicit solvent" % (target.id, template.id))
             print("-------------------------------------------------------------------------")
-            
+
             # Pass if solvation has already been run for this model.
             nwaters_filename = os.path.join(model_dir, 'nwaters.txt')
             if os.path.exists(nwaters_filename):
@@ -769,7 +771,7 @@ def refine_explicit_md(
         Solvate the contents of a PDB file, ensuring it has exactly 'target_nwaters' waters.
 
         ARGUMENTS
-        
+
         pdb (simtk.openmm.app.PDBFile) - the PDB file to solvate
         nwaters (int) - number of waters to end up with
 
