@@ -36,7 +36,7 @@ script:
   - source activate _test
   - cd devtools
   # Skip slow tests for debugging
-  #- nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit
+  - nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit
   - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     nosetests ensembler --nocapture --verbosity=2 --exe -a modeller --with-timer;
     fi
