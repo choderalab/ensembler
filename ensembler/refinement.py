@@ -796,83 +796,15 @@ def refine_explicit_md(
 
         """
 
-        natoms_per_solvent = 3
-
-        # Count initial atoms.
-        natoms_initial = len(pdb.positions)
-        if verbose: print("System initially has %d atoms (0 waters)" % (natoms_initial))
-
-        # Solvate with zero padding to determine min number of waters and minimal unit cell dimensions.
+        # Add the specified number of waters.
         modeller = app.Modeller(pdb.topology, pdb.positions)
-        modeller.addSolvent(forcefield, model=water_model, padding=0.0*unit.angstroms)
-        topology = modeller.getTopology()
-        positions = modeller.getPositions()
-        box_min = topology.getUnitCellDimensions()
-        natoms_min = len(positions)   # minimal number of atoms
-        nwaters_min = (natoms_min - natoms_initial) / natoms_per_solvent # minimal number of waters
-        volume_min = box_min[0] * box_min[1] * box_min[2]
-        residues = [ r for r in topology.residues() ]   # build a list of residues
-        nresidues_min = len(residues) # number of residues
-        if verbose: print("Minimally solvated system has %d atoms (%d waters)" % (natoms_min, nwaters_min))
+        modeller.addSolvent(forcefield, model=water_model, numAdded=target_nwaters)
 
-        # Increase the box size by 10% and resolvate.
-        scale = 1.1
-        modeller = app.Modeller(pdb.topology, pdb.positions)
-        topology = modeller.getTopology()
-        topology.setUnitCellDimensions(box_min * scale)
-        modeller.addSolvent(forcefield, model=water_model)
-        positions = modeller.getPositions()
-        box_enlarged = topology.getUnitCellDimensions()
-        natoms_enlarged = len(positions) # minimal number of atoms
-        nwaters_enlarged = (natoms_enlarged - natoms_initial) / natoms_per_solvent # minimal number of waters
-        volume_enlarged = box_enlarged[0] * box_enlarged[1] * box_enlarged[2]
-        density = (nwaters_enlarged - nwaters_min) / (volume_enlarged - volume_min)
-        if verbose: print("Enlarged solvated system has %d atoms (%d waters) : density of %.3f waters / nm^3" % (natoms_enlarged, nwaters_enlarged, density / (1.0 / unit.nanometer**3)))
-
-        # Aim for slightly more waters than target.
-        over_target = False
-        extra_nwaters = 100
-        while not over_target:
-            delta_volume = (target_nwaters + extra_nwaters - nwaters_min) / density
-            scale = ((volume_min + delta_volume) / volume_min)**(1.0/3.0)
-            if verbose: print("Final target of %d waters, so attempting box size %s to achieve %d waters..." % (target_nwaters, str(box_min * scale), target_nwaters + extra_nwaters))
-            delta_volume = (target_nwaters + extra_nwaters - nwaters_min) / density
-            modeller = app.Modeller(pdb.topology, pdb.positions)
-            topology = modeller.getTopology()
-            topology.setUnitCellDimensions(box_min * scale)
-            modeller.addSolvent(forcefield, model=water_model)
-            positions = modeller.getPositions()
-            topology = modeller.getTopology()
-            natoms = len(positions) # minimal number of atoms
-            nwaters = (natoms - natoms_initial) / natoms_per_solvent # minimal number of waters
-            if verbose: print("  actual %d waters" % nwaters)
-            if (nwaters > target_nwaters):
-                over_target = True
-            else:
-                extra_nwaters += 100
-
-        # Delete waters to achieve target.
-        ndelete = nwaters - target_nwaters
-        if (ndelete > 0):
-            if verbose: print("Will delete %d waters..." % ndelete)
-            residues = [ r for r in topology.residues() ] # build a list of residues
-            nresidues = len(residues)
-
-            # Select a random subset to delete.
-            indices = np.random.permutation(range(nresidues_min,nresidues))
-            residues_to_delete = list()
-            for index in indices[0:ndelete]:
-                residues_to_delete.append(residues[index])
-
-            modeller.delete(residues_to_delete)
-
-            # Get topology and positions.
-            topology = modeller.getTopology()
-            positions = modeller.getPositions()
-
-            # Count number of waters.
-            natoms_final = len(positions)
-            nwaters = (natoms_final - natoms_initial) / 3
+        # Count number of waters.
+        nwaters = 0
+        for residue in modeller.getTopology():
+            if residue.name == 'HOH':
+                nwaters += 1
 
         if (nwaters != target_nwaters):
             raise Exception("Malfunction in solvate_pdb: nwaters = %d, target_nwaters = %d" % (nwaters, target_nwaters))
