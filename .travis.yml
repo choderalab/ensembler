@@ -30,7 +30,8 @@ install:
 script:
   # Add channels
   - conda config --add channels ${ORGNAME}
-  # Build recipe
+  - conda config --add channels https://conda.anaconda.org/${ORGNAME}/label/dev
+    # Build recipe
   - conda build devtools/conda-recipe
   # Install locally-built package
   - conda install --yes --use-local ${PACKAGENAME}-dev
