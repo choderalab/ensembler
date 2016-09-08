@@ -1,7 +1,7 @@
 Ensembler
 =========
 
-[![Binstar Badge](https://binstar.org/omnia/ensembler/badges/version.svg)](https://binstar.org/omnia/ensembler)
+[![Anaconda Cloud](https://anaconda.org/omnia/ensembler/badges/version.svg)](https://anaconda.org/omnia/ensembler)
 [![Documentation Status](https://readthedocs.org/projects/ensembler/badge/?version=latest)](http://ensembler.readthedocs.org/en/latest/)
 [![Build Status](https://travis-ci.org/choderalab/ensembler.svg?branch=master)](https://travis-ci.org/choderalab/ensembler)
 
