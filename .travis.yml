@@ -28,14 +28,16 @@ install:
   - export CXX=g++
 
 script:
-  # Add omnia channel
+  # Add channels
   - conda config --add channels ${ORGNAME}
-  # Build the recipe
+  # Build recipe
   - conda build devtools/conda-recipe
-  # Test the local installation
-  - source activate _test
+  # Install locally-built package
+  - conda install --yes --use-local ${PACKAGENAME}-dev
+  # Install test dependencies
+  - conda install --yes --quiet pip nose nose-timer
+  # Run tests
   - cd devtools
-  # Skip slow tests for debugging
   - nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit
   - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     nosetests ensembler --nocapture --verbosity=2 --exe -a modeller --with-timer;

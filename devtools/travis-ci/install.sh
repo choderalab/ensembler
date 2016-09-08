@@ -10,4 +10,3 @@ bash $MINICONDA -b -p $HOME/miniconda
 
 export PATH=$HOME/miniconda/bin:$PATH
 conda install --yes conda-build jinja2 anaconda-client pip
-conda config --add channels omnia
