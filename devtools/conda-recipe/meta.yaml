@@ -25,6 +25,7 @@ requirements:
     - openmm
     - pdbfixer
     #- numpy
+    - libgfortran # [unix]
     - lxml
     - pyyaml
     - docopt
