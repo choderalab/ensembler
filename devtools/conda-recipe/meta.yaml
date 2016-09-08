@@ -24,8 +24,9 @@ requirements:
     - biopython
     - openmm
     - pdbfixer
-    #- numpy
-    - libgfortran # [unix]
+    - numpy
+    - scipy
+    - libgfortran==1 # [unix]
     - lxml
     - pyyaml
     - docopt
