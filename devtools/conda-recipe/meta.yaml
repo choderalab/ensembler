@@ -24,7 +24,7 @@ requirements:
     - biopython
     - openmm
     - pdbfixer
-    - numpy
+    #- numpy
     - lxml
     - pyyaml
     - docopt
