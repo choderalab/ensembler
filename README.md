@@ -33,23 +33,25 @@ Overview of pipeline
 Installation
 ------------
 
-First go to the [Modeller website](http://salilab.org/modeller/) and get a license key (registration required; free for academic non-profit instituions).
+First go to the [Modeller website](http://salilab.org/modeller/) and get a license key (registration required; free for academic non-profit institutions).
 
 Save the key as an environment variable:
 
-    export KEY_MODELLER=XXX
-
-Then, using conda (installs all dependencies except the optional dependency Rosetta):
-
-    conda config --add channels http://conda.anaconda.org/omnia
-    conda config --add channels http://conda.anaconda.org/salilab
-    conda install ensembler
-
+```bash
+export KEY_MODELLER=XXX
+```
+Then, using [`conda`](http://conda.pydata.org/docs/) (installs all dependencies except the optional dependency [Rosetta](https://www.rosettacommons.org/software)):
+```bash
+conda config --add channels omnia
+conda config --add channels salilab
+conda install ensembler
+```
 From source:
-
-    git clone https://github.com/choderalab/ensembler.git
-    cd ensembler
-    python setup.py install
+```bash
+git clone https://github.com/choderalab/ensembler.git
+cd ensembler
+python setup.py install
+```
 
 Dependencies
 ------------
