@@ -20,7 +20,7 @@ requirements:
     - python
     - modeller
     - mdtraj
-    - msmbuilder
+    - msmbuilder ==2.8.2 # msmbuilder.clustering was later moved
     - biopython
     - openmm
     - pdbfixer
