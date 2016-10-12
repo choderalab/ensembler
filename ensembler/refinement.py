@@ -802,7 +802,7 @@ def refine_explicit_md(
 
         # Count number of waters.
         nwaters = 0
-        for residue in modeller.getTopology():
+        for residue in modeller.getTopology().residues():
             if residue.name == 'HOH':
                 nwaters += 1
 
