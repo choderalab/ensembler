@@ -796,18 +796,25 @@ def refine_explicit_md(
 
         """
 
+        def count_waters(topology):
+            nwaters = 0
+            for residue in topology.residues():
+                if residue.name == 'HOH':
+                    nwaters += 1
+            return nwaters
+
+        # Count initial number of waters.
+        nwaters_initial = count_waters(pdb.topology)
+
         # Add the specified number of waters.
         modeller = app.Modeller(pdb.topology, pdb.positions)
         modeller.addSolvent(forcefield, model=water_model, numAdded=target_nwaters)
 
         # Count number of waters.
-        nwaters = 0
-        for residue in modeller.getTopology().residues():
-            if residue.name == 'HOH':
-                nwaters += 1
+        nwaters_final = count_waters(modeller.getTopology())
 
-        if (nwaters != target_nwaters):
-            raise Exception("Malfunction in solvate_pdb: nwaters = %d, target_nwaters = %d" % (nwaters, target_nwaters))
+        if (nwaters_final != target_nwaters):
+            raise Exception("Malfunction in solvate_pdb: nwaters_final = %d, target_nwaters = %d, nwaters_initial = %d" % (nwaters_final, target_nwaters, nwaters_initial))
         else:
             if write_solvated_model:
                 # write solvated pdb file
