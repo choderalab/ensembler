@@ -803,8 +803,8 @@ def refine_explicit_md(
                     nwaters += 1
             return nwaters
 
-        # Count initial number of waters.
-        nwaters_initial = count_waters(pdb.topology)
+        # Count number of waters.
+        nwaters_initial = count_waters(pdb.getTopology())
 
         # Add the specified number of waters.
         modeller = app.Modeller(pdb.topology, pdb.positions)
@@ -812,6 +812,20 @@ def refine_explicit_md(
 
         # Count number of waters.
         nwaters_final = count_waters(modeller.getTopology())
+
+        if nwaters_final < target_nwaters:
+            # Correct for number of ions
+            nions = target_nwaters - nwaters_final
+
+            # Add the specified number of waters.
+            modeller = app.Modeller(pdb.topology, pdb.positions)
+            modeller.addSolvent(forcefield, model=water_model, numAdded=target_nwaters + nions)
+
+            # Count number of waters.
+            nwaters_final = count_waters(modeller.getTopology())
+
+        positions = modeller.positions
+        topology = modeller.topology
 
         if (nwaters_final != target_nwaters):
             raise Exception("Malfunction in solvate_pdb: nwaters_final = %d, target_nwaters = %d, nwaters_initial = %d" % (nwaters_final, target_nwaters, nwaters_initial))
