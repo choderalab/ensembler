@@ -18,8 +18,8 @@ env:
     - secure: "KpipUgZIm+dJX9o+qMj237URs2M7FAm/hcl03mM/dcrNktf4k4w2fajTAdrx2Qk68eigQhg+oZZOCvX3eE+eFuUzBPFZfH2G+JaQBG4KDNwO83WYCL+tYDRf1Prlm7p4yYtGUpac2Um3RCBP6+sEE5R+UxQX0KdPoIH4nYfQ5j0="
   matrix:
     - python=2.7  CONDA_PY=27
-    # - python=3.3  CONDA_PY=33
-    # - python=3.4  CONDA_PY=34
+    - python=3.4  CONDA_PY=34
+    - python=3.5  CONDA_PY=35
 
 install:
   - source devtools/travis-ci/install.sh
@@ -28,19 +28,25 @@ install:
   - export CXX=g++
 
 script:
-  # Add omnia channel
+  # Create a test environment
+  - conda create --yes -n test python=$python
+  # Activate the test environment
+  - source activate test
+  # Add org channel
   - conda config --add channels ${ORGNAME}
+  # Add omnia dev channels
+  - conda config --add channels https://conda.anaconda.org/omnia/label/dev
+  # Install OpenEye toolkit
+  - conda install --yes --quiet pip
+  - pip install $OPENEYE_CHANNEL openeye-toolkits && python -c "import openeye; print(openeye.__version__)"
   # Build the recipe
   - conda build devtools/conda-recipe
-  # Test the local installation
-  - source activate _test
-  - cd devtools
-  # Skip slow tests for debugging
-  #- nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-    nosetests ensembler --nocapture --verbosity=2 --exe -a modeller --with-timer;
-    fi
-  - cd ..
+  # Install the package
+  - conda install --yes --use-local ${PACKAGENAME}-dev
+  # Install testing dependencies
+  - conda install --yes --quiet nose nose-timer
+  # Test the package
+  - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit -a modeller && cd ..
 
 after_success:
   - echo "after_success"

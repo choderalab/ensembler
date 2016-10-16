@@ -21,7 +21,7 @@ import Bio.SubsMat.MatrixInfo
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import mdtraj
-import msmbuilder.cluster
+import msmbuilder
 from ensembler.core import get_targets_and_templates, get_templates_full_seq
 from ensembler.core import mpistate, logger
 try:
@@ -919,6 +919,7 @@ def models_regular_spatial_clustering(templateids, traj, atom_indices=None, cuto
     else:
         reduced_traj = traj
 
+    import msmbuilder.cluster
     cluster = msmbuilder.cluster.RegularSpatial(cutoff, metric='rmsd')
     cluster_labels = cluster.fit_predict([reduced_traj])[0]
     unique_templateids = list(set([templateids[t] for t in cluster_labels]))

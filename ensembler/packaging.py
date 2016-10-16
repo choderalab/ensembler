@@ -246,7 +246,7 @@ def calc_pme_parameters(system):
     ysize = int(ceil(2*alpha*boxVectors[1][1]/(3*pow(tol, 0.2))))
     zsize = int(ceil(2*alpha*boxVectors[2][2]/(3*pow(tol, 0.2))))
 
-    logger.debug(xsize,ysize,zsize)
+    logger.debug('xsize = %d, ysize = %d, zsize = %d' % (xsize,ysize,zsize))
     def findLegalDimension(minimum):
         while (True):
             # Attempt to factor the current value.

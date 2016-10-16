@@ -6,36 +6,36 @@ source:
    path: ../..
 
 build:
-  # preserve_egg_dir: True
   number: 0
   entry_points:
     - ensembler = ensembler.cli:main
+  skip:
+    - [win or py3k]
 
 requirements:
   build:
     - python
     - setuptools
-
+    
   run:
     - python
     - modeller ==9.16
     - mdtraj
     - msmbuilder
     - biopython
-    - openmm-dev
-    - pdbfixer-dev
+    - openmm
+    - pdbfixer ==1.2
     # - numpy
     - lxml
     - pyyaml
     - docopt
     - mock
     - subprocess32 # [py2k]
+    - libgfortran ==1.0.0 [linux]
 
 test:
   requires:
-    - pip
     - nose
-    - nose-timer
   imports:
     - ensembler
 
