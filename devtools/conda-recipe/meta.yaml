@@ -16,7 +16,7 @@ requirements:
   build:
     - python
     - setuptools
-
+    
   run:
     - python
     - modeller ==9.16
@@ -31,6 +31,7 @@ requirements:
     - docopt
     - mock
     - subprocess32 # [py2k]
+    - libgfortran ==1.0.0 [linux]
 
 test:
   requires:
