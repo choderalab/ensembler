@@ -48,7 +48,7 @@ script:
   # Install testing dependencies
   - conda install --yes --quiet nose nose-timer
   # Test the package
-  - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit -a modeller -a "\!slow" && cd ..
+  - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit -a modeller -a '!slow' && cd ..
 
 after_success:
   - echo "after_success"
