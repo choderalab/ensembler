@@ -19,6 +19,7 @@ requirements:
 
   run:
     - python
+    - numpy >=1.9
     #- modeller ==9.16
     - modeller
     - mdtraj
@@ -27,7 +28,7 @@ requirements:
     - openmm
     #- pdbfixer ==1.2
     - pdbfixer
-    - numpy
+    #- numpy
     - pillow
     - lxml
     - pyyaml
