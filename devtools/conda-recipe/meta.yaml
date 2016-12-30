@@ -10,13 +10,13 @@ build:
   entry_points:
     - ensembler = ensembler.cli:main
   skip:
-    - [win or py3k]
+    - [win]
 
 requirements:
   build:
     - python
     - setuptools
-    
+
   run:
     - python
     - modeller ==9.16
