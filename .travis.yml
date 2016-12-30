@@ -9,11 +9,6 @@ env:
   global:
     - ORGNAME="omnia"
     - PACKAGENAME="ensembler"
-    - # Make sure OpenMM uses at most 1 thread for CPU platform (unless we explicitly say otherwise)
-    - OPENMM_CPU_THREADS=1
-    - OPENMM_NUM_THREADS=1
-    # OpenEye channel
-    - OPENEYE_CHANNEL="https://pypi.anaconda.org/OpenEye/simple OpenEye-toolkits"
     # KEY_MODELLER for testing with modeller package
     - secure: "M6Qw8y6+Q05+ciQ/JGxhO/3jmc/qtywy2xE4nGBIpDDMZ1FJH17tN1YVMMXM8Ld2DIFb/4CMGHKi03URfxdve9Q8QT9AMo+nffvHqrQizyX26ao3eAo61p0r0s7qLtAwymx2PoRvZxOOvZHpq11VN0gMeCynU4OPCf4nWZ9BbgE="
     # BINSTAR_TOKEN
@@ -26,8 +21,8 @@ env:
 install:
   - source devtools/travis-ci/install.sh
   - export PYTHONUNBUFFERED=true
-  - export CC=gcc
-  - export CXX=g++
+  # Add org channel
+  - conda config --add channels ${ORGNAME}
 
 script:
   # Create a test environment
@@ -37,16 +32,13 @@ script:
   # Add org channel
   - conda config --add channels ${ORGNAME}
   # Add omnia dev channels
-  - conda config --add channels https://conda.anaconda.org/omnia/label/dev
-  # Install OpenEye toolkit
-  - conda install --yes --quiet pip
-  - pip install -i $OPENEYE_CHANNEL && python -c "import openeye; print(openeye.__version__)"
+  - conda config --add channels omnia/label/dev
+  # Install extras for testing
+  - conda install --yes --quiet pip nose nose-timer
   # Build the recipe
   - conda build devtools/conda-recipe
   # Install the package
   - conda install --yes --use-local ${PACKAGENAME}-dev
-  # Install testing dependencies
-  - conda install --yes --quiet nose nose-timer
   # Test the package
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit -a modeller -a '!slow' && cd ..
 
