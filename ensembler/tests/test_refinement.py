@@ -9,7 +9,6 @@ from nose.plugins.attrib import attr
 
 
 @attr('unit')
-@attr('slow')
 def test_refine_implicit_md_short():
     with integrationtest_context(set_up_project_stage='clustered'):
         #targetid = 'EGFR_HUMAN_D0'
@@ -64,7 +63,6 @@ def test_refine_implicit_md_short():
         assert 'ASP48-HD2' in resi47_atom_strings
 
 
-@attr('unit')
 @attr('slow')
 def test_refine_explicit_md_short():
     with integrationtest_context(set_up_project_stage='solvated'):
@@ -75,7 +73,6 @@ def test_refine_explicit_md_short():
             process_only_these_templates=[templateid],
             sim_length=2.0*unit.femtosecond,
             nsteps_per_iteration=1,
-            minimization_steps=10,
             verbose=True
         )
         explicit_metadata_filepath = os.path.join(
