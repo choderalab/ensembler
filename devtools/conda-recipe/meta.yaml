@@ -19,13 +19,16 @@ requirements:
 
   run:
     - python
-    - modeller ==9.16
+    #- modeller ==9.16
+    - modeller
     - mdtraj
     - msmbuilder
     - biopython
     - openmm
-    - pdbfixer ==1.2
-    # - numpy
+    #- pdbfixer ==1.2
+    - pdbfixer
+    - numpy
+    - pillow
     - lxml
     - pyyaml
     - docopt

@@ -5,9 +5,7 @@ import warnings
 import shutil
 import ensembler
 import mdtraj
-import Image
-import ImageFont
-import ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 
 
 class PymolRender(object):

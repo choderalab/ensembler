@@ -11,6 +11,7 @@ import traceback
 import Bio.SeqUtils
 import simtk.openmm
 import yaml
+import msmbuilder
 import warnings
 import ensembler
 import ensembler.version
