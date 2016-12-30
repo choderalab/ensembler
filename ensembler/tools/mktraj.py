@@ -266,6 +266,6 @@ class MkTrajImplicitStart(MkTraj):
                     app.PDBFile.writeFooter(topology, file=output_model_file)
 
             except Exception as e:
-                print 'Error for model {0}: {1}'.format(templateid, e)
+                print('Error for model {0}: {1}'.format(templateid, e))
                 continue
                 # import ipdb; ipdb.set_trace()
