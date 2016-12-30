@@ -75,6 +75,7 @@ def test_refine_explicit_md_short():
             process_only_these_templates=[templateid],
             sim_length=2.0*unit.femtosecond,
             nsteps_per_iteration=1,
+            minimization_steps=1,
             verbose=True
         )
         explicit_metadata_filepath = os.path.join(
