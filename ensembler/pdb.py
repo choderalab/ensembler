@@ -23,8 +23,6 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
     else:
         pdbtext = pdb_input_file.readlines()
 
-    print(pdbtext) # DEBUG
-
     # list of resnum strings e.g. ['9', '29', '30B'] must be converted as follows to match the PDB format:
     # ['   9 ', '  29 ', '  30B']
     desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.resolved_pdbresnums]
@@ -49,6 +47,9 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
                     if resnum in desired_resnums:
                         ofile.write(line)
                         resnums_extracted[resnum] = 1
+    except Exception as e:
+        print('Exception detected while extracting ATOM/HETATM records:')
+        print(e)
     finally:
         if isinstance(output_file, six.string_types):
             ofile.close()
