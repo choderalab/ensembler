@@ -35,14 +35,17 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
         resnums_extracted = {}
         model_index = 0
         for line in pdbtext:
+            print(line) # DEBUG
             # For PDBs containing multiple MODELs (e.g. NMR structures), extract data only from the first model, ignore others.
             if line[0:6] == 'MODEL ':
+                print('MODEL %d' % model_index) # DEBUG
                 model_index += 1
                 if model_index == 2:
                     break
             if line[0:6] in ['ATOM  ', 'HETATM']:
                 resnum = line[22:27]
                 chainid = line[21]
+                print('resnum "%s" chainid "%s"' % (resnum, chainid)) # DEBUG
                 if chainid == template.chainid:
                     if resnum in desired_resnums:
                         ofile.write(line)
