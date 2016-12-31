@@ -45,7 +45,7 @@ def get_uniprot_xml(uniprot_query_string, write_to_filepath=None):
 
 
 def remove_uniprot_xmlns(uniprot_xml_string):
-    return uniprot_xml_string.replace('xmlns="http://uniprot.org/uniprot" ', '', 1)
+    return uniprot_xml_string.replace('xmlns="http://uniprot.org/uniprot" ', '', 1).encode('utf-16be') # as bytes
 
 
 def parse_uniprot_pdbref_chains(chains_span_str):

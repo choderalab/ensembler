@@ -9,13 +9,12 @@ from nose.plugins.attrib import attr
 
 
 @attr('unit')
-@attr('slow')
 def test_refine_implicit_md_short():
     with integrationtest_context(set_up_project_stage='clustered'):
-        #targetid = 'EGFR_HUMAN_D0'
-        #templateid = 'KC1D_HUMAN_D0_4KB8_D'
-        targetid = 'MYB_HUMAN_D0'
-        templateid = 'MYB_MOUSE_D0_1GUU'
+        targetid = 'EGFR_HUMAN_D0'
+        templateid = 'KC1D_HUMAN_D0_4KB8_D'
+        #targetid = 'MYB_HUMAN_D0'
+        #templateid = 'MYB_MOUSE_D0_1GUU'
         refine_implicit_md(
             process_only_these_targets=[targetid],
             process_only_these_templates=[templateid],
@@ -37,10 +36,10 @@ def test_refine_implicit_md_short():
             default_project_dirnames.models, targetid, templateid, 'implicit-log.yaml'
         )
 
-        assert all(map(
-            os.path.exists,
-            [implicit_model_filepath, implicit_energies_filepath, implicit_log_filepath]
-        ))
+        assert os.path.exists(implicit_model_filepath), "%s does not exist" % implicit_model_filepath
+        assert os.path.exists(implicit_energies_filepath), "%s does not exist" % implicit_energies_filepath
+        assert os.path.exists(implicit_log_filepath), "%s does not exist" % implicit_log_filepath
+
         with open(implicit_log_filepath) as implicit_log_file:
             implicit_log = yaml.load(implicit_log_file)
         assert implicit_log.get('finished') is True
@@ -49,22 +48,21 @@ def test_refine_implicit_md_short():
         assert os.path.exists(implicit_metadata_filepath)
         with open(implicit_metadata_filepath) as implicit_metadata_file:
             implicit_metadata = yaml.load(implicit_metadata_file)
-        #assert implicit_metadata.get('refine_implicit_md').get('custom_residue_variants') == {
-        #    'EGFR_HUMAN_D0': {49: 'ASH'}
         assert implicit_metadata.get('refine_implicit_md').get('custom_residue_variants') == {
-            'MYB_HUMAN_D0': {47: 'ASH'}
+            'EGFR_HUMAN_D0': {49: 'ASH'}
+        #assert implicit_metadata.get('refine_implicit_md').get('custom_residue_variants') == {
+        #    'MYB_HUMAN_D0': {47: 'ASH'}
         }
         implicit_model_traj = mdtraj.load_pdb(implicit_model_filepath)
         resis = [resi for resi in implicit_model_traj.top.residues]
-        #resi49 = resis[49]
-        #resi49_atom_strings = [str(atom) for atom in resi49.atoms]
-        #assert 'ASP50-HD2' in resi49_atom_strings
-        resi47 = resis[47]
-        resi47_atom_strings = [str(atom) for atom in resi47.atoms]
-        assert 'ASP48-HD2' in resi47_atom_strings
+        resi49 = resis[49]
+        resi49_atom_strings = [str(atom) for atom in resi49.atoms]
+        assert 'ASP50-HD2' in resi49_atom_strings
+        #resi47 = resis[47]
+        #resi47_atom_strings = [str(atom) for atom in resi47.atoms]
+        #assert 'ASP48-HD2' in resi47_atom_strings
 
 
-@attr('unit')
 @attr('slow')
 def test_refine_explicit_md_short():
     with integrationtest_context(set_up_project_stage='solvated'):

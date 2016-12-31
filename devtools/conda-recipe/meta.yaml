@@ -10,22 +10,24 @@ build:
   entry_points:
     - ensembler = ensembler.cli:main
   skip:
-    - [win or py3k]
+    - [win]
 
 requirements:
   build:
     - python
     - setuptools
-    
+
   run:
     - python
-    - modeller ==9.16
+    - numpy >=1.9
+    - modeller
     - mdtraj
     - msmbuilder
     - biopython
     - openmm
-    - pdbfixer ==1.2
-    # - numpy
+    - pdbfixer
+    - six
+    - pillow
     - lxml
     - pyyaml
     - docopt

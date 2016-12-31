@@ -409,6 +409,9 @@ class ProjectMetadata:
         :return: int
         """
         metadata_dir = self.metadata_dir_mapper(project_stage, target_id=self.target_id)
+        if not os.path.exists(metadata_dir):
+            # Directory does not exist, so we must create it for the rest of the code logic to work.
+            os.makedirs(metadata_dir)
         dir_contents = os.listdir(metadata_dir)
         metadata_file_basename = self.metadata_file_basename_mapper(project_stage)
         metadata_file_regex = re.compile('%s([0-9]+)\.yaml' % metadata_file_basename)

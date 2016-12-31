@@ -508,245 +508,244 @@ HOH     2
 
 [ bonds ]
 ; i     j       funct   length  force_constant
-1       2       1       0.09572 502416.0   0.09572        502416.0 
-1       3       1       0.09572 502416.0   0.09572        502416.0 
-        
+1       2       1       0.09572 502416.0   0.09572        502416.0
+1       3       1       0.09572 502416.0   0.09572        502416.0
+
 
 [ angles ]
 ; i     j       k       funct   angle   force_constant
-2       1       3       1       104.52  628.02      104.52  628.02  
+2       1       3       1       104.52  628.02      104.52  628.02
 
 #endif
 
 '''
 
-eq_mdp_contents='''; VARIOUS PREPROCESSING OPTIONS = 
-title                    = 
+eq_mdp_contents='''; VARIOUS PREPROCESSING OPTIONS =
+title                    =
 cpp                      = /lib/cpp
-include                  = 
+include                  =
 define                   =
 
-; RUN CONTROL PARAMETERS = 
+; RUN CONTROL PARAMETERS =
 integrator               = sd
-; start time and timestep in ps = 
+; start time and timestep in ps =
 tinit                    = 0.0
 dt                       = 0.002
 nsteps                   = 50000
-; number of steps for center of mass motion removal = 
+; number of steps for center of mass motion removal =
 nstcomm                  = 1
 
 
-; OUTPUT CONTROL OPTIONS = 
-; Output frequency for coords (x), velocities (v) and forces (f) = 
+; OUTPUT CONTROL OPTIONS =
+; Output frequency for coords (x), velocities (v) and forces (f) =
 nstxout                  = 100000
 nstvout                  = 100000
 nstfout                  = 0
-; Output frequency for energies to log file and energy file = 
+; Output frequency for energies to log file and energy file =
 nstlog                   = 10000
 nstenergy                = 500
-; Output frequency and precision for xtc file = 
+; Output frequency and precision for xtc file =
 nstxtcout                = 10000
 xtc_precision            = 10000
-; This selects the subset of atoms for the xtc file. You can = 
-; select multiple groups. By default all atoms will be written. = 
-xtc-grps                 = 
-; Selection of energy groups = 
+; This selects the subset of atoms for the xtc file. You can =
+; select multiple groups. By default all atoms will be written. =
+xtc-grps                 =
+; Selection of energy groups =
 energygrps               = Protein Water_and_ions
 
-; NEIGHBORSEARCHING PARAMETERS = 
-; nblist update frequency = 
+; NEIGHBORSEARCHING PARAMETERS =
+; nblist update frequency =
 nstlist                  = 5
-; ns algorithm (simple or grid) = 
+; ns algorithm (simple or grid) =
 ns_type                  = grid
-; Periodic boundary conditions: xyz or none = 
+; Periodic boundary conditions: xyz or none =
 pbc                      = xyz
-; nblist cut-off         = 
+; nblist cut-off         =
 rlist                    = 1.0
 domain-decomposition     = no
 
-; OPTIONS FOR ELECTROSTATICS AND VDW = 
-; Method for doing electrostatics = 
+; OPTIONS FOR ELECTROSTATICS AND VDW =
+; Method for doing electrostatics =
 coulombtype              = PME
 ; rcoulomb_switch          = 0.0 (not used with coulombtype=PME)
 rcoulomb                 = 1.0
-; Dielectric constant (DC) for cut-off or DC of reaction field = 
-epsilon_r                = 1 
-; Method for doing Van der Waals = 
+; Dielectric constant (DC) for cut-off or DC of reaction field =
+epsilon_r                = 1
+; Method for doing Van der Waals =
 vdw_type                 = Switch
-; cut-off lengths        = 
+; cut-off lengths        =
 rvdw_switch              = 0.95
 rvdw                     = 1.0
-; Apply long range dispersion corrections for Energy and Pressure = 
+; Apply long range dispersion corrections for Energy and Pressure =
 DispCorr                 = No
-; Spacing for the PME/PPPM FFT grid = 
+; Spacing for the PME/PPPM FFT grid =
 fourierspacing           = 0.12
-; FFT grid size, when a value is 0 fourierspacing will be used = 
+; FFT grid size, when a value is 0 fourierspacing will be used =
 fourier_nx               = 10
 fourier_ny               = 10
 fourier_nz               = 10
-; EWALD/PME/PPPM parameters = 
+; EWALD/PME/PPPM parameters =
 pme_order                = 4
 ewald_rtol               = 1e-05
 epsilon_surface          = 0
 optimize_fft             = no
 
-; OPTIONS FOR WEAK COUPLING ALGORITHMS = 
-; Temperature coupling   = 
+; OPTIONS FOR WEAK COUPLING ALGORITHMS =
+; Temperature coupling   =
 tcoupl                   = no
 ; NOTE: using Langevin dynamics as thermostat
-; Groups to couple separately = 
+; Groups to couple separately =
 tc-grps                  = Protein Water_and_ions
-; Time constant (ps) and reference temperature (K) = 
+; Time constant (ps) and reference temperature (K) =
 ; This is the inverse of the damping coefficient (in ps)
 tau_t                    = 0.2 0.2
 ref_t                    = 300 300
 ; ld_seed = -1 means that the seed is calculated from the process ID
 ld_seed                  = -1
-; Pressure coupling      = 
+; Pressure coupling      =
 Pcoupl                   = parrinello-rahman
 ; Pressure coupling type - isotropic,semiisotropic,anisotropic,surface-tension,triclinic
 Pcoupltype               = isotropic
-; Time constant (ps), compressibility (1/bar) and reference P (bar) = 
-tau-p                    = 1.0 1.0 
+; Time constant (ps), compressibility (1/bar) and reference P (bar) =
+tau-p                    = 1.0 1.0
 compressibility          = 4.5E-5 4.5E-5
-ref-p                    = 1.0 1.0 
+ref-p                    = 1.0 1.0
 
 
-; GENERATE VELOCITIES FOR STARTUP RUN = 
+; GENERATE VELOCITIES FOR STARTUP RUN =
 gen_vel                  = yes
 gen_temp                 = 300
 gen_seed                 = 591
 
-; OPTIONS FOR BONDS     = 
-constraints              = hbonds 
-; Type of constraint algorithm = 
+; OPTIONS FOR BONDS     =
+constraints              = hbonds
+; Type of constraint algorithm =
 constraint_algorithm     = Lincs
-; Do not constrain the start configuration = 
+; Do not constrain the start configuration =
 unconstrained_start      = no
-; Relative tolerance of shake = 
+; Relative tolerance of shake =
 shake_tol                = 0.0001
-; Highest order in the expansion of the constraint coupling matrix = 
+; Highest order in the expansion of the constraint coupling matrix =
 lincs_order              = 4
-; Lincs will write a warning to the stderr if in one step a bond = 
-; rotates over more degrees than = 
+; Lincs will write a warning to the stderr if in one step a bond =
+; rotates over more degrees than =
 lincs_warnangle          = 30
-; Convert harmonic bonds to morse potentials = 
+; Convert harmonic bonds to morse potentials =
 morse                    = no
 
 '''
 
-prod_mdp_contents='''; VARIOUS PREPROCESSING OPTIONS = 
-title                    = 
+prod_mdp_contents='''; VARIOUS PREPROCESSING OPTIONS =
+title                    =
 cpp                      = /lib/cpp
-include                  = 
+include                  =
 define                   =
 
-; RUN CONTROL PARAMETERS = 
+; RUN CONTROL PARAMETERS =
 integrator               = sd
-; start time and timestep in ps = 
+; start time and timestep in ps =
 tinit                    = 0.0
 dt                       = 0.002
 nsteps                   = 5000000
-; number of steps for center of mass motion removal = 
+; number of steps for center of mass motion removal =
 nstcomm                  = 1
 
 
-; OUTPUT CONTROL OPTIONS = 
-; Output frequency for coords (x), velocities (v) and forces (f) = 
+; OUTPUT CONTROL OPTIONS =
+; Output frequency for coords (x), velocities (v) and forces (f) =
 nstxout                  = 100000
 nstvout                  = 100000
 nstfout                  = 0
-; Output frequency for energies to log file and energy file = 
+; Output frequency for energies to log file and energy file =
 nstlog                   = 10000
 nstenergy                = 500
-; Output frequency and precision for xtc file = 
+; Output frequency and precision for xtc file =
 nstxtcout                = 10000
 xtc_precision            = 10000
-; This selects the subset of atoms for the xtc file. You can = 
-; select multiple groups. By default all atoms will be written. = 
-xtc-grps                 = 
-; Selection of energy groups = 
+; This selects the subset of atoms for the xtc file. You can =
+; select multiple groups. By default all atoms will be written. =
+xtc-grps                 =
+; Selection of energy groups =
 energygrps               = Protein Water_and_ions
 
-; NEIGHBORSEARCHING PARAMETERS = 
-; nblist update frequency = 
+; NEIGHBORSEARCHING PARAMETERS =
+; nblist update frequency =
 nstlist                  = 10
-; ns algorithm (simple or grid) = 
+; ns algorithm (simple or grid) =
 ns_type                  = grid
-; Periodic boundary conditions: xyz or none = 
+; Periodic boundary conditions: xyz or none =
 pbc                      = xyz
-; nblist cut-off         = 
+; nblist cut-off         =
 rlist                    = 1.0
 domain-decomposition     = no
 
-; OPTIONS FOR ELECTROSTATICS AND VDW = 
-; Method for doing electrostatics = 
+; OPTIONS FOR ELECTROSTATICS AND VDW =
+; Method for doing electrostatics =
 coulombtype              = PME
 ; rcoulomb_switch          = 0.0 (not used with coulombtype=PME)
 rcoulomb                 = 1.0
-; Dielectric constant (DC) for cut-off or DC of reaction field = 
-epsilon_r                = 1 
-; Method for doing Van der Waals = 
+; Dielectric constant (DC) for cut-off or DC of reaction field =
+epsilon_r                = 1
+; Method for doing Van der Waals =
 vdw_type                 = Shift
-; cut-off lengths        = 
+; cut-off lengths        =
 rvdw_switch              = 0.95
 rvdw                     = 1.0
-; Apply long range dispersion corrections for Energy and Pressure = 
+; Apply long range dispersion corrections for Energy and Pressure =
 DispCorr                 = No
-; Spacing for the PME/PPPM FFT grid = 
+; Spacing for the PME/PPPM FFT grid =
 fourierspacing           = 0.12
-; FFT grid size, when a value is 0 fourierspacing will be used = 
+; FFT grid size, when a value is 0 fourierspacing will be used =
 fourier_nx               = 10
 fourier_ny               = 10
 fourier_nz               = 10
-; EWALD/PME/PPPM parameters = 
+; EWALD/PME/PPPM parameters =
 pme_order                = 4
 ewald_rtol               = 1e-05
 epsilon_surface          = 0
 optimize_fft             = no
 
-; OPTIONS FOR WEAK COUPLING ALGORITHMS = 
-; Temperature coupling   = 
+; OPTIONS FOR WEAK COUPLING ALGORITHMS =
+; Temperature coupling   =
 tcoupl                   = no
 ; NOTE: using Langevin dynamics as thermostat
-; Groups to couple separately = 
+; Groups to couple separately =
 tc-grps                  = Protein Water_and_ions
-; Time constant (ps) and reference temperature (K) = 
+; Time constant (ps) and reference temperature (K) =
 ; This is the inverse of the damping coefficient (in ps)
 tau_t                    = 0.2 0.2
 ref_t                    = 300 300
 ; ld_seed = -1 means that the seed is calculated from the process ID
 ld_seed                  = -1
-; Pressure coupling      = 
+; Pressure coupling      =
 Pcoupl                   = parrinello-rahman
 ; Pressure coupling type - isotropic,semiisotropic,anisotropic,surface-tension,triclinic
 Pcoupltype               = isotropic
-; Time constant (ps), compressibility (1/bar) and reference P (bar) = 
-tau-p                    = 1.0 1.0 
+; Time constant (ps), compressibility (1/bar) and reference P (bar) =
+tau-p                    = 1.0 1.0
 compressibility          = 4.5E-5 4.5E-5
-ref-p                    = 1.0 1.0 
+ref-p                    = 1.0 1.0
 
 
-; GENERATE VELOCITIES FOR STARTUP RUN = 
+; GENERATE VELOCITIES FOR STARTUP RUN =
 gen_vel                  = yes
 gen_temp                 = 300
 gen_seed                 = 591
 
-; OPTIONS FOR BONDS     = 
-constraints              = hbonds 
-; Type of constraint algorithm = 
+; OPTIONS FOR BONDS     =
+constraints              = hbonds
+; Type of constraint algorithm =
 constraint_algorithm     = Lincs
-; Do not constrain the start configuration = 
+; Do not constrain the start configuration =
 unconstrained_start      = no
-; Relative tolerance of shake = 
+; Relative tolerance of shake =
 shake_tol                = 0.0001
-; Highest order in the expansion of the constraint coupling matrix = 
+; Highest order in the expansion of the constraint coupling matrix =
 lincs_order              = 4
-; Lincs will write a warning to the stderr if in one step a bond = 
-; rotates over more degrees than = 
+; Lincs will write a warning to the stderr if in one step a bond =
+; rotates over more degrees than =
 lincs_warnangle          = 30
-; Convert harmonic bonds to morse potentials = 
+; Convert harmonic bonds to morse potentials =
 morse                    = no
 
 '''
-

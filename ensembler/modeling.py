@@ -11,6 +11,7 @@ import traceback
 import Bio.SeqUtils
 import simtk.openmm
 import yaml
+import msmbuilder
 import warnings
 import ensembler
 import ensembler.version
@@ -135,12 +136,10 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
             template_full_seq.id + '.pdb'
         )
         fixer = pdbfixer.PDBFixer(filename=template_filepath)
-        chainid = next(fixer.structure.iter_chains()).chain_id
-        seq_obj = simtk.openmm.app.internal.pdbstructure.Sequence(chainid)
-        for r in template_full_seq.seq:
-            resi3 = Bio.SeqUtils.seq3(r).upper()
-            seq_obj.residues.append(resi3)
-        fixer.structure.sequences.append(seq_obj)
+        chainid = next(fixer.topology.chains()).id
+        sequence = [ Bio.SeqUtils.seq3(r).upper() for r in template_full_seq.seq ]
+        seq_obj = pdbfixer.pdbfixer.Sequence(chainid, sequence)
+        fixer.sequences.append(seq_obj)
         fixer.findMissingResidues()
         remove_missing_residues_at_termini(fixer, len_full_seq=len(template_full_seq.seq))
         if not overwrite_structures and os.path.exists(template_pdbfixed_filepath):

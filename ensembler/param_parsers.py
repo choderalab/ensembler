@@ -30,7 +30,7 @@ def parse_api_params_string(params_string):
 
     Examples
     --------
-    >>> parse_api_params_string('{"a": 3 / picoseconds, "b": "x", "c": 2.4}')
+    >>> mydict = parse_api_params_string('{"a": 3 / picoseconds, "b": "x", "c": 2.4}')
     """
 
     expr = ast.parse(params_string, mode='eval')
@@ -70,8 +70,11 @@ def eval_quantity_string(param_value_string):
     Examples
     --------
     >>> eval_quantity_string('2 picoseconds')
+    Quantity(value=2, unit=picosecond)
     >>> eval_quantity_string('2 / picoseconds')
+    Quantity(value=2, unit=/picosecond)
     >>> eval_quantity_string('2')
+    2
     """
 
     quantity_as_number_space_unit_match = re.match(quantity_without_operator_regex, param_value_string)

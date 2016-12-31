@@ -40,8 +40,8 @@ def get_last_good_chunk(model_dir, destructive=False, verbose=False):
             else:
                 if destructive == True:
                     shutil.rmtree(last_chunk_dir)
-    # If a chunk with a good .rst file has not been found, then each chunk will subsequently have been deleted, and last_chunk_index will remain at -1
 
+    # If a chunk with a good .rst file has not been found, then each chunk will subsequently have been deleted, and last_chunk_index will remain at -1
     return last_good_chunk_index
 
 
@@ -109,7 +109,7 @@ def test_rst_file(chunk_dir, natoms, verbose=False):
 
 def _readFileContents(filename):
     import os.path
-    
+
     if os.path.exists(filename):
         infile = open(filename, 'r')
     elif os.path.exists(filename+'.gz'):
@@ -121,7 +121,7 @@ def _readFileContents(filename):
     contents = infile.read()
     infile.close()
     return contents
-    
+
 def _writeFileContents(filename, contents):
     outfile = open(filename, 'w')
     outfile.write(contents)
@@ -157,14 +157,14 @@ def createAmberInputFiles(topology, system, state, nproteinatoms, openmm_forcefi
     * Decide on whether to keep ambernames.pdb or amber.pdb in each directory
 
     RETURNS
-    
+
     None
 
-    '''    
+    '''
 
     from simtk import openmm
     from simtk import unit
-    
+
     # Create box and center protein
     if verbose: print("Creating box and centering protein in unit cell...")
     integrator = openmm.VerletIntegrator(1.0 * unit.femtoseconds)
@@ -223,10 +223,10 @@ quit
     leap_log_filename = 'leap.log'
     if os.path.exists(leap_log_filename):
         os.remove(leap_log_filename)
-    
+
     # Determine atom names.
     (atoms, sorted_atom_indices) = _assignNamesFromForceFieldTemplates(topology, system, openmm_forcefields_to_use)
-    
+
     # Re-sort atoms.
     resort_atoms = True
     if resort_atoms:
@@ -237,7 +237,7 @@ quit
             atoms2[new_index] = atoms[old_index]
             atoms2[new_index].index = new_index+1
             positions2[new_index,:] = positions[old_index,:]
-    
+
         atoms = atoms2
         positions = positions2
 
@@ -319,8 +319,8 @@ def _assignNamesFromForceFieldTemplates(topology, system, openmm_forcefields_to_
     openmm_forcefields_to_use (list of strings) - list of XML files of forcefields containing templates
 
     RETURNS
-    
-    atoms - list of atom information 
+
+    atoms - list of atom information
     sorted_atom_indices (list of int) - atom indices in order that they appear in forcefield templates, in case re-sorting is required
 
     '''
@@ -329,7 +329,7 @@ def _assignNamesFromForceFieldTemplates(topology, system, openmm_forcefields_to_
     from simtk.openmm.app import ForceField
     import simtk.openmm.app.forcefield
     forcefield = ForceField(*openmm_forcefields_to_use)
-        
+
     data = ForceField._SystemData()
     atomIndices = {}
     for index, atom in enumerate(topology.atoms()):
@@ -352,8 +352,8 @@ def _assignNamesFromForceFieldTemplates(topology, system, openmm_forcefields_to_
         bondedToAtom[bond.atom2].add(bond.atom1)
         data.atomBonds[bond.atom1].append(i)
         data.atomBonds[bond.atom2].append(i)
-        
-    # Find the template matching each residue and assign atom types.        
+
+    # Find the template matching each residue and assign atom types.
     sorted_atom_indices = list()
     for chain in topology.chains():
         for res in chain.residues():
@@ -405,7 +405,7 @@ def create_mdin(ntimesteps, restart=False, coord_writeperiod=50000, energy_write
     TODO:
 
     Allow all parameters to be specified with OpenMM-like interface?
-    
+
     '''
     import os
     # Return if file already exists (and if not forcing overwrite)
@@ -429,10 +429,10 @@ Langevin dynamics in periodic box.
  &cntrl
    imin=0, irest=%(irest)d, ntx=%(ntx)d,
    imin=0, irest=0, ntx=1,
-   ntc=2, ntf=2, 
-   nstlim=%(ntimesteps)d, 
+   ntc=2, ntf=2,
+   nstlim=%(ntimesteps)d,
    ntpr=%(energy_writeperiod)d, ntwx=%(coord_writeperiod)d,
-   ntwr=%(rst_writeperiod)d, 
+   ntwr=%(rst_writeperiod)d,
    dt=0.002, cut=9.,
    ntt=3, gamma_ln=5.0, tempi=300.0, temp0=300.0,
    ntb=2, ntp=1, pres0=1.01317122594, taup=10.0,
@@ -442,7 +442,7 @@ Langevin dynamics in periodic box.
     outfile = open(mdin_filename, 'w')
     outfile.write(mdin_template)
     outfile.close()
-                        
+
 def run_sander(verbose=False, restart=False, overwrite_mdin=False):
     # Generate MD input file.
     create_mdin(ntimesteps, restart=restart)
@@ -462,7 +462,7 @@ def run_pmemd(ncpus=1, shell='/bin/tcsh', verbose=False, restart=False, overwrit
 
     # Run CPU version of PMEMD
     import subprocess
-    command = "setenv AMBERHOME $AMBERHOME_CPU; $AMBERHOME/bin/pmemd -O -i md.sander.in -o md.sander.out -p amber.prmtop -c amber.crd -inf amber.mdinfo -x amber.nc -r amber.restrt" % vars() 
+    command = "setenv AMBERHOME $AMBERHOME_CPU; $AMBERHOME/bin/pmemd -O -i md.sander.in -o md.sander.out -p amber.prmtop -c amber.crd -inf amber.mdinfo -x amber.nc -r amber.restrt" % vars()
     output = subprocess.check_output(command, shell=True, executable=shell)
     if verbose: print(output)
 
@@ -487,10 +487,10 @@ If restarting a trajectory, set restart to the name of the restart file to be us
     create_mdin(ntimesteps, restart=restart)
 
     # Run Serial CUDA version of PMEMD.
-    if restart:    
-        command = "setenv AMBERHOME $AMBERHOME_GPU; setenv CUDA_VISIBLE_DEVICES %(cuda_visible_devices)s; $AMBERHOME/bin/pmemd.cuda -O -i md.restart.in -p ../amber.prmtop -c %(restart)s -o md.out -inf md.mdinfo -x md.nc -r md.rst" % vars() 
+    if restart:
+        command = "setenv AMBERHOME $AMBERHOME_GPU; setenv CUDA_VISIBLE_DEVICES %(cuda_visible_devices)s; $AMBERHOME/bin/pmemd.cuda -O -i md.restart.in -p ../amber.prmtop -c %(restart)s -o md.out -inf md.mdinfo -x md.nc -r md.rst" % vars()
     else:
-        command = "setenv AMBERHOME $AMBERHOME_GPU; setenv CUDA_VISIBLE_DEVICES %(cuda_visible_devices)s; $AMBERHOME/bin/pmemd.cuda -O -i md.start.in -p ../amber.prmtop -c ../amber.crd -o md.out -inf md.mdinfo -x md.nc -r md.rst" % vars() 
+        command = "setenv AMBERHOME $AMBERHOME_GPU; setenv CUDA_VISIBLE_DEVICES %(cuda_visible_devices)s; $AMBERHOME/bin/pmemd.cuda -O -i md.start.in -p ../amber.prmtop -c ../amber.crd -o md.out -inf md.mdinfo -x md.nc -r md.rst" % vars()
 
     output = subprocess.check_output(command, shell=True, executable=shell)
     if verbose: print(output)
@@ -539,4 +539,3 @@ if __name__ == '__main__':
     # Run dynamics.
     ntimesteps = 5000
     run_pmemd_cuda(ntimesteps, verbose=True)
-
