@@ -409,11 +409,10 @@ class ProjectMetadata:
         :return: int
         """
         metadata_dir = self.metadata_dir_mapper(project_stage, target_id=self.target_id)
-        try:
-            dir_contents = os.listdir(metadata_dir)
-        except Exception as e:
-            print('Failure in os.listdir(metadata_dir) for metadata_dir = "%s"' % metadata_dir)
-            raise e
+        if not os.path.exists(metadata_dir):
+            # Directory does not exist.
+            return -1
+        dir_contents = os.listdir(metadata_dir)
         metadata_file_basename = self.metadata_file_basename_mapper(project_stage)
         metadata_file_regex = re.compile('%s([0-9]+)\.yaml' % metadata_file_basename)
         metadata_file_indices = []
