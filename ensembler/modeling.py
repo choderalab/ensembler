@@ -136,9 +136,9 @@ def pdbfix_template(template_full_seq, overwrite_structures=False):
             template_full_seq.id + '.pdb'
         )
         fixer = pdbfixer.PDBFixer(filename=template_filepath)
-        chainid = next(fixer.chains()).id
+        chainid = next(fixer.topology.chains()).id
         sequence = [ Bio.SeqUtils.seq3(r).upper() for r in template_full_seq.seq ]
-        seq_obj = pdbfixer.Sequence(chainid, sequence)
+        seq_obj = pdbfixer.pdbfixer.Sequence(chainid, sequence)
         fixer.sequences.append(seq_obj)
         fixer.findMissingResidues()
         remove_missing_residues_at_termini(fixer, len_full_seq=len(template_full_seq.seq))
