@@ -8,7 +8,7 @@ else:
     from StringIO import StringIO
 import gzip
 import re
-
+import six
 
 def extract_residues_by_resnum(output_file, pdb_input_file, template):
     """
@@ -17,7 +17,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
     output_file: string or gzip.file_like
     pdb_input_file: string or gzip.file_like
     """
-    if type(pdb_input_file) in [str, unicode]:
+    if isinstance(pdb_input_file, six.string_types):
         with gzip.open(pdb_input_file, 'r') as pdb_file:
             pdbtext = pdb_file.readlines()
     else:
@@ -27,7 +27,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
     # ['   9 ', '  29 ', '  30B']
     desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.resolved_pdbresnums]
 
-    if type(output_file) in [str, unicode]:
+    if isinstance(output_file, six.string_types):
         ofile = open(output_file, 'w')
     else:
         ofile = output_file
@@ -48,7 +48,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
                         ofile.write(line)
                         resnums_extracted[resnum] = 1
     finally:
-        if type(output_file) in [str, unicode]:
+        if isinstance(output_file, six.string_types):
             ofile.close()
     if len(resnums_extracted) != len(desired_resnums):
         raise Exception(

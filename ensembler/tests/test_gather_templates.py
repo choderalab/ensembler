@@ -7,6 +7,7 @@ else:
 from ensembler.utils import get_installed_resource_filename
 import ensembler.pdb
 from mock import Mock
+from numpy import arange
 from nose.plugins.attrib import attr
 
 
@@ -16,7 +17,7 @@ def test_extract_residues_by_resnum_from_4CFE():
     pdb_input_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', '4CFE.pdb.gz'))
     template = Mock()
     template.chainid= 'A'
-    template.resolved_pdbresnums = [str(x) for x in range(16, 269)]
+    template.resolved_pdbresnums = [str(x) for x in arange(16, 269)]
     ofile = StringIO()
     ensembler.pdb.extract_residues_by_resnum(ofile, pdb_input_filepath, template)
     ofile.close()
@@ -28,7 +29,7 @@ def test_extract_residues_by_resnum_from_3HLL():
     pdb_input_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', '3HLL.pdb.gz'))
     template = Mock()
     template.chainid = 'A'
-    template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
+    template.resolved_pdbresnums = [str(x) for x in arange(24, 172) + arange(183, 309)]
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
     ofile = StringIO()
@@ -41,7 +42,7 @@ def test_extract_residues_by_resnum_output():
     pdb_input_filepath = get_installed_resource_filename(os.path.join('tests', 'resources', '3HLL.pdb.gz'))
     template = Mock()
     template.chainid = 'A'
-    template.resolved_pdbresnums = [str(x) for x in range(24, 172) + range(183, 309)]
+    template.resolved_pdbresnums = [str(x) for x in arange(24, 172) + arange(183, 309)]
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('56')] = '56A'
     template.resolved_pdbresnums[template.resolved_pdbresnums.index('93')] = '93B'
     ofile = StringIO()
