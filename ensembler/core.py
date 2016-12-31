@@ -409,6 +409,8 @@ class ProjectMetadata:
         :return: int
         """
         metadata_dir = self.metadata_dir_mapper(project_stage, target_id=self.target_id)
+        print(metadata_dir) # DEBUG
+        print(os.listdir('.')) # DEBUG
         dir_contents = os.listdir(metadata_dir)
         metadata_file_basename = self.metadata_file_basename_mapper(project_stage)
         metadata_file_regex = re.compile('%s([0-9]+)\.yaml' % metadata_file_basename)
