@@ -40,7 +40,7 @@ script:
   # Install the package
   - conda install --yes --use-local ${PACKAGENAME}-dev
   # Test the package
-  - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit -a modeller -a 'unit' -a '!slow' && cd ..
+  - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer --exe -a unit -a modeller -A 'unit and not slow' && cd ..
 
 after_success:
   - echo "after_success"
