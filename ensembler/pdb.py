@@ -26,7 +26,7 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
     # list of resnum strings e.g. ['9', '29', '30B'] must be converted as follows to match the PDB format:
     # ['   9 ', '  29 ', '  30B']
     desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.resolved_pdbresnums]
-    
+
     if isinstance(output_file, six.string_types):
         ofile = open(output_file, 'w')
     else:
@@ -44,7 +44,6 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
             if line[0:6] in ['ATOM  ', 'HETATM']:
                 resnum = line[22:27]
                 chainid = line[21]
-                print(resnum, chainid)
                 if chainid == template.chainid:
                     if resnum in desired_resnums:
                         ofile.write(line)

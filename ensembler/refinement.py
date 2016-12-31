@@ -178,22 +178,25 @@ def refine_implicit_md(
         energy_outfile.close()
 
         # Write final PDB file.
-        pdb_outfile = gzip.open(pdb_filename, 'w')
+        pdb_outfile = gzip.open(pdb_filename, 'wt')
         app.PDBFile.writeHeader(topology, file=pdb_outfile)
         app.PDBFile.writeFile(topology, state.getPositions(), file=pdb_outfile)
         app.PDBFile.writeFooter(topology, file=pdb_outfile)
         pdb_outfile.close()
 
-
-
-
+    # Process targets
+    print('Processing targets...') # DEBUG
     for target in targets:
-        if process_only_these_targets and (target.id not in process_only_these_targets):
+        if (process_only_these_targets is not None) and (target.id not in process_only_these_targets):
+            print('Skipping because %s is not in process_only_these_targets' % target.id)
+            print(process_only_these_targets)
             continue
+        logger.info('Processing %s' % target)
         models_target_dir = os.path.join(models_dir, target.id)
         if mpistate.rank == 0:
             target_starttime = datetime.datetime.utcnow()
             if not os.path.exists(models_target_dir):
+                print('%s does not exist, skipping' % models_target_dir)
                 continue
 
         mpistate.comm.Barrier()
@@ -320,7 +323,9 @@ def refine_implicit_md(
             project_metadata = ensembler.core.ProjectMetadata(project_stage='refine_implicit_md', target_id=target.id)
 
             datestamp = ensembler.core.get_utcnow_formatted()
-            nsuccessful_refinements = subprocess.check_output(['find', models_target_dir, '-name', 'implicit-refined.pdb.gz']).count('\n')
+            command = ['find', models_target_dir, '-name', 'implicit-refined.pdb.gz']
+            output = subprocess.check_output(command)
+            nsuccessful_refinements = output.decode('UTF-8').count('\n')
             target_timedelta = datetime.datetime.utcnow() - target_starttime
 
             metadata = {
@@ -949,9 +954,9 @@ def refine_explicit_md(
         with gzip.open(state_filename+'.gz', 'w') as state_file:
             state_file.write(openmm.XmlSerializer.serialize(state))
 
-
+    # Refine targets
     for target in targets:
-        if process_only_these_targets and (target.id not in process_only_these_targets):
+        if (process_only_these_targets is not None) and (target.id not in process_only_these_targets):
             continue
         models_target_dir = os.path.join(models_dir, target.id)
         if mpistate.rank == 0:
