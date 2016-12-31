@@ -38,9 +38,6 @@ class MkTraj(object):
         df : pandas.DataFrame
             models data (e.g. sequence identities):
 
-        Examples
-        --------
-        >>> MkTraj(targetid='EGFR_HUMAN_D0')
         """
         ensembler.utils.set_loglevel(loglevel)
         ensembler.core.check_project_toplevel_dir()

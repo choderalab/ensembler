@@ -36,10 +36,10 @@ def test_refine_implicit_md_short():
             default_project_dirnames.models, targetid, templateid, 'implicit-log.yaml'
         )
 
-        assert all(map(
-            os.path.exists,
-            [implicit_model_filepath, implicit_energies_filepath, implicit_log_filepath]
-        ))
+        assert os.path.exists(implicit_model_filepath), "%s does not exist" % implicit_model_filepath
+        assert os.path.exists(implicit_energies_filepath), "%s does not exist" % implicit_energies_filepath
+        assert os.path.exists(implicit_log_filepath), "%s does not exist" % implicit_log_filepath
+
         with open(implicit_log_filepath) as implicit_log_file:
             implicit_log = yaml.load(implicit_log_file)
         assert implicit_log.get('finished') is True
