@@ -25,7 +25,8 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
 
     # list of resnum strings e.g. ['9', '29', '30B'] must be converted as follows to match the PDB format:
     # ['   9 ', '  29 ', '  30B']
-    desired_resnums = ['%4s ' % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.resolved_pdbresnums]
+    desired_resnums = ['%4s '.encode('UTF-8') % r if re.match('[0-9]', r[-1]) else '%5s' % r for r in template.resolved_pdbresnums]
+    print(desired_resnums) # DEBUG
 
     if isinstance(output_file, six.string_types):
         ofile = open(output_file, 'w')
@@ -35,19 +36,17 @@ def extract_residues_by_resnum(output_file, pdb_input_file, template):
         resnums_extracted = {}
         model_index = 0
         for line in pdbtext:
-            print(line) # DEBUG
             # For PDBs containing multiple MODELs (e.g. NMR structures), extract data only from the first model, ignore others.
             if line[0:6] == 'MODEL ':
-                print('MODEL %d' % model_index) # DEBUG
                 model_index += 1
                 if model_index == 2:
                     break
             if line[0:6] in ['ATOM  ', 'HETATM']:
-                resnum = line[22:27]
-                chainid = line[21]
-                print('resnum "%s" chainid "%s"' % (resnum, chainid)) # DEBUG
+                resnum = line[22:27].encode('UTF-8')
+                chainid = line[21].encode('UTF-8')
                 if chainid == template.chainid:
                     if resnum in desired_resnums:
+                        print('resnum "%s" found' % resnum) # DEBUG
                         ofile.write(line)
                         resnums_extracted[resnum] = 1
     except Exception as e:
