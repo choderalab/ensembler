@@ -155,7 +155,7 @@ def get_installed_resource_filename(relative_path):
 
     Examples
     --------
-    >>> get_installed_resource_filename('tests/example_project/meta0.yaml')
+    >>> pathname = get_installed_resource_filename('tests/example_project/meta0.yaml')
     """
     installed_filepath = resource_filename(ensembler.__name__, relative_path)
 
