@@ -74,7 +74,8 @@ class MkTraj(object):
         if process_only_these_templates:
             self.templateids = process_only_these_templates
         else:
-            self.templateids = os.walk(self.models_target_dir).next()[1]
+            directories = [ directory for directory in os.walk(self.models_target_dir) ]
+            self.templateids = directories[0][1]
 
         if run_main:
             self._gen_df()
@@ -193,7 +194,8 @@ class MkTrajImplicitStart(MkTraj):
         if process_only_these_templates:
             self.templateids = process_only_these_templates
         else:
-            self.templateids = os.walk(self.models_target_dir).next()[1]
+            directories = [ directory for directory in os.walk(self.models_target_dir) ]
+            self.templateids = directories[0][1]
 
         if run_main:
             self._gen_implicit_start_models()
@@ -257,7 +259,7 @@ class MkTrajImplicitStart(MkTraj):
                 topology = modeller.getTopology()
                 positions = modeller.getPositions()
 
-                with gzip.open(output_model_filepath, 'w') as output_model_file:
+                with gzip.open(output_model_filepath, 'wt') as output_model_file:
                     app.PDBFile.writeHeader(topology, file=output_model_file)
                     app.PDBFile.writeFile(topology, positions, file=output_model_file)
                     app.PDBFile.writeFooter(topology, file=output_model_file)
