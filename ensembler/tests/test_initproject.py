@@ -10,6 +10,7 @@ import ensembler.core
 import ensembler.uniprot
 from ensembler.utils import enter_temp_dir, get_installed_resource_filename
 from ensembler.tests.integrationtest_utils import integrationtest_context
+import shutil
 
 
 @attr('unit')
@@ -108,6 +109,18 @@ def test_attempt_symlink_structure_files():
         ensembler.initproject.attempt_symlink_structure_files(pdbid, '.', structure_paths, structure_type)
         assert os.path.exists(project_pdb_filepath)
 
+@attr('unit')
+def test_attempt_symlink_structure_files_relative_path():
+    pdbid = '4CFE'
+    structure_path = get_installed_resource_filename(os.path.join('tests', 'resources', pdbid + '.pdb.gz'))
+    with enter_temp_dir():
+        os.mkdir('pdb')
+        os.mkdir('manual_input')
+        shutil.copy(structure_path, 'manual_input')
+        structure_type = 'pdb'
+        project_pdb_filepath = os.path.join('pdb', pdbid + '.pdb.gz')
+        ensembler.initproject.attempt_symlink_structure_files(pdbid, '.', ['manual_input'], structure_type)
+        assert os.path.exists(project_pdb_filepath)
 
 @attr('unit')
 def test_log_unique_domain_names():
